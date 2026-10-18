@@ -258,3 +258,25 @@ describe('row ownership (security fix)', () => {
     await as('alice', "insert into loans (org_id, borrower_id, principal_cents, due_on, written_off_on) values ($1, $2, 100, '2026-12-01', '2026-10-18')", [orgA, borrower])
   })
 })
+
+describe('member rows (security fix)', () => {
+  it('lets owners change roles but not identity columns', async () => {
+    const org = await createOrg('alice', 'Identity Co')
+    const [invite] = await as<{ id: string }>('alice', "insert into organization_invites (org_id, email) values ($1, 'bob@example.com') returning id", [org])
+    await as('bob', 'select public.accept_invite($1)', [invite.id])
+
+    await as('alice', "update organization_members set role = 'viewer' where org_id = $1 and user_id = $2", [org, users.bob.id])
+    await expect(
+      as('alice', "update organization_members set email = 'ceo@bank.com' where org_id = $1 and user_id = $2", [org, users.bob.id]),
+    ).rejects.toThrow(/permission denied/)
+    await expect(
+      as('alice', 'update organization_members set user_id = $1 where org_id = $2 and user_id = $3', [users.carol.id, org, users.bob.id]),
+    ).rejects.toThrow(/permission denied/)
+
+    const rows = await as<{ email: string; role: string }>('alice', 'select email, role from organization_members where org_id = $1 order by email', [org])
+    expect(rows).toEqual([
+      { email: 'alice@example.com', role: 'owner' },
+      { email: 'bob@example.com', role: 'viewer' },
+    ])
+  })
+})
