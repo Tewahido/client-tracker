@@ -1,0 +1,62 @@
+name: Quality gates
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  tests-required:
+    name: Tests required
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-tests-needed') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require test changes alongside code changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          changed=$(git diff --name-only "$BASE_SHA"...$HEAD_SHA)
+          echo "Changed files:"; echo "$changed" | sed 's/^/  /'
+
+          # Behavioural code: TypeScript under src/ (not styles, tests or type-only files) and SQL migrations.
+          code=$(echo "$changed" | grep -E '^(src/.*\.(ts|tsx)|supabase/migrations/.*\.sql)$' \
+            | grep -vE '\.styles\.ts$|\.test\.ts$|\.d\.ts$|/index\.ts$' || true)
+          tests=$(echo "$changed" | grep -E '\.test\.(ts|tsx)$|^supabase/tests/' || true)
+
+          if [ -n "$code" ] && [ -z "$tests" ]; then
+            echo "::error title=Tests required::This PR changes application code but no tests. Add regression tests (see AGENTS.md), or label the PR 'no-tests-needed' and explain why in the description."
+            echo "$code" | sed 's/^/  untested change: /'
+            exit 1
+          fi
+          echo "OK: code changes are accompanied by test changes (or there are no code changes)."
+
+  dependency-review:
+    name: Dependency review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure
+
+  audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Fail on high or critical advisories in production dependencies
+        run: npm audit --omit=dev --audit-level=high
