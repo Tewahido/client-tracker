@@ -19,8 +19,14 @@ async function guard<T>(task: Promise<T>): Promise<T> {
   }
 }
 
-export function LoanStoreProvider({ children }: { children: ReactNode }) {
-  const [repo] = useState<DataRepository>(createRepository)
+interface LoanStoreProviderProps {
+  /** Active organisation, or null for this device's local storage. Key the provider by it so a switch reloads cleanly. */
+  orgId: string | null
+  children: ReactNode
+}
+
+export function LoanStoreProvider({ orgId, children }: LoanStoreProviderProps) {
+  const [repo] = useState<DataRepository>(() => createRepository(orgId))
   const [data, setData] = useState<Snapshot>(EMPTY)
   const [status, setStatus] = useState<LoanStoreValue['status']>('loading')
   const [error, setError] = useState<string | null>(null)
@@ -41,6 +47,20 @@ export function LoanStoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void reload()
   }, [reload])
+
+  // Live updates from other members. Coalesce bursts (e.g. a restore) into one reload.
+  useEffect(() => {
+    if (!repo.subscribe) return
+    let timer: number | undefined
+    const unsubscribe = repo.subscribe(() => {
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => void reload(), 400)
+    })
+    return () => {
+      window.clearTimeout(timer)
+      unsubscribe()
+    }
+  }, [repo, reload])
 
   const actions = useMemo(
     () => ({

@@ -60,7 +60,7 @@ export default function App() {
   const { theme } = useTheme()
   return (
     <SettingsProvider>
-      <LoanStoreProvider>
+      <LoanStoreProvider orgId={null}>
         <OverlayProvider>
           <Layout />
         </OverlayProvider>

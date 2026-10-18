@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Borrower, Loan, Payment } from '../../lib/types'
+import { withFreshIds } from '../../lib/snapshot'
 import type { DataRepository } from './repository'
 
 /* Row shapes as stored in Postgres (snake_case). `user_id` is filled by the database default. */
@@ -93,18 +94,21 @@ function unwrap<T>(result: { data: T | null; error: { message: string } | null }
 }
 
 /**
- * Stores data in Supabase. Row Level Security (see supabase/migrations) limits
- * access to allow-listed members, who all share one ledger; no user filter is needed here.
+ * Stores one organisation's ledger in Supabase. Row Level Security (see
+ * supabase/migrations) guarantees users only reach organisations they belong
+ * to; filtering by org_id here picks the active one when a user has several.
  */
-export function createSupabaseRepository(client: SupabaseClient): DataRepository {
+export function createSupabaseRepository(client: SupabaseClient, orgId: string): DataRepository {
+  const scoped = <T extends object>(row: T) => ({ ...row, org_id: orgId })
+
   return {
     kind: 'supabase',
 
     async load() {
       const [borrowers, loans, payments] = await Promise.all([
-        client.from('borrowers').select('*').order('created_at'),
-        client.from('loans').select('*').order('created_at'),
-        client.from('payments').select('*').order('paid_on'),
+        client.from('borrowers').select('*').eq('org_id', orgId).order('created_at'),
+        client.from('loans').select('*').eq('org_id', orgId).order('created_at'),
+        client.from('payments').select('*').eq('org_id', orgId).order('paid_on'),
       ])
       return {
         borrowers: unwrap<BorrowerRow[]>(borrowers).map(toBorrower),
@@ -114,7 +118,7 @@ export function createSupabaseRepository(client: SupabaseClient): DataRepository
     },
 
     async createBorrower(input) {
-      return toBorrower(unwrap(await client.from('borrowers').insert(fromBorrower(input)).select().single()))
+      return toBorrower(unwrap(await client.from('borrowers').insert(scoped(fromBorrower(input))).select().single()))
     },
 
     async updateBorrower(id, patch) {
@@ -126,7 +130,7 @@ export function createSupabaseRepository(client: SupabaseClient): DataRepository
     },
 
     async createLoan(input) {
-      return toLoan(unwrap(await client.from('loans').insert(fromLoan(input)).select().single()))
+      return toLoan(unwrap(await client.from('loans').insert(scoped(fromLoan(input))).select().single()))
     },
 
     async updateLoan(id, patch) {
@@ -138,7 +142,7 @@ export function createSupabaseRepository(client: SupabaseClient): DataRepository
     },
 
     async createPayment(input) {
-      return toPayment(unwrap(await client.from('payments').insert(fromPayment(input)).select().single()))
+      return toPayment(unwrap(await client.from('payments').insert(scoped(fromPayment(input))).select().single()))
     },
 
     async deletePayment(id) {
@@ -146,11 +150,22 @@ export function createSupabaseRepository(client: SupabaseClient): DataRepository
     },
 
     async replaceAll(snapshot) {
+      // Fresh ids so restoring the same backup into another organisation can't collide.
+      const data = withFreshIds(snapshot)
       // Borrower deletes cascade to loans and payments.
-      unwrap(await client.from('borrowers').delete().not('id', 'is', null))
-      if (snapshot.borrowers.length) unwrap(await client.from('borrowers').insert(snapshot.borrowers.map(fromBorrower)))
-      if (snapshot.loans.length) unwrap(await client.from('loans').insert(snapshot.loans.map(fromLoan)))
-      if (snapshot.payments.length) unwrap(await client.from('payments').insert(snapshot.payments.map(fromPayment)))
+      unwrap(await client.from('borrowers').delete().eq('org_id', orgId))
+      if (data.borrowers.length) unwrap(await client.from('borrowers').insert(data.borrowers.map((b) => scoped(fromBorrower(b)))))
+      if (data.loans.length) unwrap(await client.from('loans').insert(data.loans.map((l) => scoped(fromLoan(l)))))
+      if (data.payments.length) unwrap(await client.from('payments').insert(data.payments.map((p) => scoped(fromPayment(p)))))
+    },
+
+    subscribe(onChange) {
+      const channel = client.channel(`ledger:${orgId}`)
+      for (const table of ['borrowers', 'loans', 'payments']) {
+        channel.on('postgres_changes', { event: '*', schema: 'public', table, filter: `org_id=eq.${orgId}` }, onChange)
+      }
+      channel.subscribe()
+      return () => void client.removeChannel(channel)
     },
   }
 }

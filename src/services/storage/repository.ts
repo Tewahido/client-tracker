@@ -27,4 +27,7 @@ export interface DataRepository {
 
   /** Replace every record, used when restoring a backup. */
   replaceAll(snapshot: Snapshot): Promise<void>
+
+  /** Optional live updates (e.g. other organisation members' edits). Returns an unsubscribe function. */
+  subscribe?(onChange: () => void): () => void
 }
