@@ -2,7 +2,7 @@ import { BellOff, BellRing, CalendarPlus, Send } from 'lucide-react'
 import { Button, SelectInput } from '../../../../components/ui'
 import { useCalendarExport, useNotificationPermission } from '../../../reminders'
 import { useSettings } from '../../../../providers/settingsContext'
-import { SettingsRow, SettingsSection } from '../SettingsSection'
+import { SettingsRow, SettingsSection } from '../../../../components/layout/SettingsSection'
 import { remindersSectionStyles as s } from './RemindersSection.styles'
 
 const LEAD_DAYS = [1, 2, 3, 5, 7, 14]

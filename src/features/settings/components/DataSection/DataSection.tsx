@@ -3,7 +3,7 @@ import { useRef } from 'react'
 import { Button, ConfirmDialog } from '../../../../components/ui'
 import { useLoanStore } from '../../../../providers/loanStoreContext'
 import { useDataTransfer } from '../../hooks/useDataTransfer'
-import { SettingsRow, SettingsSection } from '../SettingsSection'
+import { SettingsRow, SettingsSection } from '../../../../components/layout/SettingsSection'
 import { dataSectionStyles as s } from './DataSection.styles'
 
 export function DataSection() {

@@ -4,7 +4,7 @@ import { useTheme } from '../../../../hooks/useTheme'
 import { useSettings } from '../../../../providers/settingsContext'
 import type { ThemePreference } from '../../../../services/settings'
 import { CURRENCIES } from '../../currencies'
-import { SettingsRow, SettingsSection } from '../SettingsSection'
+import { SettingsRow, SettingsSection } from '../../../../components/layout/SettingsSection'
 import { preferencesStyles as s } from './PreferencesSection.styles'
 
 const THEMES: { value: ThemePreference; label: string }[] = [
