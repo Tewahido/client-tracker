@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { isOpen, sortByUrgency, type LoanView } from '../../../lib/loans'
+import { isOpen, needsAttention, outstandingCents, sortByUrgency, type LoanView } from '../../../lib/loans'
 
 export type LoanFilter = 'open' | 'overdue' | 'soon' | 'closed' | 'all'
 export type LoanSort = 'urgency' | 'amount' | 'recent'
@@ -15,7 +15,7 @@ export const FILTER_LABELS: Record<LoanFilter, string> = {
 const matchers: Record<LoanFilter, (v: LoanView) => boolean> = {
   open: (v) => isOpen(v.status),
   overdue: (v) => v.status === 'overdue',
-  soon: (v) => v.status === 'due-today' || v.status === 'due-soon',
+  soon: (v) => needsAttention(v.status) && v.status !== 'overdue',
   closed: (v) => !isOpen(v.status),
   all: () => true,
 }
@@ -50,5 +50,7 @@ export function useLoanFilters(views: LoanView[], initialFilter: LoanFilter = 'o
     return sorters[sort](filtered)
   }, [views, filter, sort, query])
 
-  return { filter, setFilter, sort, setSort, query, setQuery, counts, visible }
+  const outstanding = useMemo(() => outstandingCents(views), [views])
+
+  return { filter, setFilter, sort, setSort, query, setQuery, counts, visible, outstandingCents: outstanding }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { borrowerStats, buildLoanViews, loanStatus, monthlyCollections, portfolioStats, sortByUrgency, totalDueCents } from './loans'
+import { attentionList, borrowerStats, buildLoanViews, loanStatus, monthlyCollections, needsAttention, outstandingCents, portfolioStats, sortByUrgency, totalDueCents } from './loans'
 import type { Borrower, Loan, Payment } from './types'
 
 const TODAY = '2026-10-18'
@@ -139,5 +139,33 @@ describe('monthlyCollections', () => {
       { key: '2026-09', cents: 0 },
       { key: '2026-10', cents: 100 },
     ])
+  })
+})
+
+describe('attention helpers', () => {
+  const views = buildLoanViews(
+    [
+      loan({ id: 'late', dueOn: '2026-10-10' }),
+      loan({ id: 'today', dueOn: '2026-10-18' }),
+      loan({ id: 'soon', dueOn: '2026-10-20' }),
+      loan({ id: 'later', dueOn: '2026-12-01' }),
+      loan({ id: 'paid', dueOn: '2026-10-01' }),
+      loan({ id: 'forgiven', dueOn: '2026-10-01', writtenOffOn: '2026-10-05' }),
+    ],
+    [payment({ loanId: 'paid', amountCents: 10_000 }), payment({ loanId: 'late', amountCents: 2_500 })],
+    [borrower],
+    TODAY,
+    3,
+  )
+
+  it('lists overdue, due-today and due-soon loans, most urgent first', () => {
+    expect(attentionList(views).map((v) => v.loan.id)).toEqual(['late', 'today', 'soon'])
+    expect(needsAttention('active')).toBe(false)
+    expect(needsAttention('paid')).toBe(false)
+  })
+
+  it('sums what is still owed on open loans only', () => {
+    // late 7,500 + today 10,000 + soon 10,000 + later 10,000; paid and forgiven excluded
+    expect(outstandingCents(views)).toBe(37_500)
   })
 })

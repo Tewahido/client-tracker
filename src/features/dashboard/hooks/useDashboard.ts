@@ -1,7 +1,7 @@
 import { format, parseISO } from 'date-fns'
 import { useMemo } from 'react'
 import { useToday } from '../../../hooks/useToday'
-import { isOpen, monthlyCollections, portfolioStats, sortByUrgency } from '../../../lib/loans'
+import { attentionList, isOpen, monthlyCollections, portfolioStats, sortByUrgency } from '../../../lib/loans'
 import { useLoanStore } from '../../../providers/loanStoreContext'
 import { useSettings } from '../../../providers/settingsContext'
 
@@ -19,7 +19,7 @@ export function useDashboard() {
 
   return useMemo(() => {
     const stats = portfolioStats(views, payments, todayDate)
-    const urgent = sortByUrgency(views.filter((v) => v.status === 'overdue' || v.status === 'due-today' || v.status === 'due-soon'))
+    const urgent = attentionList(views)
     const upcoming = sortByUrgency(views.filter((v) => v.status === 'active' && v.daysUntilDue <= 30))
 
     const recentPayments = [...payments]

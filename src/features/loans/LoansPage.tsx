@@ -14,19 +14,18 @@ const FILTERS: LoanFilter[] = ['open', 'overdue', 'soon', 'closed', 'all']
 
 export function LoansPage({ initialFilter }: { initialFilter?: LoanFilter }) {
   const { views } = useLoanStore()
-  const { filter, setFilter, sort, setSort, query, setQuery, counts, visible } = useLoanFilters(views, initialFilter)
+  const { filter, setFilter, sort, setSort, query, setQuery, counts, visible, outstandingCents } = useLoanFilters(views, initialFilter)
   const overlay = useOverlay()
   const money = useMoney()
   const { canEdit } = usePermissions()
   const newLoan = () => overlay.open({ type: 'loan-form' })
-  const outstanding = views.reduce((sum, v) => sum + (v.status === 'paid' || v.status === 'written-off' ? 0 : v.balanceCents), 0)
 
   return (
     <>
       <PageHeader
         eyebrow="Ledger"
         title="Loans"
-        subtitle={views.length ? `${money(outstanding)} still out across ${counts.open} open ${counts.open === 1 ? 'loan' : 'loans'}` : undefined}
+        subtitle={views.length ? `${money(outstandingCents)} still out across ${counts.open} open ${counts.open === 1 ? 'loan' : 'loans'}` : undefined}
         actions={
           canEdit && (
             <Button icon={Plus} onClick={newLoan}>

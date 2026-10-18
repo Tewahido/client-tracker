@@ -93,6 +93,21 @@ export function buildLoanViews(
   })
 }
 
+/** Statuses that should catch the lender's eye: overdue, due today or due soon. */
+export function needsAttention(status: LoanStatus): boolean {
+  return status === 'overdue' || status === 'due-today' || status === 'due-soon'
+}
+
+/** Loans needing attention, most urgent first. */
+export function attentionList(views: LoanView[]): LoanView[] {
+  return sortByUrgency(views.filter((v) => needsAttention(v.status)))
+}
+
+/** What is still owed across open loans (forgiven and paid loans excluded). */
+export function outstandingCents(views: LoanView[]): number {
+  return views.reduce((sum, v) => sum + (isOpen(v.status) ? v.balanceCents : 0), 0)
+}
+
 export function sortByUrgency(views: LoanView[]): LoanView[] {
   return [...views].sort(
     (a, b) => STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status] || a.loan.dueOn.localeCompare(b.loan.dueOn),

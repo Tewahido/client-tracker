@@ -6,7 +6,7 @@ import { Avatar, Button } from '../../../../components/ui'
 import { useDismissable } from '../../../../hooks/useDismissable'
 import { useMoney } from '../../../../hooks/useMoney'
 import { dueLabel } from '../../../../lib/describe'
-import { sortByUrgency } from '../../../../lib/loans'
+import { attentionList } from '../../../../lib/loans'
 import { useLoanStore } from '../../../../providers/loanStoreContext'
 import { useNotificationPermission } from '../../hooks/useNotificationPermission'
 import { notificationBellStyles as s } from './NotificationBell.styles'
@@ -21,10 +21,7 @@ export function NotificationBell({ onOpenLoan }: { onOpenLoan: (loanId: string) 
   const close = useCallback(() => setOpen(false), [])
   useDismissable(rootRef, open, close)
 
-  const urgent = useMemo(
-    () => sortByUrgency(views.filter((v) => v.status === 'overdue' || v.status === 'due-today' || v.status === 'due-soon')),
-    [views],
-  )
+  const urgent = useMemo(() => attentionList(views), [views])
 
   return (
     <div className={s.root} ref={rootRef}>
