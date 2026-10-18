@@ -1,7 +1,8 @@
 name: AI review
 
-# Three independent Claude reviewers comment on every pull request and on every
-# push to it. Their briefs live in .github/reviewers/.
+# Two independent Claude reviewers (security, and a full code review ending in a
+# merge verdict) comment on every pull request and on every push to it.
+# Their briefs live in .github/reviewers/.
 #
 # Setup: add an ANTHROPIC_API_KEY repository secret (Settings → Secrets and
 # variables → Actions) and install the Claude GitHub app (https://github.com/apps/claude).
@@ -36,12 +37,9 @@ jobs:
           - reviewer: security
             title: Security review
             heading: '### 🔐 Security review'
-          - reviewer: code-quality
-            title: Code quality review
-            heading: '### 🧹 Code quality review'
-          - reviewer: architecture
-            title: Overall quality review
-            heading: '### 🧭 Overall quality review'
+          - reviewer: code-review
+            title: Code review
+            heading: '### 🧹 Code review'
     env:
       HAS_ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
     steps:
@@ -63,8 +61,8 @@ jobs:
             PR NUMBER: ${{ github.event.pull_request.number }}
             YOUR ROLE: ${{ matrix.title }}
 
-            You are one of three independent automated reviewers on this pull request
-            (security, code quality, overall quality). Stay strictly within your role.
+            You are one of two independent automated reviewers on this pull request
+            (security, and code review). Stay strictly within your role.
 
             1. Read `.github/reviewers/${{ matrix.reviewer }}.md`. It defines your role,
                what to look for and how to report. Also read `AGENTS.md`.

@@ -44,7 +44,7 @@ One logical change per commit, Conventional Commit messages (`feat`, `fix`, `ref
 | Dependency review | `quality.yml` | Blocks newly added dependencies with known high-severity vulnerabilities |
 | npm audit | `quality.yml` | Fails on high/critical advisories in production dependencies |
 | CodeQL | `codeql.yml` | GitHub's static security and quality analysis for TypeScript |
-| AI review | `ai-review.yml` | Three reviewers (security, senior developer, architecture) comment on the PR; see [`.github/reviewers/`](.github/reviewers) |
+| AI review | `ai-review.yml` | Two reviewers comment on the PR: security, and a code review that ends with a merge verdict; see [`.github/reviewers/`](.github/reviewers) |
 
 ## Project conventions
 
