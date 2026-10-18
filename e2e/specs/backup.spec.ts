@@ -34,8 +34,11 @@ test('restores a backup and keeps working with the restored loans', async ({ app
 test('restores a backup dropped onto the drop zone', async ({ app, loans, settings }) => {
   await settings.open()
 
+  const idleBorder = await settings.restoreZone.evaluate((el) => getComputedStyle(el).borderTopColor)
   await settings.dropBackup('samples/lendly-sample-backup.json', { holdOver: true })
   await expect(settings.restoreZone).toContainText('Drop to continue')
+  // The zone must visibly light up, not just change its text.
+  await expect(settings.restoreZone).not.toHaveCSS('border-top-color', idleBorder)
 
   await settings.dropBackup('samples/lendly-sample-backup.json')
   await expect(app.page.getByRole('dialog', { name: 'Restore this backup?' })).toContainText('8 loans')
@@ -55,4 +58,18 @@ test('rejects a file that is not a backup', async ({ app, settings }, testInfo) 
   await settings.dropBackup(notABackup)
   await expect(app.toast("That file isn't a Lendly backup.")).toBeVisible()
   await expect(app.page.getByRole('dialog', { name: 'Restore this backup?' })).toHaveCount(0)
+})
+
+test('a file dropped beside the drop zone does not navigate away from the app', async ({ page, settings }) => {
+  await settings.open()
+  const dataTransfer = await page.evaluateHandle(() => {
+    const transfer = new DataTransfer()
+    transfer.items.add(new File(['{}'], 'stray.json', { type: 'application/json' }))
+    return transfer
+  })
+  const prevented = await page.evaluate(
+    (transfer) => !document.body.dispatchEvent(new DragEvent('drop', { dataTransfer: transfer, bubbles: true, cancelable: true })),
+    dataTransfer,
+  )
+  expect(prevented).toBe(true)
 })

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
 
 /**
  * Drag-and-drop plus click-to-browse for a single file. Returns handlers for the drop
@@ -9,6 +9,20 @@ export function useFileDrop(onFile: (file: File) => void, { disabled = false } =
   const [dragging, setDragging] = useState(false)
   // dragenter/dragleave fire for every child element; count them to know when we really left.
   const depth = useRef(0)
+
+  // While a drop zone is on screen, a file dropped beside it must not make the browser
+  // open the file and navigate away from the app.
+  useEffect(() => {
+    const ignore = (e: globalThis.DragEvent) => {
+      if (e.dataTransfer?.types.includes('Files')) e.preventDefault()
+    }
+    window.addEventListener('dragover', ignore)
+    window.addEventListener('drop', ignore)
+    return () => {
+      window.removeEventListener('dragover', ignore)
+      window.removeEventListener('drop', ignore)
+    }
+  }, [])
 
   const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer.types).includes('Files')
 

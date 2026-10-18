@@ -24,10 +24,10 @@ export function FileDropZone({ label, hint, accept, disabled, onFile }: FileDrop
         aria-label={label}
         disabled={disabled}
         onClick={browse}
-        className={clsx(s.zone, dragging && s.dragging, disabled && s.disabled)}
+        className={clsx(s.zone, s.state[disabled ? 'disabled' : dragging ? 'dragging' : 'idle'])}
         {...zoneProps}
       >
-        <span className={s.iconWrap}>
+        <span className={clsx(s.iconWrap, dragging && s.iconDragging)}>
           <FileUp className={s.icon} />
         </span>
         <span className={s.title}>{dragging ? 'Drop to continue' : label}</span>
