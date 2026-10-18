@@ -9,6 +9,7 @@ describe('findUntestedChanges', () => {
     ['a migration without tests', ['supabase/migrations/x.sql'], ['supabase/migrations/x.sql']],
     ['styles, barrels and type files only', ['src/a/A.styles.ts', 'src/a/index.ts', 'src/vite-env.d.ts'], []],
     ['docs and config only', ['README.md', 'AGENTS.md', 'vite.config.ts'], []],
+    ['a UI fix covered by a Playwright spec', ['src/components/ui/Modal/Modal.tsx', 'e2e/specs/dialogs.spec.ts'], []],
   ])('%s', (_label, files, expected) => {
     expect(findUntestedChanges(files)).toEqual(expected)
   })

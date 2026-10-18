@@ -10,7 +10,7 @@ import { pathToFileURL } from 'node:url'
 /** Behavioural code: TypeScript under src/ (not styles, tests, types or barrels) and SQL migrations. */
 const CODE = /^(src\/.*\.(ts|tsx)|supabase\/migrations\/.*\.sql)$/
 const NOT_CODE = /\.styles\.ts$|\.test\.ts$|\.d\.ts$|\/index\.ts$/
-const TEST = /\.test\.(ts|tsx|mjs)$|^supabase\/tests\//
+const TEST = /\.test\.(ts|tsx|mjs)$|^supabase\/tests\/|^e2e\//
 
 /** Code files that changed without any accompanying test change (empty when fine). */
 export function findUntestedChanges(files) {
