@@ -39,12 +39,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Separate long-lived vendor chunks so app updates don't re-download them.
+        // Module ids use forward slashes on every OS.
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined
-          if (/node_modules[\/](react|react-dom|scheduler)[\/]/.test(id)) return 'react'
+          if (/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'react'
           if (id.includes('@supabase')) return 'supabase'
-          if (/node_modules[\/](motion|framer-motion|motion-dom|motion-utils)[\/]/.test(id)) return 'motion'
-          if (/node_modules[\/](recharts|d3-|victory-vendor|@reduxjs|redux|immer|reselect)/.test(id)) return 'charts'
+          if (/node_modules\/(motion|framer-motion|motion-dom|motion-utils)\//.test(id)) return 'motion'
+          if (/node_modules\/(recharts|d3-|victory-vendor|@reduxjs|redux|immer|reselect)/.test(id)) return 'charts'
           return undefined
         },
       },
