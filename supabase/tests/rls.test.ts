@@ -201,3 +201,22 @@ describe('roles and permissions', () => {
     expect(await as('alice', 'select * from loans where id = $1', [loan])).toHaveLength(0)
   })
 })
+
+describe('organisation defaults', () => {
+  it('starts with sensible defaults that only owners can change', async () => {
+    const org = await createOrg('alice', 'Defaults Co')
+    const [invite] = await as<{ id: string }>('alice', "insert into organization_invites (org_id, email) values ($1, 'bob@example.com') returning id", [org])
+    await as('bob', 'select public.accept_invite($1)', [invite.id])
+
+    const [row] = await as<{ currency: string; default_term_days: number; default_interest_rate: string }>(
+      'bob',
+      'select currency, default_term_days, default_interest_rate from organizations where id = $1',
+      [org],
+    )
+    expect(row).toEqual({ currency: 'ZAR', default_term_days: 30, default_interest_rate: '0.00' })
+
+    expect(await as('bob', 'update organizations set default_term_days = 7 where id = $1 returning id', [org])).toHaveLength(0)
+    await as('alice', "update organizations set default_term_days = 14, default_interest_rate = 10, currency = 'BWP' where id = $1", [org])
+    await expect(as('alice', "update organizations set currency = 'rand' where id = $1", [org])).rejects.toThrow(/check constraint/)
+  })
+})
