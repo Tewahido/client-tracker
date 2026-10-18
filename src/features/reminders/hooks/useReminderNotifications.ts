@@ -5,10 +5,9 @@ import { useLoanStore } from '../../../providers/loanStoreContext'
 import { useSettings } from '../../../providers/settingsContext'
 import { notificationLog } from '../../../services/notificationLog'
 import { notificationPermission, showNotification } from '../../../services/notifications'
+import { deliverReminders } from '../deliverReminders'
 
 const CHECK_EVERY_MS = 30 * 60 * 1000
-/** Above this many new reminders at once, send one summary instead of a burst. */
-const MAX_INDIVIDUAL = 3
 
 /**
  * Background scheduler: while the app is open (or installed and running), check for
@@ -31,27 +30,28 @@ export function useReminderNotifications() {
   useEffect(() => {
     if (!enabled) return
 
-    const check = () => {
-      if (notificationPermission() !== 'granted') return
+    // The interval and the focus listener can fire together; never run two checks at once.
+    let running = false
+    const check = async () => {
+      if (running || notificationPermission() !== 'granted') return
       const { views, money, soonDays } = latest.current
       const fresh = dueReminders(views, soonDays, money).filter((r) => !notificationLog.has(r.key))
       if (fresh.length === 0) return
 
-      if (fresh.length > MAX_INDIVIDUAL) {
-        void showNotification(`${fresh.length} loans need your attention`, {
-          body: fresh.slice(0, 3).map((r) => r.title).join('\n'),
-          tag: 'lendly-summary',
-          url: '#loans?status=open',
-        })
-      } else {
-        for (const r of fresh) void showNotification(r.title, { body: r.body, tag: r.key, url: `#loans?open=${r.loanId}` })
+      running = true
+      try {
+        // Log only what was really shown, so a failed notification is retried next check.
+        notificationLog.add(await deliverReminders(fresh, (n) => showNotification(n.title, n)))
+      } finally {
+        running = false
       }
-      notificationLog.add(fresh.map((r) => r.key))
     }
 
-    check()
-    const timer = window.setInterval(check, CHECK_EVERY_MS)
-    const onVisible = () => document.visibilityState === 'visible' && check()
+    void check()
+    const timer = window.setInterval(() => void check(), CHECK_EVERY_MS)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void check()
+    }
     document.addEventListener('visibilitychange', onVisible)
     return () => {
       window.clearInterval(timer)

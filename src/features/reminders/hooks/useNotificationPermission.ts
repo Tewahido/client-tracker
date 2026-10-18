@@ -31,7 +31,10 @@ export function useNotificationPermission() {
   const disable = useCallback(() => updateSettings({ notificationsEnabled: false }), [updateSettings])
 
   const sendTest = useCallback(
-    () => showNotification('Lendly notifications work 🎉', { body: "This is what a payment reminder will look like.", tag: 'lendly-test', url: '#home' }),
+    async () => {
+      const shown = await showNotification('Lendly notifications work 🎉', { body: 'This is what a payment reminder will look like.', tag: 'lendly-test', url: '#home' })
+      if (!shown) toast.error("Couldn't show a notification", { description: 'Check that notifications are allowed for this site and for your browser.' })
+    },
     [],
   )
 
