@@ -63,6 +63,23 @@
     background-attachment: fixed;
   }
 
+  /* Tailwind v4 no longer gives buttons a pointer cursor; restore it for everything clickable. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='tab'],
+  select:not(:disabled),
+  summary,
+  label[for],
+  input[type='file']:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+
   ::selection {
     @apply bg-brand-400/30;
   }

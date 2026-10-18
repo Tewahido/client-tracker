@@ -1,5 +1,5 @@
 export const buttonStyles = {
-  base: 'inline-flex select-none items-center justify-center gap-2 rounded-xl font-semibold whitespace-nowrap transition-all duration-150 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400',
+  base: 'inline-flex select-none items-center justify-center gap-2 rounded-xl font-semibold whitespace-nowrap transition-all duration-150 active:scale-[0.97] disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400',
   variant: {
     primary:
       'bg-gradient-to-br from-brand-400 to-sky-brand text-emerald-950 shadow-lg shadow-brand-500/25 hover:brightness-110 hover:shadow-brand-500/40',
