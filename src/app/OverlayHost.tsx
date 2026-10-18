@@ -1,5 +1,5 @@
 import { LoanDetailModal, LoanFormModal, PaymentFormModal } from '../features/loans'
-import { PersonFormModal } from '../features/people'
+import { PersonDetailModal, PersonFormModal } from '../features/people'
 import { useOverlay, type Overlay } from './overlayContext'
 
 /** Renders every open dialog, bottom of the stack first so the newest sits on top. */
@@ -45,6 +45,16 @@ function OverlayView({ overlay }: { overlay: Overlay }) {
           borrowerId={overlay.borrowerId}
           onClose={close}
           onSaved={(b) => (overlay.borrowerId ? close() : replace({ type: 'person', borrowerId: b.id }))}
+        />
+      )
+    case 'person':
+      return (
+        <PersonDetailModal
+          borrowerId={overlay.borrowerId}
+          onClose={close}
+          onEdit={() => open({ type: 'person-form', borrowerId: overlay.borrowerId })}
+          onNewLoan={() => open({ type: 'loan-form', borrowerId: overlay.borrowerId })}
+          onOpenLoan={(loanId) => open({ type: 'loan', loanId })}
         />
       )
     default:
