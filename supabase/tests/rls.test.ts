@@ -280,3 +280,45 @@ describe('member rows (security fix)', () => {
     ])
   })
 })
+
+describe('restore_snapshot', () => {
+  let org: string
+  const ids = {
+    borrower: '10000000-0000-0000-0000-000000000001',
+    loan: '20000000-0000-0000-0000-000000000001',
+    payment: '30000000-0000-0000-0000-000000000001',
+  }
+  const backup = (amountCents: number) => [
+    org,
+    JSON.stringify([{ id: ids.borrower, name: 'Restored person' }]),
+    JSON.stringify([{ id: ids.loan, borrower_id: ids.borrower, principal_cents: 10000, lent_on: '2026-10-01', due_on: '2026-11-01' }]),
+    JSON.stringify([{ id: ids.payment, loan_id: ids.loan, amount_cents: amountCents, paid_on: '2026-10-10' }]),
+  ]
+  const restore = (user: User, amountCents: number) =>
+    as(user, 'select public.restore_snapshot($1, $2::jsonb, $3::jsonb, $4::jsonb)', backup(amountCents))
+  const names = () => as<{ name: string }>('alice', 'select name from borrowers where org_id = $1 order by name', [org])
+
+  beforeAll(async () => {
+    org = await createOrg('alice', 'Restore Co')
+    await as('alice', "insert into borrowers (org_id, name) values ($1, 'Original person')", [org])
+    const [invite] = await as<{ id: string }>('alice', "insert into organization_invites (org_id, email) values ($1, 'bob@example.com') returning id", [org])
+    await as('bob', 'select public.accept_invite($1)', [invite.id])
+  })
+
+  it('changes nothing when any part of the backup is rejected', async () => {
+    await expect(restore('alice', 0)).rejects.toThrow(/check constraint/)
+    expect(await names()).toEqual([{ name: 'Original person' }])
+  })
+
+  it('is reserved for owners', async () => {
+    await expect(restore('bob', 500)).rejects.toThrow(/Only organisation owners/)
+    expect(await names()).toEqual([{ name: 'Original person' }])
+  })
+
+  it('replaces the ledger in one go for owners', async () => {
+    await restore('alice', 500)
+    expect(await names()).toEqual([{ name: 'Restored person' }])
+    const [payment] = await as<{ amount_cents: number; org_id: string }>('alice', 'select amount_cents, org_id from payments where id = $1', [ids.payment])
+    expect(payment).toEqual({ amount_cents: 500, org_id: org })
+  })
+})

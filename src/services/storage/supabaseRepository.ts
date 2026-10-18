@@ -154,11 +154,15 @@ export function createSupabaseRepository(client: SupabaseClient, orgId: string):
     async replaceAll(snapshot) {
       // Fresh ids so restoring the same backup into another organisation can't collide.
       const data = withFreshIds(snapshot)
-      // Borrower deletes cascade to loans and payments.
-      unwrap(await client.from('borrowers').delete().eq('org_id', orgId))
-      if (data.borrowers.length) unwrap(await client.from('borrowers').insert(data.borrowers.map((b) => scoped(fromBorrower(b)))))
-      if (data.loans.length) unwrap(await client.from('loans').insert(data.loans.map((l) => scoped(fromLoan(l)))))
-      if (data.payments.length) unwrap(await client.from('payments').insert(data.payments.map((p) => scoped(fromPayment(p)))))
+      // One RPC = one transaction: the restore either fully succeeds or changes nothing.
+      unwrap(
+        await client.rpc('restore_snapshot', {
+          p_org: orgId,
+          p_borrowers: data.borrowers.map(fromBorrower),
+          p_loans: data.loans.map(fromLoan),
+          p_payments: data.payments.map(fromPayment),
+        }),
+      )
     },
 
     subscribe(onChange) {
