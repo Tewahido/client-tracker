@@ -34,7 +34,7 @@ export function LoanFormModal({ loanId, borrowerId, onClose, onSaved }: LoanForm
         </SelectInput>
 
         {values.borrowerId === NEW_BORROWER && (
-          <TextInput label="Their name" value={values.newBorrowerName} onChange={bind('newBorrowerName')} error={errors.newBorrowerName} placeholder="e.g. Dawit" autoFocus />
+          <TextInput label="Their name" value={values.newBorrowerName} onChange={bind('newBorrowerName')} error={errors.newBorrowerName} placeholder="e.g. Sipho" autoFocus />
         )}
 
         <div className={s.amountRow}>

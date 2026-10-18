@@ -79,7 +79,7 @@ export function Modal({ open, onClose, title, description, wide, children }: Mod
               role="dialog"
               aria-modal="true"
               tabIndex={-1}
-              className={clsx(s.panel, wide && s.wide)}
+              className={clsx(s.panel, s.width[wide ? 'wide' : 'normal'])}
               initial={{ opacity: 0, y: 40, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 40, scale: 0.98 }}
