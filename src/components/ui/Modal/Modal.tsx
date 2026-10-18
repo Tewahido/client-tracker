@@ -6,6 +6,23 @@ import { createPortal } from 'react-dom'
 import { Button } from '../Button'
 import { modalStyles as s } from './Modal.styles'
 
+/*
+ * Dialogs can stack. Track the open ones so only the top-most reacts to Escape
+ * and page scrolling is restored only once the last one closes.
+ */
+const openDialogs: symbol[] = []
+
+function register(token: symbol) {
+  if (openDialogs.push(token) === 1) document.body.style.overflow = 'hidden'
+}
+
+function unregister(token: symbol) {
+  openDialogs.splice(openDialogs.indexOf(token), 1)
+  if (openDialogs.length === 0) document.body.style.overflow = ''
+}
+
+const isTopMost = (token: symbol) => openDialogs[openDialogs.length - 1] === token
+
 interface ModalProps {
   open: boolean
   onClose: () => void
@@ -26,10 +43,13 @@ export function Modal({ open, onClose, title, description, wide, children }: Mod
 
   useEffect(() => {
     if (!open) return
+    const token = Symbol('dialog')
     const previouslyFocused = document.activeElement as HTMLElement | null
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onCloseRef.current()
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isTopMost(token)) onCloseRef.current()
+    }
     document.addEventListener('keydown', onKey)
-    document.body.style.overflow = 'hidden'
+    register(token)
     // Focus the first form control (or the panel) so keyboard users land inside the dialog.
     requestAnimationFrame(() => {
       const target = panelRef.current?.querySelector<HTMLElement>('input, select, textarea') ?? panelRef.current
@@ -37,7 +57,7 @@ export function Modal({ open, onClose, title, description, wide, children }: Mod
     })
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = ''
+      unregister(token)
       previouslyFocused?.focus?.()
     }
   }, [open])
