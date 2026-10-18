@@ -1,7 +1,10 @@
 export type ThemePreference = 'system' | 'light' | 'dark'
 
 export interface Settings {
+  /** Used in local-only mode; organisations keep their own lending defaults. */
   currency: string
+  defaultTermDays: number
+  defaultInterestRate: number
   /** How many days before the due date a loan counts as "due soon" and triggers a reminder. */
   reminderDays: number
   notificationsEnabled: boolean
@@ -11,6 +14,8 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   currency: 'ZAR',
+  defaultTermDays: 30,
+  defaultInterestRate: 0,
   reminderDays: 3,
   notificationsEnabled: false,
   lenderName: '',

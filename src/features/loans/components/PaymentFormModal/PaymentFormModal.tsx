@@ -1,7 +1,7 @@
 import { Button, Modal, TextInput } from '../../../../components/ui'
 import { useMoney } from '../../../../hooks/useMoney'
 import { currencySymbol } from '../../../../lib/money'
-import { useSettings } from '../../../../providers/settingsContext'
+import { useLendingDefaults } from '../../../../hooks/useLendingDefaults'
 import { usePaymentForm } from '../../hooks/usePaymentForm'
 import { paymentFormStyles as s } from './PaymentFormModal.styles'
 
@@ -13,7 +13,7 @@ const SHARES = [
 
 export function PaymentFormModal({ loanId, onClose }: { loanId: string; onClose: () => void }) {
   const { values, errors, submitting, bind, onSubmit, view, balance, setShare } = usePaymentForm(loanId, onClose)
-  const { settings } = useSettings()
+  const { defaults } = useLendingDefaults()
   const money = useMoney()
 
   return (
@@ -27,7 +27,7 @@ export function PaymentFormModal({ loanId, onClose }: { loanId: string; onClose:
         <TextInput
           label="Amount received"
           inputMode="decimal"
-          prefix={currencySymbol(settings.currency)}
+          prefix={currencySymbol(defaults.currency)}
           value={values.amount}
           onChange={bind('amount')}
           error={errors.amount}

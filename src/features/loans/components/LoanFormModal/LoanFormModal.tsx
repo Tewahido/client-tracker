@@ -2,7 +2,7 @@ import { Button, Modal, SelectInput, TextArea, TextInput } from '../../../../com
 import { useMoney } from '../../../../hooks/useMoney'
 import { currencySymbol } from '../../../../lib/money'
 import type { Loan } from '../../../../lib/types'
-import { useSettings } from '../../../../providers/settingsContext'
+import { useLendingDefaults } from '../../../../hooks/useLendingDefaults'
 import { DUE_PRESETS, NEW_BORROWER, useLoanForm } from '../../hooks/useLoanForm'
 import { loanFormStyles as s } from './LoanFormModal.styles'
 
@@ -15,7 +15,7 @@ interface LoanFormModalProps {
 
 export function LoanFormModal({ loanId, borrowerId, onClose, onSaved }: LoanFormModalProps) {
   const { values, errors, submitting, bind, onSubmit, isEdit, borrowers, applyDuePreset, preview } = useLoanForm({ loanId, borrowerId }, onSaved)
-  const { settings } = useSettings()
+  const { defaults } = useLendingDefaults()
   const money = useMoney()
 
   return (
@@ -41,7 +41,7 @@ export function LoanFormModal({ loanId, borrowerId, onClose, onSaved }: LoanForm
           <TextInput
             label="Amount"
             inputMode="decimal"
-            prefix={currencySymbol(settings.currency)}
+            prefix={currencySymbol(defaults.currency)}
             value={values.amount}
             onChange={bind('amount')}
             error={errors.amount}

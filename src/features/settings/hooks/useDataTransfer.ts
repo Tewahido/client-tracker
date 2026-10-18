@@ -5,7 +5,7 @@ import { toCsv } from '../../../lib/csv'
 import { today } from '../../../lib/dates'
 import { sortByUrgency } from '../../../lib/loans'
 import { useLoanStore } from '../../../providers/loanStoreContext'
-import { useSettings } from '../../../providers/settingsContext'
+import { useLendingDefaults } from '../../../hooks/useLendingDefaults'
 import { STATUS_META } from '../../../components/ui'
 import { downloadFile } from '../../../services/download'
 
@@ -14,7 +14,7 @@ const amount = (cents: number) => (cents / 100).toFixed(2)
 /** Spreadsheet export, full JSON backup, and restore with a confirmation step. */
 export function useDataTransfer() {
   const { borrowers, loans, payments, views, replaceAll } = useLoanStore()
-  const { settings } = useSettings()
+  const { defaults } = useLendingDefaults()
   const [pendingRestore, setPendingRestore] = useState<Backup | null>(null)
 
   const exportCsv = useCallback(() => {
@@ -33,12 +33,12 @@ export function useDataTransfer() {
       v.loan.note ?? '',
     ])
     const csv = toCsv(
-      ['Person', 'Phone', 'Status', `Lent (${settings.currency})`, 'Interest %', 'Total due', 'Paid', 'Balance', 'Lent on', 'Due on', 'Paid off on', 'Note'],
+      ['Person', 'Phone', 'Status', `Lent (${defaults.currency})`, 'Interest %', 'Total due', 'Paid', 'Balance', 'Lent on', 'Due on', 'Paid off on', 'Note'],
       rows,
     )
     downloadFile(`lendly-loans-${today()}.csv`, csv, 'text/csv')
     toast.success('Spreadsheet downloaded')
-  }, [views, settings.currency])
+  }, [views, defaults.currency])
 
   const downloadBackup = useCallback(() => {
     downloadFile(`lendly-backup-${today()}.json`, serializeBackup({ borrowers, loans, payments }), 'application/json')

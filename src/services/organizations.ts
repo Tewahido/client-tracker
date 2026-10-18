@@ -2,11 +2,20 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type OrgRole = 'owner' | 'member' | 'viewer'
 
+export interface LendingDefaults {
+  currency: string
+  /** Days from lending to the due date for new loans. */
+  termDays: number
+  /** Flat interest percentage pre-filled on new loans. */
+  interestRate: number
+}
+
 export interface Organization {
   id: string
   name: string
   /** The signed-in user's role in this organisation. */
   role: OrgRole
+  defaults: LendingDefaults
 }
 
 export interface Member {
@@ -33,7 +42,7 @@ function unwrap<T>(result: { data: T | null; error: { message: string } | null }
 
 interface MembershipRow {
   role: OrgRole
-  organizations: { id: string; name: string } | null
+  organizations: { id: string; name: string; currency: string; default_term_days: number; default_interest_rate: number | string } | null
 }
 
 interface InviteRow {
@@ -60,11 +69,21 @@ export function createOrganizationService(client: SupabaseClient) {
     async listMine(userId: string): Promise<Organization[]> {
       const rows = unwrap<MembershipRow[]>(
         // Many-to-one embed: PostgREST returns a single object, which the untyped client can't infer.
-        await client.from('organization_members').select('role, organizations(id, name)').eq('user_id', userId).overrideTypes<MembershipRow[], { merge: false }>(),
+        await client
+          .from('organization_members')
+          .select('role, organizations(id, name, currency, default_term_days, default_interest_rate)')
+          .eq('user_id', userId)
+          .overrideTypes<MembershipRow[], { merge: false }>(),
       )
       return rows
         .filter((r) => r.organizations)
-        .map((r) => ({ id: r.organizations!.id, name: r.organizations!.name, role: r.role }))
+        .map(({ role, organizations: o }) => ({
+          id: o!.id,
+          name: o!.name,
+          role,
+          // numeric columns arrive as strings from PostgREST
+          defaults: { currency: o!.currency, termDays: o!.default_term_days, interestRate: Number(o!.default_interest_rate) },
+        }))
         .sort((a, b) => a.name.localeCompare(b.name))
     },
 
@@ -75,6 +94,15 @@ export function createOrganizationService(client: SupabaseClient) {
 
     async rename(orgId: string, name: string): Promise<void> {
       unwrap(await client.from('organizations').update({ name: name.trim() }).eq('id', orgId))
+    },
+
+    async updateDefaults(orgId: string, d: LendingDefaults): Promise<void> {
+      unwrap(
+        await client
+          .from('organizations')
+          .update({ currency: d.currency, default_term_days: d.termDays, default_interest_rate: d.interestRate })
+          .eq('id', orgId),
+      )
     },
 
     async remove(orgId: string): Promise<void> {

@@ -4,6 +4,7 @@ import { shiftDate, today } from '../../../lib/dates'
 import { totalDueCents } from '../../../lib/loans'
 import { centsToInput, parseMoney } from '../../../lib/money'
 import type { Loan } from '../../../lib/types'
+import { useLendingDefaults } from '../../../hooks/useLendingDefaults'
 import { useLoanStore } from '../../../providers/loanStoreContext'
 
 /** Sentinel select value meaning "create a new person from the typed name". */
@@ -46,6 +47,7 @@ export function useLoanForm(
   onSaved: (loan: Loan) => void,
 ) {
   const { loans, borrowers, addBorrower, addLoan, updateLoan } = useLoanStore()
+  const { defaults } = useLendingDefaults()
   const existing = loanId ? loans.find((l) => l.id === loanId) : undefined
   const start = today()
 
@@ -54,9 +56,9 @@ export function useLoanForm(
       borrowerId: existing?.borrowerId ?? borrowerId ?? (borrowers.length ? '' : NEW_BORROWER),
       newBorrowerName: '',
       amount: existing ? centsToInput(existing.principalCents) : '',
-      interestRate: existing?.interestRate ? String(existing.interestRate) : '',
+      interestRate: existing ? (existing.interestRate ? String(existing.interestRate) : '') : defaults.interestRate ? String(defaults.interestRate) : '',
       lentOn: existing?.lentOn ?? start,
-      dueOn: existing?.dueOn ?? shiftDate(start, 30),
+      dueOn: existing?.dueOn ?? shiftDate(start, defaults.termDays),
       note: existing?.note ?? '',
     },
     validateLoan,

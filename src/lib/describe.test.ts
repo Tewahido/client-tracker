@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dueLabel } from './describe'
+import { dueLabel, periodLabel } from './describe'
 import type { LoanView } from './loans'
 
 const base = { loan: { dueOn: '2026-12-25' }, settledOn: null } as unknown as LoanView
@@ -16,5 +16,19 @@ describe('dueLabel', () => {
     [{ status: 'paid', daysUntilDue: 3, settledOn: '2026-10-02' }, 'Paid off 2 Oct'],
   ] as const)('%j -> %s', (patch, expected) => {
     expect(dueLabel({ ...base, ...patch })).toBe(expected)
+  })
+})
+
+describe('periodLabel', () => {
+  it.each([
+    [7, '1 week'],
+    [14, '2 weeks'],
+    [30, '1 month'],
+    [90, '3 months'],
+    [365, '1 year'],
+    [45, '45 days'],
+    [1, '1 day'],
+  ])('%i -> %s', (days, label) => {
+    expect(periodLabel(days)).toBe(label)
   })
 })

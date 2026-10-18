@@ -4,6 +4,7 @@ import { Card } from '../../components/ui'
 import { useWorkspace } from '../../providers/workspaceContext'
 import { OrganizationSection } from '../organizations'
 import { DataSection } from './components/DataSection'
+import { LendingDefaultsSection } from './components/LendingDefaultsSection'
 import { PreferencesSection } from './components/PreferencesSection'
 import { RemindersSection } from './components/RemindersSection'
 
@@ -16,6 +17,7 @@ export function SettingsPage() {
       <PageHeader eyebrow="Make it yours" title="Settings" />
       <Card>
         {status === 'ready' && <OrganizationSection onCreateOrg={() => overlay.open({ type: 'org-form' })} />}
+        <LendingDefaultsSection />
         <RemindersSection />
         <PreferencesSection />
         <DataSection />
