@@ -1,16 +1,19 @@
 import { ArrowRight } from 'lucide-react'
+import { lazy, Suspense } from 'react'
 import { useOverlay } from '../../app/overlayContext'
 import { Button, Card, CardHeader } from '../../components/ui'
 import { useHashRoute } from '../../hooks/useHashRoute'
 import { usePermissions } from '../../hooks/usePermissions'
 import { AttentionList } from './components/AttentionList'
-import { CollectionsChart } from './components/CollectionsChart'
 import { Hero } from './components/Hero'
 import { RecentPayments } from './components/RecentPayments'
 import { StatTiles } from './components/StatTiles'
 import { Welcome } from './components/Welcome'
 import { dashboardStyles as s } from './DashboardPage.styles'
 import { useDashboard } from './hooks/useDashboard'
+
+// The chart library is the heaviest dependency; load it after the rest of the dashboard.
+const CollectionsChart = lazy(() => import('./components/CollectionsChart').then((m) => ({ default: m.CollectionsChart })))
 
 export function DashboardPage() {
   const d = useDashboard()
@@ -55,7 +58,9 @@ export function DashboardPage() {
         <div className={s.side}>
           <Card>
             <CardHeader title="Collected per month" />
-            <CollectionsChart data={d.chart} />
+            <Suspense fallback={<div className={s.chartPlaceholder} />}>
+              <CollectionsChart data={d.chart} />
+            </Suspense>
           </Card>
           <Card>
             <CardHeader title="Recent payments" />
