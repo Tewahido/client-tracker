@@ -2,6 +2,8 @@ export type ThemePreference = 'system' | 'light' | 'dark'
 
 export interface Settings {
   currency: string
+  /** Dialling code applied to local numbers (leading 0) when opening WhatsApp. */
+  countryCode: string
   /** How many days before the due date a loan counts as "due soon" and triggers a reminder. */
   reminderDays: number
   notificationsEnabled: boolean
@@ -16,6 +18,7 @@ export const DEFAULT_REMINDER_TEMPLATE =
 
 export const DEFAULT_SETTINGS: Settings = {
   currency: 'ZAR',
+  countryCode: '27',
   reminderDays: 3,
   notificationsEnabled: false,
   lenderName: '',
