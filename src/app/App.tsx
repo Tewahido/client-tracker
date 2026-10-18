@@ -4,6 +4,7 @@ import { isLoanFilter, LoansPage } from '../features/loans'
 import { OrgSwitcher } from '../features/organizations'
 import { PeoplePage } from '../features/people'
 import { NotificationBell, useReminderNotifications } from '../features/reminders'
+import { SettingsPage } from '../features/settings'
 import { useDeepLink } from '../hooks/useDeepLink'
 import { useHashRoute } from '../hooks/useHashRoute'
 import { useTheme } from '../hooks/useTheme'
@@ -30,8 +31,8 @@ function Page({ route }: { route: Route }) {
     }
     case 'people':
       return <PeoplePage />
-    default:
-      return <p className="text-muted">Coming soon: {route.name}</p>
+    case 'settings':
+      return <SettingsPage />
   }
 }
 
