@@ -62,6 +62,15 @@ export function LoanStoreProvider({ orgId, children }: LoanStoreProviderProps) {
     }
   }, [repo, reload])
 
+  // Realtime can't filter delete events by organisation and may miss changes while a
+  // phone sleeps, so shared ledgers also re-sync whenever the app comes back into view.
+  useEffect(() => {
+    if (repo.kind !== 'supabase') return
+    const onVisible = () => document.visibilityState === 'visible' && void reload()
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [repo, reload])
+
   const actions = useMemo(
     () => ({
       addBorrower: async (input: Parameters<DataRepository['createBorrower']>[0]) => {
