@@ -5,11 +5,20 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # setup-node registers ESLint and tsc problem matchers, so lint and type
+      # errors show up as inline annotations on the PR's changed lines.
       - uses: actions/setup-node@v4
         with:
           node-version: 24
