@@ -45,6 +45,14 @@ export class SettingsPage extends AppPage {
     await this.restoreDialog.getByRole('button', { name: 'Replace and restore' }).click()
   }
 
+  /** Hover "Save defaults" (even while disabled) and report its background once transitions settle. */
+  async saveDefaultsBackground({ hovered }: { hovered: boolean }): Promise<string> {
+    if (hovered) await this.saveDefaultsButton.hover({ force: true })
+    else await this.page.mouse.move(0, 0)
+    await this.page.waitForTimeout(400)
+    return this.saveDefaultsButton.evaluate((el) => getComputedStyle(el).backgroundColor)
+  }
+
   async restoreZoneBorderColor(): Promise<string> {
     return this.restoreZone.evaluate((el) => getComputedStyle(el).borderTopColor)
   }
