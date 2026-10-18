@@ -27,3 +27,8 @@ dist-ssr
 .claude/launch.json
 .claude/settings.local.json
 .env.local
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
