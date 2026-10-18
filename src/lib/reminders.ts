@@ -42,7 +42,7 @@ export function dueReminders(views: LoanView[], soonDays: number, formatMoney: (
       loanId: v.loan.id,
       stage,
       title: reminderTitle(stage, name, v.daysUntilDue),
-      body: `${amount} outstanding. Tap to see the loan or send ${name.split(' ')[0]} a friendly reminder.`,
+      body: `${amount} still owed to you. Tap to open the loan.`,
     })
   }
   return reminders

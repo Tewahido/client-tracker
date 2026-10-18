@@ -2,27 +2,18 @@ export type ThemePreference = 'system' | 'light' | 'dark'
 
 export interface Settings {
   currency: string
-  /** Dialling code applied to local numbers (leading 0) when opening WhatsApp. */
-  countryCode: string
   /** How many days before the due date a loan counts as "due soon" and triggers a reminder. */
   reminderDays: number
   notificationsEnabled: boolean
-  /** Used to sign reminder messages sent to borrowers. */
+  /** Your first name, used to greet you on the dashboard. */
   lenderName: string
-  /** Placeholders: {name}, {amount}, {due}, {lender}. */
-  reminderTemplate: string
 }
-
-export const DEFAULT_REMINDER_TEMPLATE =
-  "Hi {name}! Just a friendly reminder that {amount} is due {due}. Let me know if you need anything. Thanks! {lender}"
 
 export const DEFAULT_SETTINGS: Settings = {
   currency: 'ZAR',
-  countryCode: '27',
   reminderDays: 3,
   notificationsEnabled: false,
   lenderName: '',
-  reminderTemplate: DEFAULT_REMINDER_TEMPLATE,
 }
 
 const SETTINGS_KEY = 'lendly.settings.v1'

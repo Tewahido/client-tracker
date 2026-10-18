@@ -17,7 +17,7 @@ export function PersonFormModal({ borrowerId, onClose, onSaved }: PersonFormModa
       open
       onClose={onClose}
       title={isEdit ? 'Edit person' : 'Add a person'}
-      description={isEdit ? undefined : 'Contact details let you send payment reminders in one tap.'}
+      description={isEdit ? undefined : 'Contact details are optional; they make it easy to call or email them.'}
     >
       <form className={s.form} onSubmit={onSubmit} noValidate>
         <TextInput label="Name" value={values.name} onChange={bind('name')} error={errors.name} placeholder="e.g. Thandi Nkosi" autoComplete="off" />
@@ -29,7 +29,6 @@ export function PersonFormModal({ borrowerId, onClose, onSaved }: PersonFormModa
             onChange={bind('phone')}
             error={errors.phone}
             placeholder="+27 82 123 4567"
-            hint="Used for WhatsApp and SMS reminders"
           />
           <TextInput label="Email" type="email" value={values.email} onChange={bind('email')} error={errors.email} placeholder="name@example.com" />
         </div>
