@@ -25,7 +25,7 @@ Keep track of money you've lent: who owes what, when it's due, and what's been p
 | Animation and charts | Motion, Recharts |
 | Data and auth | Supabase (Postgres + Row Level Security, magic-link auth, Realtime) |
 | Offline / install | vite-plugin-pwa with a custom Workbox service worker |
-| Tests | Vitest, plus PGlite (Postgres in WebAssembly) for database policy tests |
+| Tests | Vitest for logic, PGlite (Postgres in WebAssembly) for database policy tests, Playwright with page objects for end-to-end tests |
 
 ## Getting started
 
@@ -34,7 +34,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173. Without Supabase settings the app runs in **local mode**: everything is stored in this browser only. That's handy for trying it out, but there are no accounts and no sharing.
+Open http://localhost:5173. To try it with realistic data, restore [`samples/lendly-sample-backup.json`](samples) from **Settings → Your data**. Without Supabase settings the app runs in **local mode**: everything is stored in this browser only. That's handy for trying it out, but there are no accounts and no sharing.
 
 ## Connecting Supabase (accounts and sharing)
 
@@ -117,8 +117,9 @@ Conventions:
 | `npm run build` | Type-check and build for production into `dist/` |
 | `npm run preview` | Serve the production build locally |
 | `npm test` | Unit tests and database policy tests |
+| `npm run test:e2e` | Playwright end-to-end tests (desktop and phone); run `npx playwright install chromium` once first |
 | `npm run typecheck` / `npm run lint` | Static checks |
-| `npm run verify` | Every check (typecheck, lint, tests-required, tests, audit, build); runs automatically before each `git push` |
+| `npm run verify` | Every check (typecheck, lint, tests-required, tests, audit, build, end-to-end); runs automatically before each `git push` |
 | `npm run icons` | Regenerate app icons from `public/favicon.svg` |
 
 ## Deploying
