@@ -23,7 +23,8 @@ const SUPABASE_STUBS = `
   $$;
   create publication supabase_realtime;
   grant usage on schema public, auth to authenticated, anon;
-  alter default privileges in schema public grant all on tables to authenticated;
+  -- Like Supabase: both API roles get table privileges by default; RLS and grants decide the rest.
+  alter default privileges in schema public grant all on tables to authenticated, anon;
 `
 
 const users = {
@@ -320,5 +321,21 @@ describe('restore_snapshot', () => {
     expect(await names()).toEqual([{ name: 'Restored person' }])
     const [payment] = await as<{ amount_cents: number; org_id: string }>('alice', 'select amount_cents, org_id from payments where id = $1', [ids.payment])
     expect(payment).toEqual({ amount_cents: 500, org_id: org })
+  })
+})
+
+describe('signed-out visitors', () => {
+  async function asAnon(sql: string) {
+    return db.transaction(async (tx) => {
+      await tx.exec('set local role anon')
+      return tx.query(sql)
+    })
+  }
+
+  it('cannot write to any table', async () => {
+    for (const table of ['organizations', 'organization_members', 'organization_invites', 'borrowers', 'loans', 'payments']) {
+      await expect(asAnon(`delete from public.${table}`)).rejects.toThrow(/permission denied/)
+    }
+    await expect(asAnon("update public.organization_members set role = 'owner'")).rejects.toThrow(/permission denied/)
   })
 })
