@@ -9,6 +9,16 @@ export function centsToInput(cents: number): string {
   return (cents / 100).toFixed(2).replace(/\.00$/, '')
 }
 
+/** Narrow symbol for a currency code, e.g. "$" for USD; falls back to the code itself. */
+export function currencySymbol(currency: string): string {
+  try {
+    const parts = new Intl.NumberFormat(undefined, { style: 'currency', currency, currencyDisplay: 'narrowSymbol' }).formatToParts(0)
+    return parts.find((p) => p.type === 'currency')?.value ?? currency
+  } catch {
+    return currency
+  }
+}
+
 const formatters = new Map<string, Intl.NumberFormat>()
 
 export function formatMoney(cents: number, currency: string, options: { compact?: boolean } = {}): string {

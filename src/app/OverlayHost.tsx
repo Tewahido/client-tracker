@@ -1,3 +1,4 @@
+import { LoanDetailModal, LoanFormModal, PaymentFormModal } from '../features/loans'
 import { PersonFormModal } from '../features/people'
 import { useOverlay, type Overlay } from './overlayContext'
 
@@ -14,9 +15,30 @@ export function OverlayHost() {
 }
 
 function OverlayView({ overlay }: { overlay: Overlay }) {
-  const { close, replace } = useOverlay()
+  const { open, close, replace } = useOverlay()
 
   switch (overlay.type) {
+    case 'loan-form':
+      return (
+        <LoanFormModal
+          loanId={overlay.loanId}
+          borrowerId={overlay.borrowerId}
+          onClose={close}
+          onSaved={(loan) => (overlay.loanId ? close() : replace({ type: 'loan', loanId: loan.id }))}
+        />
+      )
+    case 'loan':
+      return (
+        <LoanDetailModal
+          loanId={overlay.loanId}
+          onClose={close}
+          onEdit={() => open({ type: 'loan-form', loanId: overlay.loanId })}
+          onRecordPayment={() => open({ type: 'payment', loanId: overlay.loanId })}
+          onOpenPerson={(borrowerId) => open({ type: 'person', borrowerId })}
+        />
+      )
+    case 'payment':
+      return <PaymentFormModal loanId={overlay.loanId} onClose={close} />
     case 'person-form':
       return (
         <PersonFormModal

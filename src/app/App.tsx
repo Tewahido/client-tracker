@@ -1,4 +1,5 @@
 import { Toaster } from 'sonner'
+import { isLoanFilter, LoansPage } from '../features/loans'
 import { PeoplePage } from '../features/people'
 import { useHashRoute } from '../hooks/useHashRoute'
 import { useTheme } from '../hooks/useTheme'
@@ -9,14 +10,19 @@ import { AppShell } from './AppShell'
 import { OverlayHost } from './OverlayHost'
 import { OverlayProvider } from './OverlayProvider'
 import { useOverlay } from './overlayContext'
-import type { RouteName } from './routes'
+import type { Route } from './routes'
 
-function Page({ name }: { name: RouteName }) {
-  switch (name) {
+function Page({ route }: { route: Route }) {
+  switch (route.name) {
+    case 'loans': {
+      const status = route.params.get('status')
+      // Keyed so following a dashboard link (e.g. #loans?status=overdue) resets the filter.
+      return <LoansPage key={status} initialFilter={isLoanFilter(status) ? status : undefined} />
+    }
     case 'people':
       return <PeoplePage />
     default:
-      return <p className="text-muted">Coming soon: {name}</p>
+      return <p className="text-muted">Coming soon: {route.name}</p>
   }
 }
 
@@ -35,7 +41,7 @@ function Layout() {
         loansBadge={overdue}
         backend={backend}
       >
-        <Page name={route.name} />
+        <Page route={route} />
       </AppShell>
       <OverlayHost />
     </>
