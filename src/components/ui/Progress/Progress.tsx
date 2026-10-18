@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../../lib/cn'
 import { progressStyles as s } from './Progress.styles'
 
 interface RingProps {
@@ -27,7 +27,7 @@ export function ProgressRing({ value, size = 48, stroke = 5, colorClass, showLab
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={circumference * (1 - clamped)}
-          className={clsx(s.ring.value, colorClass)}
+          className={cn(s.ring.value, colorClass)}
         />
       </svg>
       {showLabel && <span className={s.ring.label}>{Math.round(clamped * 100)}%</span>}
@@ -39,7 +39,7 @@ export function ProgressBar({ value, colorClass }: { value: number; colorClass: 
   const pct = Math.max(0, Math.min(1, value)) * 100
   return (
     <div className={s.bar.track} role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
-      <div className={clsx(s.bar.fill, colorClass)} style={{ width: `${pct}%` }} />
+      <div className={cn(s.bar.fill, colorClass)} style={{ width: `${pct}%` }} />
     </div>
   )
 }

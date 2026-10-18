@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../../../lib/cn'
 import { Building2, Clock, Copy, LogOut, Trash2, UserMinus, UserPlus, X } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -162,7 +162,7 @@ function MemberList({ admin, onRemove }: { admin: OrganizationAdmin; onRemove: (
                 ))}
               </select>
             ) : (
-              <span className={clsx(s.role, m.role === 'owner' ? s.roleOwner : s.roleMember)}>{ROLE_LABEL[m.role]}</span>
+              <span className={cn(s.role, m.role === 'owner' ? s.roleOwner : s.roleMember)}>{ROLE_LABEL[m.role]}</span>
             )}
             {isOwner && !isMe && (
               <div className={s.memberActions}>

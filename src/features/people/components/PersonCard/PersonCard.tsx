@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../../../lib/cn'
 import { Star } from 'lucide-react'
 import { Avatar, Card } from '../../../../components/ui'
 import { relativeDays } from '../../../../lib/dates'
@@ -10,7 +10,7 @@ export function OnTimeRating({ rate }: { rate: number | null }) {
   if (rate === null) return null
   const tone = rate >= 0.8 ? s.ratingGood : rate >= 0.5 ? s.ratingOk : s.ratingPoor
   return (
-    <span className={clsx(s.rating, tone)} title="Share of loans repaid on time">
+    <span className={cn(s.rating, tone)} title="Share of loans repaid on time">
       <Star className={s.ratingIcon} fill="currentColor" />
       {Math.round(rate * 100)}% on time
     </span>
@@ -35,7 +35,7 @@ export function PersonCard({ person, onOpen }: { person: PersonSummary; onOpen: 
       <div className={s.bottom}>
         <div>
           <div className={s.amountLabel}>Owes you</div>
-          <div className={clsx(s.amount, stats.outstandingCents === 0 && s.amountClear)}>{money(stats.outstandingCents)}</div>
+          <div className={cn(s.amount, stats.outstandingCents === 0 && s.amountClear)}>{money(stats.outstandingCents)}</div>
         </div>
         <div className={s.meta}>
           <div>

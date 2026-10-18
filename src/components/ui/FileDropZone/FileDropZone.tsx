@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../../lib/cn'
 import { FileUp } from 'lucide-react'
 import { useFileDrop } from '../../../hooks/useFileDrop'
 import { fileDropZoneStyles as s } from './FileDropZone.styles'
@@ -24,10 +24,10 @@ export function FileDropZone({ label, hint, accept, disabled, onFile }: FileDrop
         aria-label={label}
         disabled={disabled}
         onClick={browse}
-        className={clsx(s.zone, s.state[disabled ? 'disabled' : dragging ? 'dragging' : 'idle'])}
+        className={cn(s.zone, s.state[disabled ? 'disabled' : dragging ? 'dragging' : 'idle'])}
         {...zoneProps}
       >
-        <span className={clsx(s.iconWrap, dragging && s.iconDragging)}>
+        <span className={cn(s.iconWrap, dragging && s.iconDragging)}>
           <FileUp className={s.icon} />
         </span>
         <span className={s.title}>{dragging ? 'Drop to continue' : label}</span>

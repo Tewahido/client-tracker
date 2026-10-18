@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../lib/cn'
 import { Plus } from 'lucide-react'
 import { motion } from 'motion/react'
 import type { ReactNode } from 'react'
@@ -46,7 +46,7 @@ export function AppShell({ current, onNavigate, onNewLoan, loansBadge = 0, backe
                 key={name}
                 href={`#${name}`}
                 aria-current={active ? 'page' : undefined}
-                className={clsx(s.navItem, active && s.navItemActive)}
+                className={cn(s.navItem, active && s.navItemActive)}
                 onClick={(e) => {
                   e.preventDefault()
                   onNavigate(name)
@@ -68,7 +68,7 @@ export function AppShell({ current, onNavigate, onNewLoan, loansBadge = 0, backe
           )}
           {workspace ?? (
             <div className={s.backend}>
-              <span className={clsx(s.backendDot, backend === 'supabase' ? s.backendCloud : s.backendLocal)} />
+              <span className={cn(s.backendDot, backend === 'supabase' ? s.backendCloud : s.backendLocal)} />
               {backend === 'supabase' ? 'Synced with Supabase' : 'Saved on this device'}
             </div>
           )}
@@ -120,7 +120,7 @@ function TabButton({
   onNavigate: (route: RouteName) => void
 }) {
   return (
-    <button className={clsx(s.tab, active && s.tabActive)} aria-current={active ? 'page' : undefined} onClick={() => onNavigate(name)}>
+    <button className={cn(s.tab, active && s.tabActive)} aria-current={active ? 'page' : undefined} onClick={() => onNavigate(name)}>
       <span className={s.tabIconWrap}>
         <Icon className={s.tabIcon} strokeWidth={active ? 2.4 : 2} />
         {dot && <span className={s.tabDot} />}

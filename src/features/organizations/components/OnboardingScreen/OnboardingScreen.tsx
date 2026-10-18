@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../../../lib/cn'
 import { Plus } from 'lucide-react'
 import { CenteredLayout } from '../../../../components/layout/CenteredLayout'
 import { Button, TextInput } from '../../../../components/ui'
@@ -40,7 +40,7 @@ export function OnboardingScreen() {
         </>
       )}
 
-      <form className={clsx(s.form, !invites.length && s.section)} onSubmit={form.submit} noValidate>
+      <form className={cn(s.form, !invites.length && s.section)} onSubmit={form.submit} noValidate>
         <TextInput
           label="Organisation name"
           value={form.name}

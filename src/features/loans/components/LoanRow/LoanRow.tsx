@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../../../lib/cn'
 import { Avatar, Card, ProgressBar, STATUS_META, StatusBadge } from '../../../../components/ui'
 import { useMoney } from '../../../../hooks/useMoney'
 import { formatDate } from '../../../../lib/dates'
@@ -29,7 +29,7 @@ export function LoanRow({ view, onOpen, hideBorrower }: LoanRowProps) {
           <div className={s.sub}>{subtitle}</div>
         </div>
         <div className={s.amounts}>
-          <div className={clsx(s.balance, !open && s.balanceDone)}>{money(open ? view.balanceCents : view.totalDueCents)}</div>
+          <div className={cn(s.balance, !open && s.balanceDone)}>{money(open ? view.balanceCents : view.totalDueCents)}</div>
           <div className={s.total}>{open ? `of ${money(view.totalDueCents)}` : 'collected'}</div>
         </div>
       </div>
@@ -37,7 +37,7 @@ export function LoanRow({ view, onOpen, hideBorrower }: LoanRowProps) {
         <div className={s.barWrap}>
           <ProgressBar value={view.progress} colorClass={STATUS_META[status].accent} />
         </div>
-        <span className={clsx(s.due, status === 'overdue' && s.dueUrgent)}>{dueLabel(view)}</span>
+        <span className={cn(s.due, status === 'overdue' && s.dueUrgent)}>{dueLabel(view)}</span>
         <StatusBadge status={status} />
       </div>
     </Card>

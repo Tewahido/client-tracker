@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../../lib/cn'
 import { LoaderCircle, type LucideIcon } from 'lucide-react'
 import type { ButtonHTMLAttributes } from 'react'
 import { buttonStyles as s } from './Button.styles'
@@ -33,7 +33,7 @@ export function Button({
     <button
       type={type}
       disabled={disabled || loading}
-      className={clsx(s.base, s.variant[variant], s.size[size], iconOnly && s.iconOnly[size], fullWidth && s.fullWidth, className)}
+      className={cn(s.base, s.variant[variant], s.size[size], iconOnly && s.iconOnly[size], fullWidth && s.fullWidth, className)}
       {...rest}
     >
       {loading ? <LoaderCircle className={s.spinner} /> : Icon && <Icon className={s.icon} strokeWidth={2.25} />}

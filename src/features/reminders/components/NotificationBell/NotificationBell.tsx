@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../../../lib/cn'
 import { Bell, BellRing } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useMemo, useRef, useState } from 'react'
@@ -62,7 +62,7 @@ export function NotificationBell({ onOpenLoan }: { onOpenLoan: (loanId: string) 
                     <Avatar name={v.borrower?.name ?? '?'} size="sm" />
                     <div className={s.itemMain}>
                       <div className={s.itemName}>{v.borrower?.name ?? 'Unknown'}</div>
-                      <div className={clsx(s.itemDue, v.status === 'overdue' && s.itemDueUrgent)}>{dueLabel(v)}</div>
+                      <div className={cn(s.itemDue, v.status === 'overdue' && s.itemDueUrgent)}>{dueLabel(v)}</div>
                     </div>
                     <span className={s.itemAmount}>{money(v.balanceCents)}</span>
                   </button>

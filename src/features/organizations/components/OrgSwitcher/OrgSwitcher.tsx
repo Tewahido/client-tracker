@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../../../lib/cn'
 import { Building2, Check, ChevronsUpDown, LogOut, Plus } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useRef, useState } from 'react'
@@ -49,7 +49,7 @@ export function OrgSwitcher({ onCreate }: { onCreate: () => void }) {
               New organisation
             </button>
             <div className={s.separator} />
-            <button className={clsx(s.item, s.danger)} onClick={signOut}>
+            <button className={cn(s.item, s.danger)} onClick={signOut}>
               <LogOut className={s.itemIcon} />
               Sign out
             </button>

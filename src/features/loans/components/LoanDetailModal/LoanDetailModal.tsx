@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../../../lib/cn'
 import { ArrowDownLeft, CalendarPlus, Check, HandHeart, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Avatar, Button, ConfirmDialog, Modal, ProgressRing, STATUS_META, StatusBadge } from '../../../../components/ui'
@@ -56,7 +56,7 @@ export function LoanDetailModal({ loanId, onClose, onEdit, onRecordPayment, onOp
           <ProgressRing value={view.progress} size={88} stroke={8} colorClass={STATUS_META[status].stroke} />
           <div>
             <div className={s.heroLabel}>{open ? 'Still owed' : status === 'paid' ? 'Fully repaid' : 'Forgiven'}</div>
-            <div className={clsx(s.heroValue, !open && s.heroValueDone)}>{money(open ? view.balanceCents : view.totalDueCents)}</div>
+            <div className={cn(s.heroValue, !open && s.heroValueDone)}>{money(open ? view.balanceCents : view.totalDueCents)}</div>
             <div className={s.heroSub}>
               {money(view.paidCents)} of {money(view.totalDueCents)} paid back
             </div>
@@ -196,7 +196,7 @@ function Fact({ label, value, sub, urgent }: { label: string; value: string; sub
     <div className={s.fact}>
       <div className={s.factLabel}>{label}</div>
       <div className={s.factValue}>{value}</div>
-      {sub && <div className={clsx(s.factSub, urgent && s.factUrgent)}>{sub}</div>}
+      {sub && <div className={cn(s.factSub, urgent && s.factUrgent)}>{sub}</div>}
     </div>
   )
 }

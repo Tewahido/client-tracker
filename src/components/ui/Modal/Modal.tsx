@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../../lib/cn'
 import { X } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useId, useRef, type ReactNode } from 'react'
@@ -94,7 +94,7 @@ export function Modal({ open, onClose, title, description, wide, children }: Mod
               aria-labelledby={titleId}
               aria-describedby={description ? descriptionId : undefined}
               tabIndex={-1}
-              className={clsx(s.panel, s.width[wide ? 'wide' : 'normal'])}
+              className={cn(s.panel, s.width[wide ? 'wide' : 'normal'])}
               initial={{ opacity: 0, y: 40, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 40, scale: 0.98 }}

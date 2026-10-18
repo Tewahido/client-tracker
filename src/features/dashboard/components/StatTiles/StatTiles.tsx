@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../../../lib/cn'
 import { AlarmClock, CalendarClock, PiggyBank, TrendingUp, type LucideIcon } from 'lucide-react'
 import { Card } from '../../../../components/ui'
 import { useMoney } from '../../../../hooks/useMoney'
@@ -46,7 +46,7 @@ export function StatTiles({ stats, onShowOverdue, onShowSoon }: StatTilesProps) 
         >
           <div className={s.head}>
             <span className={s.label}>{t.label}</span>
-            <span className={clsx(s.iconWrap, s.tone[t.tone])}>
+            <span className={cn(s.iconWrap, s.tone[t.tone])}>
               <t.icon className={s.icon} />
             </span>
           </div>

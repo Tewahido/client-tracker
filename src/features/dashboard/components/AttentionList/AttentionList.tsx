@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../../../lib/cn'
 import { PartyPopper } from 'lucide-react'
 import { Avatar, StatusBadge } from '../../../../components/ui'
 import { useMoney } from '../../../../hooks/useMoney'
@@ -29,7 +29,7 @@ export function AttentionList({ views, onOpen }: { views: LoanView[]; onOpen: (l
             <Avatar name={v.borrower?.name ?? '?'} size="sm" />
             <div className={s.main}>
               <div className={s.name}>{v.borrower?.name ?? 'Unknown'}</div>
-              <div className={clsx(s.due, v.status === 'overdue' && s.dueUrgent)}>{dueLabel(v)}</div>
+              <div className={cn(s.due, v.status === 'overdue' && s.dueUrgent)}>{dueLabel(v)}</div>
             </div>
             <span className={s.amount}>{money(v.balanceCents)}</span>
             <StatusBadge status={v.status} className={s.badge} />

@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../../lib/cn'
 import type { HTMLAttributes, ReactNode } from 'react'
 import { cardStyles as s } from './Card.styles'
 
@@ -8,7 +8,7 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export function Card({ padding = 'md', interactive, className, ...rest }: CardProps) {
-  return <div className={clsx(s.base, s.padding[padding], interactive && s.interactive, className)} {...rest} />
+  return <div className={cn(s.base, s.padding[padding], interactive && s.interactive, className)} {...rest} />
 }
 
 export function CardHeader({ title, action }: { title: ReactNode; action?: ReactNode }) {

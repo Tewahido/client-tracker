@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../../lib/cn'
 import { useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
 import { fieldStyles as s } from './Field.styles'
 
@@ -15,7 +15,7 @@ export function Field({ label, hint, error, className, children }: FieldProps) {
   const id = useId()
   const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined
   return (
-    <div className={clsx(s.root, className)}>
+    <div className={cn(s.root, className)}>
       <label htmlFor={id} className={s.label}>
         {label}
       </label>
@@ -47,7 +47,7 @@ export function TextInput({ label, hint, error, className, prefix, ...rest }: Co
             id={id}
             aria-describedby={describedBy}
             aria-invalid={!!error}
-            className={clsx(s.input, prefix && s.withAdornment)}
+            className={cn(s.input, prefix && s.withAdornment)}
             {...rest}
           />
         </div>

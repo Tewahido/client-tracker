@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../../lib/cn'
 import { avatarStyles as s } from './Avatar.styles'
 
 function initials(name: string): string {
@@ -15,7 +15,7 @@ function paletteFor(name: string): string {
 
 export function Avatar({ name, size = 'md', className }: { name: string; size?: keyof typeof s.size; className?: string }) {
   return (
-    <span aria-hidden className={clsx(s.base, s.size[size], paletteFor(name), className)}>
+    <span aria-hidden className={cn(s.base, s.size[size], paletteFor(name), className)}>
       {initials(name)}
     </span>
   )

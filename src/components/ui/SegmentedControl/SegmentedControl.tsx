@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import { cn } from '../../../lib/cn'
 import { motion } from 'motion/react'
 import { useId } from 'react'
 import { segmentedStyles as s } from './SegmentedControl.styles'
@@ -27,12 +27,12 @@ export function SegmentedControl<T extends string>({ options, value, onChange, l
             key={option.value}
             role="tab"
             aria-selected={active}
-            className={clsx(s.option, active && s.active)}
+            className={cn(s.option, active && s.active)}
             onClick={() => onChange(option.value)}
           >
             {active && <motion.span layoutId={layoutId} className={s.pill} transition={{ type: 'spring', damping: 30, stiffness: 400 }} />}
             <span className={s.label}>{option.label}</span>
-            {option.count !== undefined && <span className={clsx(s.count, active && s.countActive)}>{option.count}</span>}
+            {option.count !== undefined && <span className={cn(s.count, active && s.countActive)}>{option.count}</span>}
           </button>
         )
       })}
