@@ -7,6 +7,7 @@ export type Overlay =
   | { type: 'payment'; loanId: string }
   | { type: 'person-form'; borrowerId?: string }
   | { type: 'person'; borrowerId: string }
+  | { type: 'org-form' }
 
 export interface OverlayContextValue {
   stack: Overlay[]

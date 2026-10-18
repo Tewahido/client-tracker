@@ -22,12 +22,20 @@ export function useAuth() {
     return () => data.subscription.unsubscribe()
   }, [])
 
-  const sendMagicLink = useCallback(async (email: string) => {
+  /** Emails a sign-in link (and a one-time code, if the email template includes it). Creates the account if needed. */
+  const sendSignInEmail = useCallback(async (email: string) => {
     if (!supabase) return
     const { error } = await supabase.auth.signInWithOtp({
-      email,
+      email: email.trim().toLowerCase(),
       options: { emailRedirectTo: window.location.origin },
     })
+    if (error) throw error
+  }, [])
+
+  /** Signs in with the 6-digit code from the email, handy inside an installed app. */
+  const verifyCode = useCallback(async (email: string, code: string) => {
+    if (!supabase) return
+    const { error } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token: code.trim(), type: 'email' })
     if (error) throw error
   }, [])
 
@@ -35,5 +43,5 @@ export function useAuth() {
     await supabase?.auth.signOut()
   }, [])
 
-  return { state, sendMagicLink, signOut }
+  return { state, sendSignInEmail, verifyCode, signOut }
 }

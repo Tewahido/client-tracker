@@ -1,4 +1,5 @@
 import { LoanDetailModal, LoanFormModal, PaymentFormModal } from '../features/loans'
+import { CreateOrgModal } from '../features/organizations'
 import { PersonDetailModal, PersonFormModal } from '../features/people'
 import { LoanReminderActions } from '../features/reminders'
 import { useOverlay, type Overlay } from './overlayContext'
@@ -59,6 +60,8 @@ function OverlayView({ overlay }: { overlay: Overlay }) {
           onOpenLoan={(loanId) => open({ type: 'loan', loanId })}
         />
       )
+    case 'org-form':
+      return <CreateOrgModal onClose={close} />
     default:
       return null
   }

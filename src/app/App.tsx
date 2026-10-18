@@ -1,6 +1,7 @@
 import { Toaster } from 'sonner'
 import { DashboardPage } from '../features/dashboard'
 import { isLoanFilter, LoansPage } from '../features/loans'
+import { OrgSwitcher } from '../features/organizations'
 import { PeoplePage } from '../features/people'
 import { NotificationBell, useReminderNotifications } from '../features/reminders'
 import { useDeepLink } from '../hooks/useDeepLink'
@@ -9,11 +10,14 @@ import { useTheme } from '../hooks/useTheme'
 import { LoanStoreProvider } from '../providers/LoanStoreProvider'
 import { useLoanStore } from '../providers/loanStoreContext'
 import { SettingsProvider } from '../providers/SettingsProvider'
+import { WorkspaceProvider } from '../providers/WorkspaceProvider'
+import { useWorkspace } from '../providers/workspaceContext'
 import { AppShell } from './AppShell'
 import { OverlayHost } from './OverlayHost'
 import { OverlayProvider } from './OverlayProvider'
 import { useOverlay } from './overlayContext'
 import type { Route } from './routes'
+import { WorkspaceGate } from './WorkspaceGate'
 
 function Page({ route }: { route: Route }) {
   switch (route.name) {
@@ -35,6 +39,7 @@ function Layout() {
   const { route, navigate } = useHashRoute()
   const { backend, views } = useLoanStore()
   const overlay = useOverlay()
+  const { status } = useWorkspace()
   const overdue = views.filter((v) => v.status === 'overdue').length
   useReminderNotifications()
   useDeepLink(route)
@@ -48,6 +53,7 @@ function Layout() {
         loansBadge={overdue}
         backend={backend}
         actions={<NotificationBell onOpenLoan={(loanId) => overlay.open({ type: 'loan', loanId })} />}
+        workspace={status === 'ready' ? <OrgSwitcher onCreate={() => overlay.open({ type: 'org-form' })} /> : undefined}
       >
         <Page route={route} />
       </AppShell>
@@ -60,11 +66,18 @@ export default function App() {
   const { theme } = useTheme()
   return (
     <SettingsProvider>
-      <LoanStoreProvider orgId={null}>
-        <OverlayProvider>
-          <Layout />
-        </OverlayProvider>
-      </LoanStoreProvider>
+      <WorkspaceProvider>
+        <WorkspaceGate>
+          {(orgId) => (
+            // Keyed by organisation so switching starts from a clean store and closes open dialogs.
+            <LoanStoreProvider key={orgId ?? 'local'} orgId={orgId}>
+              <OverlayProvider>
+                <Layout />
+              </OverlayProvider>
+            </LoanStoreProvider>
+          )}
+        </WorkspaceGate>
+      </WorkspaceProvider>
       <Toaster position="top-center" richColors closeButton theme={theme} />
     </SettingsProvider>
   )

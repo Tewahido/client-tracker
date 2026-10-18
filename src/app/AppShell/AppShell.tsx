@@ -15,6 +15,8 @@ interface AppShellProps {
   backend: 'local' | 'supabase'
   /** Controls shown in the top bar, such as the notification bell. */
   actions?: ReactNode
+  /** Organisation switcher; replaces the storage indicator in the sidebar when present. */
+  workspace?: ReactNode
   children: ReactNode
 }
 
@@ -22,7 +24,7 @@ function BrandMark({ className }: { className: string }) {
   return <img src="/favicon.svg" alt="" className={className} />
 }
 
-export function AppShell({ current, onNavigate, onNewLoan, loansBadge = 0, backend, actions, children }: AppShellProps) {
+export function AppShell({ current, onNavigate, onNewLoan, loansBadge = 0, backend, actions, workspace, children }: AppShellProps) {
   const [first, second, ...rest] = NAV_ITEMS
 
   return (
@@ -61,10 +63,12 @@ export function AppShell({ current, onNavigate, onNewLoan, loansBadge = 0, backe
           <Button icon={Plus} size="lg" fullWidth onClick={onNewLoan}>
             New loan
           </Button>
-          <div className={s.backend}>
-            <span className={clsx(s.backendDot, backend === 'supabase' ? s.backendCloud : s.backendLocal)} />
-            {backend === 'supabase' ? 'Synced with Supabase' : 'Saved on this device'}
-          </div>
+          {workspace ?? (
+            <div className={s.backend}>
+              <span className={clsx(s.backendDot, backend === 'supabase' ? s.backendCloud : s.backendLocal)} />
+              {backend === 'supabase' ? 'Synced with Supabase' : 'Saved on this device'}
+            </div>
+          )}
         </div>
       </aside>
 
