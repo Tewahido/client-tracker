@@ -36,6 +36,6 @@ test.describe('lending and repayments', () => {
     await loanDetail.recordPayment()
     await payment.amount.fill('250')
     await payment.button('Save payment').click()
-    await expect(payment.root.getByText(/more than the .*200\.00 still owed/)).toBeVisible()
+    await expect(payment.amount).toHaveAccessibleDescription(/more than the .*200\.00 still owed/)
   })
 })

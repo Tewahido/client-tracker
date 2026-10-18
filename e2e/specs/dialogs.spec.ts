@@ -13,13 +13,13 @@ test.describe('dialogs', () => {
     await expect(loanForm.amount).toHaveValue('1234')
   })
 
-  test('close on a click on the backdrop and on Escape', async ({ loanForm, page, app }) => {
+  test('close on a click on the backdrop and on Escape', async ({ loanForm, app }) => {
     await loanForm.clickBackdrop()
     await expect(loanForm.root).toBeHidden()
 
     await app.openNewLoan()
     await expect(loanForm.root).toBeVisible()
-    await page.keyboard.press('Escape')
+    await loanForm.pressEscape()
     await expect(loanForm.root).toBeHidden()
   })
 

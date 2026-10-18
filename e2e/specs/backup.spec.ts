@@ -1,6 +1,8 @@
 import { writeFile } from 'node:fs/promises'
 import { expect, test } from '../fixtures'
 
+const SAMPLE = 'samples/lendly-sample-backup.json'
+
 test('restores a backup and keeps working with the restored loans', async ({ app, loanForm, loanDetail, loans, payment, settings }, testInfo) => {
   await app.goto('home')
   await app.openNewLoan()
@@ -31,7 +33,7 @@ test('restores a backup and keeps working with the restored loans', async ({ app
   await expect(loanDetail.balance).toHaveText(/300\.00/)
 
   // After a reload the payment must still belong to the restored loan (not a stale id).
-  await app.page.reload()
+  await app.reload()
   await loans.open()
   await loans.row('Backed Up').click()
   await expect(loanDetail.balance).toHaveText(/300\.00/)
@@ -39,15 +41,16 @@ test('restores a backup and keeps working with the restored loans', async ({ app
 
 test('restores a backup dropped onto the drop zone', async ({ app, loans, settings }) => {
   await settings.open()
+  const idleBorder = await settings.restoreZoneBorderColor()
 
-  const idleBorder = await settings.restoreZone.evaluate((el) => getComputedStyle(el).borderTopColor)
-  await settings.dropBackup('samples/lendly-sample-backup.json', { holdOver: true })
+  const transfer = await settings.fileTransfer(SAMPLE)
+  await settings.dragFileOver(transfer)
   await expect(settings.restoreZone).toContainText('Drop to continue')
   // The zone must visibly light up, not just change its text.
   await expect(settings.restoreZone).not.toHaveCSS('border-top-color', idleBorder)
 
-  await settings.dropBackup('samples/lendly-sample-backup.json')
-  await expect(app.page.getByRole('dialog', { name: 'Restore this backup?' })).toContainText('8 loans')
+  await settings.dropFile(transfer)
+  await expect(settings.restoreDialog).toContainText('8 loans')
   await settings.confirmRestore()
   await expect(app.toast('Backup restored')).toBeVisible()
 
@@ -57,25 +60,28 @@ test('restores a backup dropped onto the drop zone', async ({ app, loans, settin
   await expect(loans.row('Bongani Zulu')).toContainText('Forgiven')
 })
 
+test('stays highlighted while a dragged file moves over the zone text, and resets when it leaves', async ({ settings }) => {
+  await settings.open()
+  const transfer = await settings.fileTransfer(SAMPLE)
+
+  await settings.dragFileOver(transfer)
+  await settings.dragOntoZoneText(transfer)
+  await expect(settings.restoreZone).toContainText('Drop to continue')
+
+  await settings.dragOffZoneText(transfer)
+  await expect(settings.restoreZone).toContainText('Restore a backup')
+})
+
 test('rejects a file that is not a backup', async ({ app, settings }, testInfo) => {
   const notABackup = testInfo.outputPath('notes.json')
   await writeFile(notABackup, '{"hello":"world"}')
   await settings.open()
   await settings.dropBackup(notABackup)
   await expect(app.toast("That file isn't a Lendly backup.")).toBeVisible()
-  await expect(app.page.getByRole('dialog', { name: 'Restore this backup?' })).toHaveCount(0)
+  await expect(settings.restoreDialog).toHaveCount(0)
 })
 
-test('a file dropped beside the drop zone does not navigate away from the app', async ({ page, settings }) => {
+test('a file dropped beside the drop zone does not navigate away from the app', async ({ settings }) => {
   await settings.open()
-  const dataTransfer = await page.evaluateHandle(() => {
-    const transfer = new DataTransfer()
-    transfer.items.add(new File(['{}'], 'stray.json', { type: 'application/json' }))
-    return transfer
-  })
-  const prevented = await page.evaluate(
-    (transfer) => !document.body.dispatchEvent(new DragEvent('drop', { dataTransfer: transfer, bubbles: true, cancelable: true })),
-    dataTransfer,
-  )
-  expect(prevented).toBe(true)
+  expect(await settings.dropBesideZone(SAMPLE)).toBe(true)
 })

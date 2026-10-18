@@ -15,6 +15,10 @@ export abstract class Dialog {
     await this.root.getByRole('button', { name: 'Close' }).click()
   }
 
+  async pressEscape() {
+    await this.page.keyboard.press('Escape')
+  }
+
   /** Click the dimmed area outside the dialog (top-left corner is outside on every layout). */
   async clickBackdrop() {
     await this.page.mouse.click(4, 4)
