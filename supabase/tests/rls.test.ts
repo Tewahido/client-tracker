@@ -220,3 +220,41 @@ describe('organisation defaults', () => {
     await expect(as('alice', "update organizations set currency = 'rand' where id = $1", [org])).rejects.toThrow(/check constraint/)
   })
 })
+
+describe('row ownership (security fix)', () => {
+  let orgA: string
+  let orgB: string
+  let borrower: string
+  let loan: string
+
+  beforeAll(async () => {
+    orgA = await createOrg('alice', 'Org A')
+    const [invite] = await as<{ id: string }>('alice', "insert into organization_invites (org_id, email) values ($1, 'bob@example.com') returning id", [orgA])
+    await as('bob', 'select public.accept_invite($1)', [invite.id])
+    orgB = await createOrg('bob', 'Bob owns this')
+    ;[{ id: borrower }] = await as<{ id: string }>('alice', "insert into borrowers (org_id, name) values ($1, 'Target') returning id", [orgA])
+    ;[{ id: loan }] = await as<{ id: string }>('alice', "insert into loans (org_id, borrower_id, principal_cents, due_on) values ($1, $2, 5000, '2026-12-01') returning id", [orgA, borrower])
+  })
+
+  it('stops a member moving rows into an organisation they own', async () => {
+    await expect(as('bob', 'update borrowers set org_id = $1 where id = $2', [orgB, borrower])).rejects.toThrow(/cannot be moved/)
+    await expect(as('bob', 'update loans set org_id = $1 where id = $2', [orgB, loan])).rejects.toThrow(/cannot be moved/)
+    await expect(
+      as('bob', "update loans set org_id = $1, written_off_on = '2026-10-18' where id = $2", [orgB, loan]),
+    ).rejects.toThrow(/cannot be moved|Only organisation owners/)
+    const [row] = await as<{ org_id: string; written_off_on: string | null }>('alice', 'select org_id, written_off_on from loans where id = $1', [loan])
+    expect(row).toEqual({ org_id: orgA, written_off_on: null })
+  })
+
+  it('stops even owners moving rows between their organisations', async () => {
+    const orgC = await createOrg('alice', 'Org C')
+    await expect(as('alice', 'update borrowers set org_id = $1 where id = $2', [orgC, borrower])).rejects.toThrow(/cannot be moved/)
+  })
+
+  it('stops a member inserting a loan that is already forgiven', async () => {
+    await expect(
+      as('bob', "insert into loans (org_id, borrower_id, principal_cents, due_on, written_off_on) values ($1, $2, 100, '2026-12-01', '2026-10-18')", [orgA, borrower]),
+    ).rejects.toThrow(/Only organisation owners/)
+    await as('alice', "insert into loans (org_id, borrower_id, principal_cents, due_on, written_off_on) values ($1, $2, 100, '2026-12-01', '2026-10-18')", [orgA, borrower])
+  })
+})
