@@ -35,6 +35,9 @@ interface ModalProps {
 /** Dialog that slides up as a sheet on phones and pops in centered on larger screens. */
 export function Modal({ open, onClose, title, description, wide, children }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null)
+  // Close on a backdrop click only if the press also started on the backdrop; a drag
+  // from inside the dialog (e.g. selecting text) that ends outside must not close it.
+  const pressedOnBackdrop = useRef(false)
   const titleId = useId()
   const descriptionId = useId()
   // Read the latest onClose without re-running the open/close effect (which would steal focus).
@@ -73,9 +76,17 @@ export function Modal({ open, onClose, title, description, wide, children }: Mod
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
           />
-          <div className={s.positioner} onClick={onClose}>
+          <div
+            className={s.positioner}
+            onPointerDown={(e) => {
+              pressedOnBackdrop.current = e.target === e.currentTarget
+            }}
+            onClick={(e) => {
+              if (pressedOnBackdrop.current && e.target === e.currentTarget) onClose()
+              pressedOnBackdrop.current = false
+            }}
+          >
             <motion.div
               ref={panelRef}
               role="dialog"
@@ -88,7 +99,6 @@ export function Modal({ open, onClose, title, description, wide, children }: Mod
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 40, scale: 0.98 }}
               transition={{ type: 'spring', damping: 30, stiffness: 380 }}
-              onClick={(e) => e.stopPropagation()}
             >
               <div className={s.handle} />
               <div className={s.header}>
