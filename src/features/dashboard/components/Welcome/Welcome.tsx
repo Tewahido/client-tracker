@@ -9,7 +9,8 @@ const STEPS = [
   { icon: Wallet, title: 'Track repayments', text: 'Log partial payments and watch balances shrink.' },
 ]
 
-export function Welcome({ onStart }: { onStart: () => void }) {
+/** `onStart` is omitted for read-only users. */
+export function Welcome({ onStart }: { onStart?: () => void }) {
   return (
     <motion.section className={s.root} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
       <div className={s.bg} />
@@ -26,11 +27,13 @@ export function Welcome({ onStart }: { onStart: () => void }) {
             </div>
           ))}
         </div>
-        <div className={s.action}>
-          <Button size="lg" icon={Plus} onClick={onStart}>
-            Record your first loan
-          </Button>
-        </div>
+        {onStart && (
+          <div className={s.action}>
+            <Button size="lg" icon={Plus} onClick={onStart}>
+              Record your first loan
+            </Button>
+          </div>
+        )}
       </div>
     </motion.section>
   )

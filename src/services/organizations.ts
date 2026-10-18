@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-export type OrgRole = 'owner' | 'member'
+export type OrgRole = 'owner' | 'member' | 'viewer'
 
 export interface Organization {
   id: string

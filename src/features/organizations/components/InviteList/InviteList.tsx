@@ -3,6 +3,8 @@ import { Button } from '../../../../components/ui'
 import { useInviteResponses } from '../../hooks/useInviteResponses'
 import { inviteListStyles as s } from './InviteList.styles'
 
+const ROLE_PHRASE = { owner: 'an owner', member: 'a member', viewer: 'a viewer' } as const
+
 /** Invites waiting for the signed-in user, with accept/decline. Renders nothing when there are none. */
 export function InviteList() {
   const { invites, busyId, accept, decline } = useInviteResponses()
@@ -17,7 +19,7 @@ export function InviteList() {
           </span>
           <div className={s.main}>
             <div className={s.name}>{invite.orgName ?? 'An organisation'}</div>
-            <div className={s.meta}>Invited you as {invite.role === 'owner' ? 'an owner' : 'a member'}</div>
+            <div className={s.meta}>Invited you as {ROLE_PHRASE[invite.role]}</div>
           </div>
           <div className={s.actions}>
             <Button size="sm" variant="ghost" disabled={busyId !== null} onClick={() => decline(invite.id)}>

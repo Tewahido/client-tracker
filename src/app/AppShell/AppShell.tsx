@@ -9,7 +9,8 @@ import { appShellStyles as s } from './AppShell.styles'
 interface AppShellProps {
   current: RouteName
   onNavigate: (route: RouteName) => void
-  onNewLoan: () => void
+  /** Omitted for read-only users, which hides the New loan buttons. */
+  onNewLoan?: () => void
   /** Small count shown on the Loans tab (e.g. overdue loans). */
   loansBadge?: number
   backend: 'local' | 'supabase'
@@ -60,9 +61,11 @@ export function AppShell({ current, onNavigate, onNewLoan, loansBadge = 0, backe
           })}
         </nav>
         <div className={s.sidebarFooter}>
-          <Button icon={Plus} size="lg" fullWidth onClick={onNewLoan}>
-            New loan
-          </Button>
+          {onNewLoan && (
+            <Button icon={Plus} size="lg" fullWidth onClick={onNewLoan}>
+              New loan
+            </Button>
+          )}
           {workspace ?? (
             <div className={s.backend}>
               <span className={clsx(s.backendDot, backend === 'supabase' ? s.backendCloud : s.backendLocal)} />
@@ -90,9 +93,11 @@ export function AppShell({ current, onNavigate, onNewLoan, loansBadge = 0, backe
             <TabButton key={item.name} item={item} active={item.name === current} dot={item.name === 'loans' && loansBadge > 0} onNavigate={onNavigate} />
           ))}
           <div className={s.fabSlot}>
-            <button className={s.fab} onClick={onNewLoan} aria-label="New loan">
-              <Plus className={s.fabIcon} strokeWidth={2.5} />
-            </button>
+            {onNewLoan && (
+              <button className={s.fab} onClick={onNewLoan} aria-label="New loan">
+                <Plus className={s.fabIcon} strokeWidth={2.5} />
+              </button>
+            )}
           </div>
           {rest.map((item) => (
             <TabButton key={item.name} item={item} active={item.name === current} onNavigate={onNavigate} />

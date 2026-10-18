@@ -1,6 +1,7 @@
 import { Mail, Pencil, Phone, Plus, Trash2 } from 'lucide-react'
 import { Avatar, Button, ConfirmDialog, Modal } from '../../../../components/ui'
 import { useMoney } from '../../../../hooks/useMoney'
+import { usePermissions } from '../../../../hooks/usePermissions'
 import { LoanRow } from '../../../loans'
 import { usePersonDetail } from '../../hooks/usePersonDetail'
 import { OnTimeRating } from '../PersonCard'
@@ -17,6 +18,7 @@ interface PersonDetailModalProps {
 export function PersonDetailModal({ borrowerId, onClose, onEdit, onNewLoan, onOpenLoan }: PersonDetailModalProps) {
   const { summary, loans, confirmDelete, setConfirmDelete, remove } = usePersonDetail(borrowerId)
   const money = useMoney()
+  const { canEdit, isOwner } = usePermissions()
 
   if (!summary) return null
   const { borrower, stats } = summary
@@ -68,9 +70,11 @@ export function PersonDetailModal({ borrowerId, onClose, onEdit, onNewLoan, onOp
         <div className={s.section}>
           <div className={s.sectionHead}>
             <span className={s.sectionTitle}>Loans</span>
-            <Button size="sm" icon={Plus} onClick={onNewLoan}>
-              New loan
-            </Button>
+            {canEdit && (
+              <Button size="sm" icon={Plus} onClick={onNewLoan}>
+                New loan
+              </Button>
+            )}
           </div>
           {loans.length === 0 ? (
             <p className={s.empty}>No loans with {borrower.name} yet.</p>
@@ -83,14 +87,18 @@ export function PersonDetailModal({ borrowerId, onClose, onEdit, onNewLoan, onOp
           )}
         </div>
 
-        <div className={s.footer}>
-          <Button variant="secondary" size="sm" icon={Pencil} onClick={onEdit}>
-            Edit details
-          </Button>
-          <Button variant="danger" size="sm" icon={Trash2} onClick={() => setConfirmDelete(true)}>
-            Remove
-          </Button>
-        </div>
+        {canEdit && (
+          <div className={s.footer}>
+            <Button variant="secondary" size="sm" icon={Pencil} onClick={onEdit}>
+              Edit details
+            </Button>
+            {isOwner && (
+              <Button variant="danger" size="sm" icon={Trash2} onClick={() => setConfirmDelete(true)}>
+                Remove
+              </Button>
+            )}
+          </div>
+        )}
       </Modal>
 
       <ConfirmDialog

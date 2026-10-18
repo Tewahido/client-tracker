@@ -4,6 +4,7 @@ import { useOverlay } from '../../app/overlayContext'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { Button, Card, EmptyState, SearchInput, SegmentedControl } from '../../components/ui'
 import { useMoney } from '../../hooks/useMoney'
+import { usePermissions } from '../../hooks/usePermissions'
 import { useLoanStore } from '../../providers/loanStoreContext'
 import { LoanRow } from './components/LoanRow'
 import { FILTER_LABELS, useLoanFilters, type LoanFilter, type LoanSort } from './hooks/useLoanFilters'
@@ -16,6 +17,7 @@ export function LoansPage({ initialFilter }: { initialFilter?: LoanFilter }) {
   const { filter, setFilter, sort, setSort, query, setQuery, counts, visible } = useLoanFilters(views, initialFilter)
   const overlay = useOverlay()
   const money = useMoney()
+  const { canEdit } = usePermissions()
   const newLoan = () => overlay.open({ type: 'loan-form' })
   const outstanding = views.reduce((sum, v) => sum + (v.status === 'paid' || v.status === 'written-off' ? 0 : v.balanceCents), 0)
 
@@ -26,9 +28,11 @@ export function LoansPage({ initialFilter }: { initialFilter?: LoanFilter }) {
         title="Loans"
         subtitle={views.length ? `${money(outstanding)} still out across ${counts.open} open ${counts.open === 1 ? 'loan' : 'loans'}` : undefined}
         actions={
-          <Button icon={Plus} onClick={newLoan}>
-            New loan
-          </Button>
+          canEdit && (
+            <Button icon={Plus} onClick={newLoan}>
+              New loan
+            </Button>
+          )
         }
       />
 
@@ -39,9 +43,11 @@ export function LoansPage({ initialFilter }: { initialFilter?: LoanFilter }) {
             title="No loans yet"
             description="Record money you've lent and Lendly will keep track of what's owed and remind you when it's due."
             action={
-              <Button icon={Plus} onClick={newLoan}>
-                Record your first loan
-              </Button>
+              canEdit && (
+                <Button icon={Plus} onClick={newLoan}>
+                  Record your first loan
+                </Button>
+              )
             }
           />
         </Card>

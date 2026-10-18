@@ -1,6 +1,7 @@
 import { Database, Download, FileSpreadsheet, Upload } from 'lucide-react'
 import { useRef } from 'react'
 import { Button, ConfirmDialog } from '../../../../components/ui'
+import { usePermissions } from '../../../../hooks/usePermissions'
 import { useLoanStore } from '../../../../providers/loanStoreContext'
 import { useDataTransfer } from '../../hooks/useDataTransfer'
 import { SettingsRow, SettingsSection } from '../../../../components/layout/SettingsSection'
@@ -10,6 +11,7 @@ export function DataSection() {
   const { backend } = useLoanStore()
   const { exportCsv, downloadBackup, chooseRestoreFile, pendingRestore, confirmRestore, cancelRestore, isEmpty } = useDataTransfer()
   const fileRef = useRef<HTMLInputElement>(null)
+  const { isOwner } = usePermissions()
 
   return (
     <SettingsSection
@@ -31,8 +33,11 @@ export function DataSection() {
           Download
         </Button>
       </SettingsRow>
-      <SettingsRow label="Restore" hint="Replaces everything here with the contents of a backup file.">
-        <Button variant="secondary" size="sm" icon={Upload} onClick={() => fileRef.current?.click()}>
+      <SettingsRow
+        label="Restore"
+        hint={isOwner ? 'Replaces everything here with the contents of a backup file.' : 'Only organisation owners can restore backups.'}
+      >
+        <Button variant="secondary" size="sm" icon={Upload} onClick={() => fileRef.current?.click()} disabled={!isOwner}>
           Restore…
         </Button>
         <input

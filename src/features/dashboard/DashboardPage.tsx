@@ -2,6 +2,7 @@ import { ArrowRight } from 'lucide-react'
 import { useOverlay } from '../../app/overlayContext'
 import { Button, Card, CardHeader } from '../../components/ui'
 import { useHashRoute } from '../../hooks/useHashRoute'
+import { usePermissions } from '../../hooks/usePermissions'
 import { AttentionList } from './components/AttentionList'
 import { CollectionsChart } from './components/CollectionsChart'
 import { Hero } from './components/Hero'
@@ -15,10 +16,11 @@ export function DashboardPage() {
   const d = useDashboard()
   const overlay = useOverlay()
   const { navigate } = useHashRoute()
+  const { canEdit } = usePermissions()
   const openLoan = (loanId: string) => overlay.open({ type: 'loan', loanId })
 
   if (!d.ready) return <div className={s.skeleton} />
-  if (!d.hasLoans) return <Welcome onStart={() => overlay.open({ type: 'loan-form' })} />
+  if (!d.hasLoans) return <Welcome onStart={canEdit ? () => overlay.open({ type: 'loan-form' }) : undefined} />
 
   return (
     <div className={s.stack}>

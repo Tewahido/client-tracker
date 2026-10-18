@@ -3,6 +3,7 @@ import { ArrowDownLeft, CalendarPlus, Check, HandHeart, Pencil, Plus, RotateCcw,
 import type { ReactNode } from 'react'
 import { Avatar, Button, ConfirmDialog, Modal, ProgressRing, STATUS_META, StatusBadge } from '../../../../components/ui'
 import { useMoney } from '../../../../hooks/useMoney'
+import { usePermissions } from '../../../../hooks/usePermissions'
 import { formatDate } from '../../../../lib/dates'
 import { dueLabel } from '../../../../lib/describe'
 import { isOpen } from '../../../../lib/loans'
@@ -28,6 +29,7 @@ const EXTENSIONS = [
 export function LoanDetailModal({ loanId, onClose, onEdit, onRecordPayment, onOpenPerson, extraActions }: LoanDetailModalProps) {
   const { view, actions, confirm, setConfirm, closeConfirm, busy, run } = useLoanDetail(loanId)
   const money = useMoney()
+  const { canEdit, isOwner, canDeletePayment } = usePermissions()
 
   // The loan was deleted (possibly from this dialog): nothing left to show.
   if (!view) return null
@@ -70,7 +72,7 @@ export function LoanDetailModal({ loanId, onClose, onEdit, onRecordPayment, onOp
 
         {loan.note && <p className={s.note}>{loan.note}</p>}
 
-        {open && (
+        {open && canEdit && (
           <div className={s.primaryActions}>
             <Button icon={Plus} size="lg" onClick={onRecordPayment}>
               Record payment
@@ -83,7 +85,7 @@ export function LoanDetailModal({ loanId, onClose, onEdit, onRecordPayment, onOp
 
         {extraActions && <div className={s.section}>{extraActions}</div>}
 
-        {open && (
+        {open && canEdit && (
           <div className={s.section}>
             <div className={s.sectionTitle}>Give more time</div>
             <div className={s.chips}>
@@ -121,34 +123,39 @@ export function LoanDetailModal({ loanId, onClose, onEdit, onRecordPayment, onOp
                       {p.note ? ` · ${p.note}` : ''}
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" iconOnly icon={X} aria-label="Remove payment" onClick={() => setConfirm({ kind: 'delete-payment', paymentId: p.id })} />
+                  {canDeletePayment(p) && (
+                    <Button variant="ghost" size="sm" iconOnly icon={X} aria-label="Remove payment" onClick={() => setConfirm({ kind: 'delete-payment', paymentId: p.id })} />
+                  )}
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <div className={s.footer}>
-          <div className={s.footerGroup}>
-            <Button variant="secondary" size="sm" icon={Pencil} onClick={onEdit}>
-              Edit
-            </Button>
-            {open ? (
-              <Button variant="ghost" size="sm" icon={HandHeart} onClick={() => setConfirm({ kind: 'forgive' })}>
-                Forgive
+        {canEdit && (
+          <div className={s.footer}>
+            <div className={s.footerGroup}>
+              <Button variant="secondary" size="sm" icon={Pencil} onClick={onEdit}>
+                Edit
               </Button>
-            ) : (
-              loan.writtenOffOn && (
+              {isOwner && open && (
+                <Button variant="ghost" size="sm" icon={HandHeart} onClick={() => setConfirm({ kind: 'forgive' })}>
+                  Forgive
+                </Button>
+              )}
+              {isOwner && loan.writtenOffOn && (
                 <Button variant="ghost" size="sm" icon={RotateCcw} loading={busy === 'reopen'} onClick={() => run('reopen', actions.reopen)}>
                   Reopen
                 </Button>
-              )
+              )}
+            </div>
+            {isOwner && (
+              <Button variant="danger" size="sm" icon={Trash2} onClick={() => setConfirm({ kind: 'delete' })}>
+                Delete
+              </Button>
             )}
           </div>
-          <Button variant="danger" size="sm" icon={Trash2} onClick={() => setConfirm({ kind: 'delete' })}>
-            Delete
-          </Button>
-        </div>
+        )}
       </Modal>
 
       <ConfirmDialog

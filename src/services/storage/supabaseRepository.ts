@@ -32,6 +32,7 @@ interface PaymentRow {
   paid_on: string
   note: string | null
   created_at: string
+  created_by?: string | null
 }
 
 const toBorrower = (r: BorrowerRow): Borrower => ({
@@ -78,6 +79,7 @@ const toPayment = (r: PaymentRow): Payment => ({
   paidOn: r.paid_on,
   note: r.note,
   createdAt: r.created_at,
+  createdBy: r.created_by ?? null,
 })
 
 const fromPayment = (p: Partial<Payment>): Partial<PaymentRow> =>

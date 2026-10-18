@@ -6,6 +6,8 @@ import { useDismissable } from '../../../../hooks/useDismissable'
 import { useWorkspace } from '../../../../providers/workspaceContext'
 import { orgSwitcherStyles as s } from './OrgSwitcher.styles'
 
+const ROLE_LABEL = { owner: 'Owner', member: 'Member', viewer: 'Viewer' } as const
+
 /** Sidebar control showing the active organisation, with switching, creating and signing out. */
 export function OrgSwitcher({ onCreate }: { onCreate: () => void }) {
   const { organizations, activeOrg, switchOrg, user, signOut } = useWorkspace()
@@ -59,7 +61,9 @@ export function OrgSwitcher({ onCreate }: { onCreate: () => void }) {
         <span className={s.badge}>{activeOrg.name.slice(0, 1).toUpperCase()}</span>
         <span className={s.info}>
           <span className={s.name}>{activeOrg.name}</span>
-          <span className={s.sub}>{user?.email}</span>
+          <span className={s.sub}>
+            {ROLE_LABEL[activeOrg.role]} · {user?.email}
+          </span>
         </span>
         <ChevronsUpDown className={s.chevron} />
       </button>

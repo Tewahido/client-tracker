@@ -32,6 +32,8 @@ export interface Payment {
   paidOn: ISODate
   note: string | null
   createdAt: string
+  /** Organisation member who recorded it (Supabase only). */
+  createdBy?: string | null
 }
 
 export interface Snapshot {

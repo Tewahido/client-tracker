@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { Building2, Clock, Copy, Crown, LogOut, Trash2, UserMinus, UserPlus, X } from 'lucide-react'
+import { Building2, Clock, Copy, LogOut, Trash2, UserMinus, UserPlus, X } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { SettingsSection } from '../../../../components/layout/SettingsSection'
@@ -11,6 +11,13 @@ import { useInviteForm } from '../../hooks/useInviteForm'
 import { useOrganizationAdmin, type OrganizationAdmin } from '../../hooks/useOrganizationAdmin'
 import { InviteList } from '../InviteList'
 import { organizationSectionStyles as s } from './OrganizationSection.styles'
+
+const ROLES: { value: OrgRole; label: string; hint: string }[] = [
+  { value: 'owner', label: 'Owner', hint: 'Owners have full control, including deleting and managing members' },
+  { value: 'member', label: 'Member', hint: 'Members add and edit loans, people and payments' },
+  { value: 'viewer', label: 'Viewer', hint: 'Viewers can look but not change anything' },
+]
+const ROLE_LABEL = Object.fromEntries(ROLES.map((r) => [r.value, r.label])) as Record<OrgRole, string>
 
 type Confirm = { kind: 'leave' } | { kind: 'delete' } | { kind: 'remove'; member: Member } | null
 
@@ -146,21 +153,20 @@ function MemberList({ admin, onRemove }: { admin: OrganizationAdmin; onRemove: (
               </div>
               <div className={s.memberMeta}>Joined {formatDate(m.joinedAt.slice(0, 10))}</div>
             </div>
-            <span className={clsx(s.role, m.role === 'owner' ? s.roleOwner : s.roleMember)}>{m.role === 'owner' ? 'Owner' : 'Member'}</span>
-            {isOwner && (
+            {canChangeRole ? (
+              <select className={s.roleSelect} value={m.role} onChange={(e) => setRole(m.userId, e.target.value as OrgRole)} aria-label={'Role for ' + m.email}>
+                {ROLES.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className={clsx(s.role, m.role === 'owner' ? s.roleOwner : s.roleMember)}>{ROLE_LABEL[m.role]}</span>
+            )}
+            {isOwner && !isMe && (
               <div className={s.memberActions}>
-                {canChangeRole && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    iconOnly
-                    icon={Crown}
-                    aria-label={m.role === 'owner' ? 'Make member' : 'Make owner'}
-                    title={m.role === 'owner' ? 'Make member' : 'Make owner'}
-                    onClick={() => setRole(m.userId, m.role === 'owner' ? 'member' : 'owner')}
-                  />
-                )}
-                {!isMe && <Button variant="ghost" size="sm" iconOnly icon={UserMinus} aria-label="Remove member" title="Remove" onClick={() => onRemove(m)} />}
+                <Button variant="ghost" size="sm" iconOnly icon={UserMinus} aria-label="Remove member" title="Remove" onClick={() => onRemove(m)} />
               </div>
             )}
           </li>
@@ -189,13 +195,17 @@ function InviteBlock({ admin }: { admin: OrganizationAdmin }) {
       <form className={s.inviteForm} onSubmit={form.submit} noValidate>
         <TextInput label="Email" type="email" value={form.email} onChange={(e) => form.setEmail(e.target.value)} placeholder="partner@example.com" error={form.error} />
         <SelectInput label="Role" value={form.role} onChange={(e) => form.setRole(e.target.value as OrgRole)}>
-          <option value="member">Member</option>
-          <option value="owner">Owner</option>
+          {ROLES.map((r) => (
+            <option key={r.value} value={r.value}>
+              {r.label}
+            </option>
+          ))}
         </SelectInput>
         <Button type="submit" icon={UserPlus} loading={form.busy}>
           Invite
         </Button>
       </form>
+      <p className={s.hint}>{ROLES.find((r) => r.value === form.role)?.hint}.</p>
       <p className={s.hint}>
         Send them the app link and ask them to sign in with that email; the invite will be waiting.{' '}
         <button type="button" className={s.link} onClick={copyLink}>
@@ -207,7 +217,7 @@ function InviteBlock({ admin }: { admin: OrganizationAdmin }) {
         <div key={invite.id} className={s.pending}>
           <Clock className={s.pendingIcon} />
           <span className={s.pendingEmail}>{invite.email}</span>
-          <span className={s.hint}>{invite.role === 'owner' ? 'Owner' : 'Member'} · pending</span>
+          <span className={s.hint}>{ROLE_LABEL[invite.role]} · pending</span>
           <Button variant="ghost" size="sm" iconOnly icon={X} aria-label={`Cancel invite for ${invite.email}`} onClick={() => admin.revokeInvite(invite.id)} />
         </div>
       ))}

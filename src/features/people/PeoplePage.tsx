@@ -3,6 +3,7 @@ import { motion } from 'motion/react'
 import { useOverlay } from '../../app/overlayContext'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { Button, Card, EmptyState, SearchInput } from '../../components/ui'
+import { usePermissions } from '../../hooks/usePermissions'
 import { PersonCard } from './components/PersonCard'
 import { usePeopleList } from './hooks/usePeople'
 import { peoplePageStyles as s } from './PeoplePage.styles'
@@ -10,6 +11,7 @@ import { peoplePageStyles as s } from './PeoplePage.styles'
 export function PeoplePage() {
   const { people, total, query, setQuery } = usePeopleList()
   const overlay = useOverlay()
+  const { canEdit } = usePermissions()
   const addPerson = () => overlay.open({ type: 'person-form' })
 
   return (
@@ -19,9 +21,11 @@ export function PeoplePage() {
         title="People"
         subtitle={total ? `${total} ${total === 1 ? 'person' : 'people'} you've lent to` : undefined}
         actions={
-          <Button icon={UserPlus} variant="secondary" onClick={addPerson}>
-            Add person
-          </Button>
+          canEdit && (
+            <Button icon={UserPlus} variant="secondary" onClick={addPerson}>
+              Add person
+            </Button>
+          )
         }
       />
 
@@ -32,9 +36,11 @@ export function PeoplePage() {
             title="No one here yet"
             description="Add the people you lend money to. You can also add someone while recording a loan."
             action={
-              <Button icon={UserPlus} onClick={addPerson}>
-                Add your first person
-              </Button>
+              canEdit && (
+                <Button icon={UserPlus} onClick={addPerson}>
+                  Add your first person
+                </Button>
+              )
             }
           />
         </Card>

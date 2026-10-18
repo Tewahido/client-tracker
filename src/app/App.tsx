@@ -7,6 +7,7 @@ import { NotificationBell, useReminderNotifications } from '../features/reminder
 import { SettingsPage } from '../features/settings'
 import { useDeepLink } from '../hooks/useDeepLink'
 import { useHashRoute } from '../hooks/useHashRoute'
+import { usePermissions } from '../hooks/usePermissions'
 import { useTheme } from '../hooks/useTheme'
 import { LoanStoreProvider } from '../providers/LoanStoreProvider'
 import { useLoanStore } from '../providers/loanStoreContext'
@@ -41,6 +42,7 @@ function Layout() {
   const { backend, views } = useLoanStore()
   const overlay = useOverlay()
   const { status } = useWorkspace()
+  const { canEdit } = usePermissions()
   const overdue = views.filter((v) => v.status === 'overdue').length
   useReminderNotifications()
   useDeepLink(route)
@@ -50,7 +52,7 @@ function Layout() {
       <AppShell
         current={route.name}
         onNavigate={navigate}
-        onNewLoan={() => overlay.open({ type: 'loan-form' })}
+        onNewLoan={canEdit ? () => overlay.open({ type: 'loan-form' }) : undefined}
         loansBadge={overdue}
         backend={backend}
         actions={<NotificationBell onOpenLoan={(loanId) => overlay.open({ type: 'loan', loanId })} />}
