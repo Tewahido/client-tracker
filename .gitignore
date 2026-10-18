@@ -24,5 +24,6 @@ dist-ssr
 *.sw?
 
 # Local tooling
-.claude/
+.claude/launch.json
+.claude/settings.local.json
 .env.local
