@@ -4,6 +4,12 @@ Rules for anyone changing this repository, human or AI agent. CI enforces the pa
 
 ## Non-negotiables
 
+### 0. Never push to `main` and never merge pull requests
+
+- All work happens on a feature branch (`feat/…`, `fix/…`, `chore/…`) and reaches `main` only through a pull request.
+- **AI agents must never merge a PR**, enable auto-merge, or push to `main` in any form (`git push origin main`, `git push origin <ref>:main`, force-pushes). A human reviews and merges.
+- If a task seems to need a change on `main` (e.g. a missing base branch), stop and ask the repository owner.
+
 ### 1. Every pull request has a deep but brief description
 
 Use the template in [`.github/pull_request_template.md`](.github/pull_request_template.md). A good description lets a reviewer understand the change **without reading the diff first**:
