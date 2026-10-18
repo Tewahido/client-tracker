@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { X } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Button } from '../Button'
 import { modalStyles as s } from './Modal.styles'
@@ -35,6 +35,8 @@ interface ModalProps {
 /** Dialog that slides up as a sheet on phones and pops in centered on larger screens. */
 export function Modal({ open, onClose, title, description, wide, children }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null)
+  const titleId = useId()
+  const descriptionId = useId()
   // Read the latest onClose without re-running the open/close effect (which would steal focus).
   const onCloseRef = useRef(onClose)
   useEffect(() => {
@@ -78,6 +80,8 @@ export function Modal({ open, onClose, title, description, wide, children }: Mod
               ref={panelRef}
               role="dialog"
               aria-modal="true"
+              aria-labelledby={titleId}
+              aria-describedby={description ? descriptionId : undefined}
               tabIndex={-1}
               className={clsx(s.panel, s.width[wide ? 'wide' : 'normal'])}
               initial={{ opacity: 0, y: 40, scale: 0.98 }}
@@ -89,8 +93,14 @@ export function Modal({ open, onClose, title, description, wide, children }: Mod
               <div className={s.handle} />
               <div className={s.header}>
                 <div className={s.titleWrap}>
-                  <h2 className={s.title}>{title}</h2>
-                  {description && <p className={s.description}>{description}</p>}
+                  <h2 id={titleId} className={s.title}>
+                    {title}
+                  </h2>
+                  {description && (
+                    <p id={descriptionId} className={s.description}>
+                      {description}
+                    </p>
+                  )}
                 </div>
                 <Button variant="ghost" size="sm" iconOnly icon={X} aria-label="Close" onClick={onClose} />
               </div>
