@@ -15,7 +15,7 @@ export const DEFAULT_REMINDER_TEMPLATE =
   "Hi {name}! Just a friendly reminder that {amount} is due {due}. Let me know if you need anything. Thanks! {lender}"
 
 export const DEFAULT_SETTINGS: Settings = {
-  currency: 'USD',
+  currency: 'ZAR',
   reminderDays: 3,
   notificationsEnabled: false,
   lenderName: '',

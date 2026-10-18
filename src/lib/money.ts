@@ -29,6 +29,8 @@ export function formatMoney(cents: number, currency: string, options: { compact?
       formatter = new Intl.NumberFormat(undefined, {
         style: 'currency',
         currency,
+        // "R 1,500.00" rather than "ZAR 1,500.00" in locales that don't own the currency.
+        currencyDisplay: 'narrowSymbol',
         notation: options.compact ? 'compact' : 'standard',
         maximumFractionDigits: options.compact ? 1 : 2,
       })
