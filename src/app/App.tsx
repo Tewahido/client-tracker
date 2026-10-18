@@ -2,6 +2,8 @@ import { Toaster } from 'sonner'
 import { DashboardPage } from '../features/dashboard'
 import { isLoanFilter, LoansPage } from '../features/loans'
 import { PeoplePage } from '../features/people'
+import { NotificationBell, useReminderNotifications } from '../features/reminders'
+import { useDeepLink } from '../hooks/useDeepLink'
 import { useHashRoute } from '../hooks/useHashRoute'
 import { useTheme } from '../hooks/useTheme'
 import { LoanStoreProvider } from '../providers/LoanStoreProvider'
@@ -34,6 +36,8 @@ function Layout() {
   const { backend, views } = useLoanStore()
   const overlay = useOverlay()
   const overdue = views.filter((v) => v.status === 'overdue').length
+  useReminderNotifications()
+  useDeepLink(route)
 
   return (
     <>
@@ -43,6 +47,7 @@ function Layout() {
         onNewLoan={() => overlay.open({ type: 'loan-form' })}
         loansBadge={overdue}
         backend={backend}
+        actions={<NotificationBell onOpenLoan={(loanId) => overlay.open({ type: 'loan', loanId })} />}
       >
         <Page route={route} />
       </AppShell>

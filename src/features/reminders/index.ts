@@ -1,2 +1,5 @@
 export { LoanReminderActions } from './components/LoanReminderActions'
+export { NotificationBell } from './components/NotificationBell'
 export { useCalendarExport } from './hooks/useCalendarExport'
+export { useNotificationPermission } from './hooks/useNotificationPermission'
+export { useReminderNotifications } from './hooks/useReminderNotifications'
