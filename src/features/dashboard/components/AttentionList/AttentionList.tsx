@@ -32,7 +32,7 @@ export function AttentionList({ views, onOpen }: { views: LoanView[]; onOpen: (l
               <div className={clsx(s.due, v.status === 'overdue' && s.dueUrgent)}>{dueLabel(v)}</div>
             </div>
             <span className={s.amount}>{money(v.balanceCents)}</span>
-            <StatusBadge status={v.status} />
+            <StatusBadge status={v.status} className={s.badge} />
           </button>
         </li>
       ))}
