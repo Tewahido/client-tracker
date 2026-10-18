@@ -15,6 +15,7 @@ import { SettingsProvider } from '../providers/SettingsProvider'
 import { WorkspaceProvider } from '../providers/WorkspaceProvider'
 import { useWorkspace } from '../providers/workspaceContext'
 import { AppShell } from './AppShell'
+import { LoadError } from './LoadError'
 import { OverlayHost } from './OverlayHost'
 import { OverlayProvider } from './OverlayProvider'
 import { useOverlay } from './overlayContext'
@@ -39,7 +40,7 @@ function Page({ route }: { route: Route }) {
 
 function Layout() {
   const { route, navigate } = useHashRoute()
-  const { backend, views } = useLoanStore()
+  const { backend, views, status: loadStatus, error: loadError, reload } = useLoanStore()
   const overlay = useOverlay()
   const { status } = useWorkspace()
   const { canEdit } = usePermissions()
@@ -58,7 +59,7 @@ function Layout() {
         actions={<NotificationBell onOpenLoan={(loanId) => overlay.open({ type: 'loan', loanId })} />}
         workspace={status === 'ready' ? <OrgSwitcher onCreate={() => overlay.open({ type: 'org-form' })} /> : undefined}
       >
-        <Page route={route} />
+        {loadStatus === 'error' ? <LoadError message={loadError} onRetry={reload} /> : <Page route={route} />}
       </AppShell>
       <OverlayHost />
     </>

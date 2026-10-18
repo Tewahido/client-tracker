@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { useToday } from '../hooks/useToday'
 import { buildLoanViews } from '../lib/loans'
 import type { Snapshot } from '../lib/types'
 import { createRepository, type DataRepository } from '../services/storage'
+import { INITIAL_LOAD_STATE, loadFailed, loadSucceeded, type LoadState } from './loadState'
 import { LoanStoreContext, type LoanStoreValue } from './loanStoreContext'
 import { useSettings } from './settingsContext'
 
@@ -28,19 +29,25 @@ interface LoanStoreProviderProps {
 export function LoanStoreProvider({ orgId, children }: LoanStoreProviderProps) {
   const [repo] = useState<DataRepository>(() => createRepository(orgId))
   const [data, setData] = useState<Snapshot>(EMPTY)
-  const [status, setStatus] = useState<LoanStoreValue['status']>('loading')
-  const [error, setError] = useState<string | null>(null)
+  const [load, setLoad] = useState<LoadState>(INITIAL_LOAD_STATE)
+  // Read by reload() without making it change identity on every load.
+  const loadRef = useRef(load)
+  useEffect(() => {
+    loadRef.current = load
+  })
+  const { status, error } = load
   const { settings } = useSettings()
   const todayDate = useToday()
 
   const reload = useCallback(async () => {
     try {
       setData(await repo.load())
-      setStatus('ready')
-      setError(null)
+      setLoad(loadSucceeded())
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-      setStatus('error')
+      const message = err instanceof Error ? err.message : String(err)
+      const { state, notify } = loadFailed(loadRef.current, message)
+      setLoad(state)
+      if (notify) toast.error("Couldn't refresh. Showing the last data loaded.", { description: message })
     }
   }, [repo])
 
@@ -123,7 +130,8 @@ export function LoanStoreProvider({ orgId, children }: LoanStoreProviderProps) {
       },
       replaceAll: async (snapshot: Snapshot) => {
         await guard(repo.replaceAll(snapshot))
-        setData(snapshot)
+        // Read back what was stored: Supabase restores assign fresh ids.
+        setData(await repo.load())
       },
     }),
     [repo],
