@@ -7,6 +7,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: keyof typeof s.variant
   size?: keyof typeof s.size
   icon?: LucideIcon
+  /** Icon placed after the label, e.g. an arrow on "See all" links. */
+  trailingIcon?: LucideIcon
   loading?: boolean
   fullWidth?: boolean
   /** Renders a square button; `aria-label` is then required for accessibility. */
@@ -17,6 +19,7 @@ export function Button({
   variant = 'primary',
   size = 'md',
   icon: Icon,
+  trailingIcon: TrailingIcon,
   loading,
   fullWidth,
   iconOnly,
@@ -35,6 +38,7 @@ export function Button({
     >
       {loading ? <LoaderCircle className={s.spinner} /> : Icon && <Icon className={s.icon} strokeWidth={2.25} />}
       {children}
+      {TrailingIcon && <TrailingIcon className={s.icon} strokeWidth={2.25} />}
     </button>
   )
 }

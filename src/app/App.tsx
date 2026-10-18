@@ -1,4 +1,5 @@
 import { Toaster } from 'sonner'
+import { DashboardPage } from '../features/dashboard'
 import { isLoanFilter, LoansPage } from '../features/loans'
 import { PeoplePage } from '../features/people'
 import { useHashRoute } from '../hooks/useHashRoute'
@@ -14,6 +15,8 @@ import type { Route } from './routes'
 
 function Page({ route }: { route: Route }) {
   switch (route.name) {
+    case 'home':
+      return <DashboardPage />
     case 'loans': {
       const status = route.params.get('status')
       // Keyed so following a dashboard link (e.g. #loans?status=overdue) resets the filter.

@@ -11,6 +11,8 @@
   --muted: #64748b;
   --glow-1: rgb(52 211 153 / 0.18);
   --glow-2: rgb(139 92 246 / 0.12);
+  /* Chart series colour, validated for contrast and lightness against this surface. */
+  --chart-1: #059669;
   color-scheme: light;
 }
 
@@ -23,6 +25,7 @@
   --muted: #8b94a7;
   --glow-1: rgb(52 211 153 / 0.14);
   --glow-2: rgb(139 92 246 / 0.14);
+  --chart-1: #14a87a;
   color-scheme: dark;
 }
 
@@ -34,6 +37,7 @@
   --color-line: var(--line);
   --color-fg: var(--fg);
   --color-muted: var(--muted);
+  --color-chart-1: var(--chart-1);
 }
 
 @theme {

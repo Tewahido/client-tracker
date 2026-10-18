@@ -1,0 +1,1 @@
+export { CollectionsChart } from './CollectionsChart'
