@@ -130,11 +130,12 @@ export function LoanStoreProvider({ orgId, children }: LoanStoreProviderProps) {
       },
       replaceAll: async (snapshot: Snapshot) => {
         await guard(repo.replaceAll(snapshot))
-        // Read back what was stored: Supabase restores assign fresh ids.
-        setData(await repo.load())
+        // Read back what was stored (restores assign fresh ids). If only this read fails,
+        // reload() keeps the old view and says so; the restore itself already succeeded.
+        await reload()
       },
     }),
-    [repo],
+    [repo, reload],
   )
 
   const views = useMemo(

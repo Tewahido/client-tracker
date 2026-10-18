@@ -1,3 +1,4 @@
+import { withFreshIds } from '../../lib/snapshot'
 import type { Snapshot } from '../../lib/types'
 import type { DataRepository } from './repository'
 
@@ -91,7 +92,8 @@ export function createLocalRepository(): DataRepository {
     },
 
     async replaceAll(snapshot) {
-      commit(snapshot)
+      // Fresh ids, like the Supabase restore, so both backends behave the same.
+      commit(withFreshIds(snapshot))
     },
   }
 }

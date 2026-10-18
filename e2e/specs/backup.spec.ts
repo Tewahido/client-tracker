@@ -29,6 +29,12 @@ test('restores a backup and keeps working with the restored loans', async ({ app
   await loanDetail.recordPayment()
   await payment.pay('200')
   await expect(loanDetail.balance).toHaveText(/300\.00/)
+
+  // After a reload the payment must still belong to the restored loan (not a stale id).
+  await app.page.reload()
+  await loans.open()
+  await loans.row('Backed Up').click()
+  await expect(loanDetail.balance).toHaveText(/300\.00/)
 })
 
 test('restores a backup dropped onto the drop zone', async ({ app, loans, settings }) => {
