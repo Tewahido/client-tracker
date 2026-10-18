@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Rules for anyone changing this repository, human or AI agent. CI enforces the parts it can; reviewers enforce the rest.
+Rules for anyone changing this repository, human or AI agent. Checks run **locally before every push** (there is no CI on GitHub); the pre-push hook enforces the automated parts and the review steps below cover the rest.
 
 ## Non-negotiables
 
@@ -28,23 +28,40 @@ Brief means no filler. Deep means a reviewer learns the *why* and the *risks*, n
 - **Business logic** (`src/lib/`) gets Vitest unit tests next to the code (`*.test.ts`).
 - **Database changes** (`supabase/migrations/`) get Row Level Security / behaviour tests in `supabase/tests/` (PGlite runs the real migrations).
 - **Bug fixes** start with a test that fails before the fix.
-- If something genuinely cannot be tested automatically (pure styling, copy changes), say so in the PR under *How it was tested*, and add the `no-tests-needed` label so the *Tests required* check passes.
+- If something genuinely cannot be tested automatically (pure styling, copy changes), say so in the PR under *How it was tested*, and push with `NO_TESTS_NEEDED=1` so the tests-required check passes.
 - Before you claim a test protects something, make it fail at least once (break the code temporarily) to prove it can.
 
 ### 3. Small, atomic commits
 
 One logical change per commit, Conventional Commit messages (`feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `chore`, `ci`). Never mix a refactor with a behaviour change.
 
-## Checks every PR must pass
+## Before every push
 
-| Check | Workflow | What it does |
+All checks run on your machine; a push only pushes.
+
+### 1. Automated checks: `npm run verify`
+
+The **pre-push hook** (`.githooks/pre-push`, enabled by `npm install`) runs this automatically and stops the push if anything fails. It also refuses any push to `main`.
+
+| Step | Command | What it does |
 | --- | --- | --- |
-| Type check, lint, tests, build | `ci.yml` | `npm run typecheck`, `npm run lint` (annotated inline on the PR), `npm test`, `npm run build` |
-| Tests required | `quality.yml` | Fails when `src/` or `supabase/migrations/` change without any test changes (unless labelled `no-tests-needed`) |
-| Dependency review | `quality.yml` | Blocks newly added dependencies with known high-severity vulnerabilities |
-| npm audit | `quality.yml` | Fails on high/critical advisories in production dependencies |
-| CodeQL | `codeql.yml` | GitHub's static security and quality analysis for TypeScript |
-| AI review | `ai-review.yml` | Two reviewers comment on the PR: security, and a code review that ends with a merge verdict; see [`.github/reviewers/`](.github/reviewers) |
+| Type check | `npm run typecheck` | TypeScript across app, service worker and config |
+| Lint | `npm run lint` | ESLint over the whole repo |
+| Tests required | `npm run check:tests` | Fails when the branch changes `src/` or `supabase/migrations/` without changing any tests |
+| Tests | `npm test` | Unit tests and database (RLS) tests in PGlite |
+| Dependency audit | `npm run audit:prod` | Fails on high/critical advisories in production dependencies |
+| Build | `npm run build` | Production build, including the service worker |
+
+Never bypass the hook (`--no-verify`). If a check is wrong, fix the check in its own commit.
+
+### 2. Reviews (AI agents must do this; humans should)
+
+Before pushing, run both reviewers on the branch and address their findings:
+
+- **`security-reviewer`**: tenant isolation, RLS, privilege escalation, auth, injection, data exposure.
+- **`code-reviewer`**: bugs, tests, conventions, design and PR description, ending with a merge verdict.
+
+They are Claude Code subagents in `.claude/agents/`, and their full briefs live in [`.github/reviewers/`](.github/reviewers). Fix what they find, or note in the PR description why a finding doesn't apply.
 
 ## Project conventions
 

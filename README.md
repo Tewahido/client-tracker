@@ -117,7 +117,8 @@ Conventions:
 | `npm run build` | Type-check and build for production into `dist/` |
 | `npm run preview` | Serve the production build locally |
 | `npm test` | Unit tests and database policy tests |
-| `npm run typecheck` / `npm run lint` | Static checks (also run in CI) |
+| `npm run typecheck` / `npm run lint` | Static checks |
+| `npm run verify` | Every check (typecheck, lint, tests-required, tests, audit, build); runs automatically before each `git push` |
 | `npm run icons` | Regenerate app icons from `public/favicon.svg` |
 
 ## Deploying
