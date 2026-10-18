@@ -1,13 +1,14 @@
 import { cn } from '../../../../lib/cn'
 import { Building2, Clock, Copy, LogOut, Trash2, UserMinus, UserPlus, X } from 'lucide-react'
 import { useState } from 'react'
-import { toast } from 'sonner'
 import { SettingsSection } from '../../../../components/layout/SettingsSection'
 import { Avatar, Button, ConfirmDialog, SelectInput, TextInput } from '../../../../components/ui'
+import { useCopyToClipboard } from '../../../../hooks/useCopyToClipboard'
 import { formatDate } from '../../../../lib/dates'
 import { useWorkspace } from '../../../../providers/workspaceContext'
 import type { Member, OrgRole } from '../../../../services/organizations'
 import { useInviteForm } from '../../hooks/useInviteForm'
+import { useRenameOrgForm } from '../../hooks/useRenameOrgForm'
 import { useOrganizationAdmin, type OrganizationAdmin } from '../../hooks/useOrganizationAdmin'
 import { InviteList } from '../InviteList'
 import { organizationSectionStyles as s } from './OrganizationSection.styles'
@@ -110,21 +111,10 @@ export function OrganizationSection({ onCreateOrg }: { onCreateOrg: () => void }
 }
 
 function RenameForm({ name, onRename }: { name: string; onRename: (name: string) => Promise<boolean> }) {
-  const [value, setValue] = useState(name)
-  const [busy, setBusy] = useState(false)
-  const changed = value.trim() !== name && value.trim().length > 0
+  const { value, setValue, busy, changed, submit } = useRenameOrgForm(name, onRename)
 
   return (
-    <form
-      className={s.inline}
-      onSubmit={async (e) => {
-        e.preventDefault()
-        if (!changed) return
-        setBusy(true)
-        await onRename(value.trim())
-        setBusy(false)
-      }}
-    >
+    <form className={s.inline} onSubmit={submit}>
       <TextInput label="Name" value={value} onChange={(e) => setValue(e.target.value)} className={s.grow} maxLength={80} />
       <Button type="submit" variant="secondary" disabled={!changed} loading={busy}>
         Save
@@ -178,16 +168,8 @@ function MemberList({ admin, onRemove }: { admin: OrganizationAdmin; onRemove: (
 
 function InviteBlock({ admin }: { admin: OrganizationAdmin }) {
   const form = useInviteForm(admin.invite)
-  const appUrl = window.location.origin
-
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(appUrl)
-      toast.success('Link copied')
-    } catch {
-      toast.error("Couldn't copy. The link is " + appUrl)
-    }
-  }
+  const copy = useCopyToClipboard()
+  const copyLink = () => copy(window.location.origin, 'Link copied')
 
   return (
     <div className={s.block}>
