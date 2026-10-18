@@ -1,4 +1,5 @@
 import { Toaster } from 'sonner'
+import { PeoplePage } from '../features/people'
 import { useHashRoute } from '../hooks/useHashRoute'
 import { useTheme } from '../hooks/useTheme'
 import { LoanStoreProvider } from '../providers/LoanStoreProvider'
@@ -12,6 +13,8 @@ import type { RouteName } from './routes'
 
 function Page({ name }: { name: RouteName }) {
   switch (name) {
+    case 'people':
+      return <PeoplePage />
     default:
       return <p className="text-muted">Coming soon: {name}</p>
   }
