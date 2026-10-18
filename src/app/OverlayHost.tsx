@@ -1,5 +1,6 @@
 import { LoanDetailModal, LoanFormModal, PaymentFormModal } from '../features/loans'
 import { PersonDetailModal, PersonFormModal } from '../features/people'
+import { LoanReminderActions } from '../features/reminders'
 import { useOverlay, type Overlay } from './overlayContext'
 
 /** Renders every open dialog, bottom of the stack first so the newest sits on top. */
@@ -35,6 +36,7 @@ function OverlayView({ overlay }: { overlay: Overlay }) {
           onEdit={() => open({ type: 'loan-form', loanId: overlay.loanId })}
           onRecordPayment={() => open({ type: 'payment', loanId: overlay.loanId })}
           onOpenPerson={(borrowerId) => open({ type: 'person', borrowerId })}
+          extraActions={<LoanReminderActions loanId={overlay.loanId} />}
         />
       )
     case 'payment':

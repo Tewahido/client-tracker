@@ -5,7 +5,6 @@ export type Overlay =
   | { type: 'loan-form'; loanId?: string; borrowerId?: string }
   | { type: 'loan'; loanId: string }
   | { type: 'payment'; loanId: string }
-  | { type: 'remind'; loanId: string }
   | { type: 'person-form'; borrowerId?: string }
   | { type: 'person'; borrowerId: string }
 
