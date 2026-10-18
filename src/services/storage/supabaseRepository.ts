@@ -93,8 +93,8 @@ function unwrap<T>(result: { data: T | null; error: { message: string } | null }
 }
 
 /**
- * Stores data in Supabase. Row Level Security (see supabase/migrations) scopes
- * every query to the signed-in user, so no user filter is needed here.
+ * Stores data in Supabase. Row Level Security (see supabase/migrations) limits
+ * access to allow-listed members, who all share one ledger; no user filter is needed here.
  */
 export function createSupabaseRepository(client: SupabaseClient): DataRepository {
   return {
