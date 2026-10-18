@@ -132,3 +132,72 @@ describe('organisations', () => {
     expect(await db.query('select * from borrowers where org_id = $1', [orgA]).then((r) => r.rows)).toHaveLength(0)
   })
 })
+
+describe('roles and permissions', () => {
+  let org: string
+  let borrower: string
+  let loan: string
+
+  /** Invite `user` to `org` with `role` and accept on their behalf. */
+  async function join(user: User, role: 'member' | 'viewer') {
+    const [invite] = await as<{ id: string }>('alice', 'insert into organization_invites (org_id, email, role) values ($1, $2, $3) returning id', [
+      org,
+      users[user].email,
+      role,
+    ])
+    await as(user, 'select public.accept_invite($1)', [invite.id])
+  }
+
+  beforeAll(async () => {
+    org = await createOrg('alice', 'Permissions Co')
+    await join('bob', 'member')
+    await join('carol', 'viewer')
+    ;[{ id: borrower }] = await as<{ id: string }>('alice', "insert into borrowers (org_id, name) values ($1, 'Thandi') returning id", [org])
+    ;[{ id: loan }] = await as<{ id: string }>('alice', "insert into loans (org_id, borrower_id, principal_cents, due_on) values ($1, $2, 9000, '2026-12-01') returning id", [org, borrower])
+  })
+
+  it('lets viewers read but not write', async () => {
+    expect(await as('carol', 'select * from loans where org_id = $1', [org])).toHaveLength(1)
+    await expect(as('carol', "insert into borrowers (org_id, name) values ($1, 'Nope')", [org])).rejects.toThrow(/row-level security/)
+    await expect(as('carol', 'insert into payments (org_id, loan_id, amount_cents) values ($1, $2, 100)', [org, loan])).rejects.toThrow(/row-level security/)
+    const updated = await as('carol', "update loans set note = 'hacked' where id = $1 returning id", [loan])
+    expect(updated).toHaveLength(0)
+  })
+
+  it('lets members add and edit but not delete people or loans', async () => {
+    await as('bob', "update loans set note = 'Car repair' where id = $1", [loan])
+    await as('bob', "insert into borrowers (org_id, name) values ($1, 'Bob added')", [org])
+
+    expect(await as('bob', 'delete from loans where id = $1 returning id', [loan])).toHaveLength(0)
+    expect(await as('bob', 'delete from borrowers where id = $1 returning id', [borrower])).toHaveLength(0)
+  })
+
+  it('reserves forgiving a loan for owners', async () => {
+    await expect(as('bob', "update loans set written_off_on = '2026-10-18' where id = $1", [loan])).rejects.toThrow(/Only organisation owners/)
+    await as('alice', "update loans set written_off_on = '2026-10-18' where id = $1", [loan])
+    await as('alice', 'update loans set written_off_on = null where id = $1', [loan])
+  })
+
+  it('lets members remove only the payments they recorded', async () => {
+    const [mine] = await as<{ id: string; created_by: string }>('bob', 'insert into payments (org_id, loan_id, amount_cents) values ($1, $2, 1000) returning id, created_by', [org, loan])
+    expect(mine.created_by).toBe(users.bob.id)
+    const [alices] = await as<{ id: string }>('alice', 'insert into payments (org_id, loan_id, amount_cents) values ($1, $2, 2000) returning id', [org, loan])
+
+    expect(await as('bob', 'delete from payments where id = $1 returning id', [alices.id])).toHaveLength(0)
+    expect(await as('bob', 'delete from payments where id = $1 returning id', [mine.id])).toHaveLength(1)
+  })
+
+  it('stamps created_by itself so it cannot be spoofed', async () => {
+    const [row] = await as<{ created_by: string }>('bob', 'insert into payments (org_id, loan_id, amount_cents, created_by) values ($1, $2, 500, $3) returning created_by', [
+      org,
+      loan,
+      users.alice.id,
+    ])
+    expect(row.created_by).toBe(users.bob.id)
+  })
+
+  it('lets owners delete anything', async () => {
+    expect(await as('alice', 'delete from borrowers where id = $1 returning id', [borrower])).toHaveLength(1)
+    expect(await as('alice', 'select * from loans where id = $1', [loan])).toHaveLength(0)
+  })
+})
