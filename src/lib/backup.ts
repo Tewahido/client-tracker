@@ -17,7 +17,8 @@ export function serializeBackup(data: Snapshot, now = new Date()): string {
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null
 const isDate = (v: unknown) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)
-const isInt = (v: unknown) => Number.isInteger(v) && (v as number) >= 0
+/** Amounts must be whole cents above zero, matching the database's check constraints. */
+const isPositiveCents = (v: unknown) => Number.isInteger(v) && (v as number) > 0
 
 /** Parse and validate a backup file. Throws an Error with a user-facing message when invalid. */
 export function parseBackup(text: string): Backup {
@@ -42,15 +43,24 @@ export function parseBackup(text: string): Backup {
     if (!isObject(b) || typeof b.id !== 'string' || typeof b.name !== 'string') throw bad('person', i)
   })
   data.loans.forEach((l, i) => {
-    if (!isObject(l) || typeof l.id !== 'string' || typeof l.borrowerId !== 'string' || !isInt(l.principalCents) || !isDate(l.lentOn) || !isDate(l.dueOn)) {
+    if (!isObject(l) || typeof l.id !== 'string' || typeof l.borrowerId !== 'string' || !isPositiveCents(l.principalCents) || !isDate(l.lentOn) || !isDate(l.dueOn)) {
       throw bad('loan', i)
     }
   })
   data.payments.forEach((p, i) => {
-    if (!isObject(p) || typeof p.id !== 'string' || typeof p.loanId !== 'string' || !isInt(p.amountCents) || !isDate(p.paidOn)) {
+    if (!isObject(p) || typeof p.id !== 'string' || typeof p.loanId !== 'string' || !isPositiveCents(p.amountCents) || !isDate(p.paidOn)) {
       throw bad('payment', i)
     }
   })
+
+  for (const [label, rows] of [
+    ['people', data.borrowers],
+    ['loans', data.loans],
+    ['payments', data.payments],
+  ] as const) {
+    const ids = rows.map((r) => (r as { id: string }).id)
+    if (new Set(ids).size !== ids.length) throw new Error(`The backup lists some ${label} more than once.`)
+  }
 
   return parsed as unknown as Backup
 }

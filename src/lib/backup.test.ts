@@ -39,4 +39,16 @@ describe('backup', () => {
     broken.data.loans[0].principalCents = 'lots'
     expect(() => parseBackup(JSON.stringify(broken))).toThrow('invalid loan (entry 1)')
   })
+
+  it('rejects zero amounts, which the database would refuse mid-restore', () => {
+    const zero = JSON.parse(serializeBackup(snapshot))
+    zero.data.payments[0].amountCents = 0
+    expect(() => parseBackup(JSON.stringify(zero))).toThrow('invalid payment (entry 1)')
+  })
+
+  it('rejects duplicate ids', () => {
+    const dup = JSON.parse(serializeBackup(snapshot))
+    dup.data.loans.push({ ...dup.data.loans[0] })
+    expect(() => parseBackup(JSON.stringify(dup))).toThrow('lists some loans more than once')
+  })
 })
