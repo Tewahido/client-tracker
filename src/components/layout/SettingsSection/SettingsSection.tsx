@@ -24,8 +24,8 @@ export function SettingsSection({ icon: Icon, title, description, children }: Se
   )
 }
 
-/** Label/hint on the left, control on the right (stacked on phones). */
-export function SettingsRow({ label, hint, children }: { label: string; hint?: ReactNode; children: ReactNode }) {
+/** Label/hint on the left, an optional control on the right (stacked on phones). */
+export function SettingsRow({ label, hint, children }: { label: string; hint?: ReactNode; children?: ReactNode }) {
   return (
     <div className={s.row}>
       <div>
