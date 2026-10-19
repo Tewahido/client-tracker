@@ -1,0 +1,22 @@
+export const featureGridStyles = {
+  root: 'mx-auto w-full max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6',
+  head: 'mx-auto mb-12 max-w-2xl text-center',
+  eyebrow: 'text-xs font-bold tracking-widest text-brand-600 uppercase dark:text-brand-300',
+  title: 'mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl',
+  lead: 'mt-3 text-muted',
+  grid: 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3',
+  card: 'glass group relative overflow-hidden rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10',
+  shine: 'absolute -top-16 -right-16 h-40 w-40 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100',
+  icon: 'relative mb-4 flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-lg',
+  iconSvg: 'h-6 w-6',
+  cardTitle: 'relative text-lg font-bold',
+  cardText: 'relative mt-1.5 text-sm text-muted',
+  tone: {
+    emerald: { icon: 'bg-gradient-to-br from-emerald-400 to-teal-600 shadow-emerald-500/30', shine: 'bg-emerald-400/25' },
+    amber: { icon: 'bg-gradient-to-br from-amber-400 to-orange-600 shadow-amber-500/30', shine: 'bg-amber-400/25' },
+    violet: { icon: 'bg-gradient-to-br from-violet-400 to-fuchsia-600 shadow-violet-500/30', shine: 'bg-violet-400/25' },
+    sky: { icon: 'bg-gradient-to-br from-sky-400 to-indigo-600 shadow-sky-500/30', shine: 'bg-sky-400/25' },
+    rose: { icon: 'bg-gradient-to-br from-rose-400 to-pink-600 shadow-rose-500/30', shine: 'bg-rose-400/25' },
+    teal: { icon: 'bg-gradient-to-br from-cyan-400 to-blue-600 shadow-cyan-500/30', shine: 'bg-cyan-400/25' },
+  },
+}
