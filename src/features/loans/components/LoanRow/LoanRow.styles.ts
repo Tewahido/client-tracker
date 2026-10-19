@@ -1,0 +1,15 @@
+export const loanRowStyles = {
+  root: 'flex w-full flex-col gap-3 text-left',
+  top: 'flex items-center gap-3',
+  who: 'min-w-0 flex-1',
+  name: 'truncate font-bold',
+  sub: 'truncate text-xs text-muted',
+  amounts: 'text-right',
+  balance: 'text-lg font-extrabold tabular',
+  balanceDone: 'text-emerald-600 dark:text-emerald-300',
+  total: 'text-xs text-muted tabular',
+  bottom: 'flex items-center justify-between gap-3',
+  due: 'text-xs font-semibold text-muted',
+  dueUrgent: 'text-rose-500 dark:text-rose-400',
+  barWrap: 'flex-1',
+}

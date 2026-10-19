@@ -1,0 +1,9 @@
+Person,Phone,Status,Lent (ZAR),Interest %,Total due,Paid,Balance,Lent on,Due on,Paid off on,Note
+Sipho Dlamini,'+27 82 555 0141,Overdue,1500.00,10,1650.00,500.00,1150.00,2026-09-08,2026-10-13,,Car repair
+Sipho Dlamini,'+27 82 555 0141,Due today,400.00,0,400.00,0.00,400.00,2026-10-13,2026-10-18,,Groceries
+Thandi Nkosi,'+27 83 555 0177,Due soon,800.00,0,800.00,200.00,600.00,2026-09-28,2026-10-19,,School fees
+Lerato Mokoena,'+27 71 555 0102,On track,2500.00,5,2625.00,1400.00,1225.00,2026-08-19,2026-10-30,,Laptop
+Naledi Khumalo,'+27 72 555 0123,On track,1200.00,0,1200.00,0.00,1200.00,2026-10-08,2026-11-12,,Rent top-up
+Thandi Nkosi,'+27 83 555 0177,Paid,300.00,0,300.00,300.00,0.00,2026-06-20,2026-07-20,2026-07-15,
+Pieter van Wyk,'+27 84 555 0190,Paid,500.00,0,500.00,500.00,0.00,2026-07-20,2026-08-19,2026-08-24,
+Bongani Zulu,,Forgiven,200.00,0,200.00,0.00,200.00,2026-04-01,2026-05-21,,Taxi fare

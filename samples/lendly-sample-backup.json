@@ -1,0 +1,197 @@
+{
+  "format": "lendly-backup",
+  "version": 1,
+  "exportedAt": "2026-10-18T10:45:05.297Z",
+  "data": {
+    "borrowers": [
+      {
+        "id": "b0000000-0000-4000-8000-000000000001",
+        "name": "Sipho Dlamini",
+        "phone": "+27 82 555 0141",
+        "email": "sipho@example.com",
+        "notes": "Colleague",
+        "createdAt": "2026-06-20T10:45:05.296Z"
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000002",
+        "name": "Thandi Nkosi",
+        "phone": "+27 83 555 0177",
+        "email": null,
+        "notes": "Neighbour",
+        "createdAt": "2026-06-21T10:45:05.297Z"
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000003",
+        "name": "Lerato Mokoena",
+        "phone": "+27 71 555 0102",
+        "email": "lerato@example.com",
+        "notes": null,
+        "createdAt": "2026-06-22T10:45:05.297Z"
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000004",
+        "name": "Pieter van Wyk",
+        "phone": "+27 84 555 0190",
+        "email": null,
+        "notes": "Brother-in-law",
+        "createdAt": "2026-06-23T10:45:05.297Z"
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000005",
+        "name": "Naledi Khumalo",
+        "phone": "+27 72 555 0123",
+        "email": "naledi@example.com",
+        "notes": null,
+        "createdAt": "2026-06-24T10:45:05.297Z"
+      },
+      {
+        "id": "b0000000-0000-4000-8000-000000000006",
+        "name": "Bongani Zulu",
+        "phone": null,
+        "email": null,
+        "notes": "Pays in cash",
+        "createdAt": "2026-06-25T10:45:05.297Z"
+      }
+    ],
+    "loans": [
+      {
+        "id": "a0000000-0000-4000-8000-000000000007",
+        "borrowerId": "b0000000-0000-4000-8000-000000000001",
+        "principalCents": 150000,
+        "interestRate": 10,
+        "lentOn": "2026-09-08",
+        "dueOn": "2026-10-13",
+        "note": "Car repair",
+        "writtenOffOn": null,
+        "createdAt": "2026-09-08T10:45:05.297Z"
+      },
+      {
+        "id": "a0000000-0000-4000-8000-000000000008",
+        "borrowerId": "b0000000-0000-4000-8000-000000000002",
+        "principalCents": 80000,
+        "interestRate": 0,
+        "lentOn": "2026-09-28",
+        "dueOn": "2026-10-19",
+        "note": "School fees",
+        "writtenOffOn": null,
+        "createdAt": "2026-09-28T10:45:05.297Z"
+      },
+      {
+        "id": "a0000000-0000-4000-8000-000000000009",
+        "borrowerId": "b0000000-0000-4000-8000-000000000003",
+        "principalCents": 250000,
+        "interestRate": 5,
+        "lentOn": "2026-08-19",
+        "dueOn": "2026-10-30",
+        "note": "Laptop",
+        "writtenOffOn": null,
+        "createdAt": "2026-08-19T10:45:05.297Z"
+      },
+      {
+        "id": "a0000000-0000-4000-8000-000000000010",
+        "borrowerId": "b0000000-0000-4000-8000-000000000004",
+        "principalCents": 50000,
+        "interestRate": 0,
+        "lentOn": "2026-07-20",
+        "dueOn": "2026-08-19",
+        "note": null,
+        "writtenOffOn": null,
+        "createdAt": "2026-07-20T10:45:05.297Z"
+      },
+      {
+        "id": "a0000000-0000-4000-8000-000000000011",
+        "borrowerId": "b0000000-0000-4000-8000-000000000005",
+        "principalCents": 120000,
+        "interestRate": 0,
+        "lentOn": "2026-10-08",
+        "dueOn": "2026-11-12",
+        "note": "Rent top-up",
+        "writtenOffOn": null,
+        "createdAt": "2026-10-08T10:45:05.297Z"
+      },
+      {
+        "id": "a0000000-0000-4000-8000-000000000012",
+        "borrowerId": "b0000000-0000-4000-8000-000000000002",
+        "principalCents": 30000,
+        "interestRate": 0,
+        "lentOn": "2026-06-20",
+        "dueOn": "2026-07-20",
+        "note": null,
+        "writtenOffOn": null,
+        "createdAt": "2026-06-20T10:45:05.297Z"
+      },
+      {
+        "id": "a0000000-0000-4000-8000-000000000013",
+        "borrowerId": "b0000000-0000-4000-8000-000000000006",
+        "principalCents": 20000,
+        "interestRate": 0,
+        "lentOn": "2026-04-01",
+        "dueOn": "2026-05-21",
+        "note": "Taxi fare",
+        "writtenOffOn": "2026-07-10",
+        "createdAt": "2026-04-01T10:45:05.297Z"
+      },
+      {
+        "id": "a0000000-0000-4000-8000-000000000014",
+        "borrowerId": "b0000000-0000-4000-8000-000000000001",
+        "principalCents": 40000,
+        "interestRate": 0,
+        "lentOn": "2026-10-13",
+        "dueOn": "2026-10-18",
+        "note": "Groceries",
+        "writtenOffOn": null,
+        "createdAt": "2026-10-13T10:45:05.297Z"
+      }
+    ],
+    "payments": [
+      {
+        "id": "c0000000-0000-4000-8000-000000000015",
+        "loanId": "a0000000-0000-4000-8000-000000000007",
+        "amountCents": 50000,
+        "paidOn": "2026-10-03",
+        "note": "EFT",
+        "createdAt": "2026-10-03T10:45:05.297Z"
+      },
+      {
+        "id": "c0000000-0000-4000-8000-000000000016",
+        "loanId": "a0000000-0000-4000-8000-000000000009",
+        "amountCents": 100000,
+        "paidOn": "2026-09-18",
+        "note": "EFT",
+        "createdAt": "2026-09-18T10:45:05.297Z"
+      },
+      {
+        "id": "c0000000-0000-4000-8000-000000000017",
+        "loanId": "a0000000-0000-4000-8000-000000000009",
+        "amountCents": 40000,
+        "paidOn": "2026-10-15",
+        "note": "Cash",
+        "createdAt": "2026-10-15T10:45:05.297Z"
+      },
+      {
+        "id": "c0000000-0000-4000-8000-000000000018",
+        "loanId": "a0000000-0000-4000-8000-000000000010",
+        "amountCents": 50000,
+        "paidOn": "2026-08-24",
+        "note": "Paid in full",
+        "createdAt": "2026-08-24T10:45:05.297Z"
+      },
+      {
+        "id": "c0000000-0000-4000-8000-000000000019",
+        "loanId": "a0000000-0000-4000-8000-000000000012",
+        "amountCents": 30000,
+        "paidOn": "2026-07-15",
+        "note": "Cash",
+        "createdAt": "2026-07-15T10:45:05.297Z"
+      },
+      {
+        "id": "c0000000-0000-4000-8000-000000000020",
+        "loanId": "a0000000-0000-4000-8000-000000000008",
+        "amountCents": 20000,
+        "paidOn": "2026-10-16",
+        "note": "EFT",
+        "createdAt": "2026-10-16T10:45:05.297Z"
+      }
+    ]
+  }
+}
