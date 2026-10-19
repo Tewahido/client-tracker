@@ -1,4 +1,4 @@
-export const signInStyles = {
+export const signInPanelStyles = {
   title: 'text-xl font-bold tracking-tight',
   text: 'mt-1 text-sm text-muted',
   form: 'mt-6 flex flex-col gap-4',
