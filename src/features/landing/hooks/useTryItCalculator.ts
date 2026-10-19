@@ -4,6 +4,7 @@ import { useToday } from '../../../hooks/useToday'
 import { formatDate } from '../../../lib/dates'
 import { previewLoan, tryItProblem } from '../../../lib/loanPreview'
 import { parseMoney } from '../../../lib/money'
+import { useSettings } from '../../../providers/settingsContext'
 
 export const TRY_IT_TERMS = [7, 14, 30, 60, 90]
 
@@ -16,13 +17,14 @@ export function useTryItCalculator() {
   const [termDays, setTermDays] = useState(30)
   const money = useMoney()
   const today = useToday()
+  const { reminderDays } = useSettings().settings
 
   const { result, problem } = useMemo(() => {
     const principalCents = parseMoney(amount)
     const rate = Number(interest || 0)
     const problem = tryItProblem(principalCents, rate)
     if (problem || principalCents === null) return { result: null, problem }
-    const p = previewLoan({ principalCents, interestRate: rate, termDays, lentOn: today })
+    const p = previewLoan({ principalCents, interestRate: rate, termDays, lentOn: today, reminderDays })
     return {
       problem: null,
       result: {
@@ -33,7 +35,7 @@ export function useTryItCalculator() {
         remindOn: formatDate(p.firstReminderOn, DAY),
       },
     }
-  }, [amount, interest, termDays, money, today])
+  }, [amount, interest, termDays, money, today, reminderDays])
 
   return { amount, setAmount, interest, setInterest, termDays, setTermDays, result, problem }
 }
