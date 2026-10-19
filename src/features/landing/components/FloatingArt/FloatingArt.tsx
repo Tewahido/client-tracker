@@ -2,7 +2,7 @@ import { motion } from 'motion/react'
 import { cn } from '../../../../lib/cn'
 import { floatingArtStyles as s } from './FloatingArt.styles'
 
-export type LandingArt = 'banknotes' | 'bell' | 'calendar' | 'coin' | 'money-bag' | 'money-with-wings' | 'party-popper'
+export type LandingArt = 'banknotes' | 'bell' | 'coin' | 'money-bag' | 'money-with-wings' | 'party-popper'
 
 interface FloatingArtProps {
   art: LandingArt
