@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 
-/** The Supabase-mode sign-in screen. */
+/** The sign-up / sign-in card on the Supabase-mode landing page. */
 export class SignInPage {
   readonly heading
   readonly email
@@ -9,7 +9,7 @@ export class SignInPage {
   readonly linkProblem
 
   constructor(readonly page: Page) {
-    this.heading = page.getByRole('heading', { level: 1, name: 'Welcome' })
+    this.heading = page.getByRole('heading', { name: 'Get started free' })
     this.email = page.getByLabel('Email', { exact: true })
     this.sendLinkButton = page.getByRole('button', { name: 'Email me a sign-in link' })
     this.linkProblem = page.getByRole('alert')

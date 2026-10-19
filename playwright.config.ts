@@ -28,6 +28,7 @@ export default defineConfig({
     { name: 'desktop', testIgnore: AUTH_SPECS, use: { ...devices['Desktop Chrome'] } },
     { name: 'mobile', testIgnore: AUTH_SPECS, use: { ...devices['Pixel 7'] } },
     { name: 'auth', testMatch: AUTH_SPECS, use: { ...devices['Desktop Chrome'], baseURL: `http://localhost:${AUTH_PORT}` } },
+    { name: 'auth-mobile', testMatch: AUTH_SPECS, use: { ...devices['Pixel 7'], baseURL: `http://localhost:${AUTH_PORT}` } },
   ],
   webServer: [
     {
