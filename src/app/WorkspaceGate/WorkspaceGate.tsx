@@ -1,14 +1,16 @@
 import { RotateCcw } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { lazy, Suspense, type ReactNode } from 'react'
 import { CenteredLayout } from '../../components/layout/CenteredLayout'
 import { Button } from '../../components/ui'
-import { SignInScreen } from '../../features/auth'
 import { OnboardingScreen } from '../../features/organizations'
 import { useWorkspace } from '../../providers/workspaceContext'
 import { workspaceGateStyles as s } from './WorkspaceGate.styles'
 
+// Only signed-out visitors need the landing page; keep it out of the app's main bundle.
+const LandingPage = lazy(() => import('../../features/landing').then((m) => ({ default: m.LandingPage })))
+
 /**
- * Decides what to show before the main app: sign-in, organisation onboarding,
+ * Decides what to show before the main app: the landing page (with sign-in), organisation onboarding,
  * or the app itself for the active organisation (null orgId = local-only mode).
  */
 export function WorkspaceGate({ children }: { children: (orgId: string | null) => ReactNode }) {
@@ -20,7 +22,11 @@ export function WorkspaceGate({ children }: { children: (orgId: string | null) =
     case 'ready':
       return children(ws.activeOrg!.id)
     case 'signed-out':
-      return <SignInScreen />
+      return (
+        <Suspense fallback={<GateLoading />}>
+          <LandingPage />
+        </Suspense>
+      )
     case 'needs-org':
       return <OnboardingScreen />
     case 'error':
@@ -39,10 +45,14 @@ export function WorkspaceGate({ children }: { children: (orgId: string | null) =
         </CenteredLayout>
       )
     default:
-      return (
-        <div className={s.loading} aria-busy="true" aria-label="Loading">
-          <img src="/favicon.svg" alt="" className={s.loadingMark} />
-        </div>
-      )
+      return <GateLoading />
   }
+}
+
+function GateLoading() {
+  return (
+    <div className={s.loading} aria-busy="true" aria-label="Loading">
+      <img src="/favicon.svg" alt="" className={s.loadingMark} />
+    </div>
+  )
 }

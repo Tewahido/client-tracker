@@ -6,6 +6,8 @@ export const buttonStyles = {
     secondary: 'glass text-fg enabled:hover:bg-surface-2',
     ghost: 'text-muted enabled:hover:bg-surface-2 enabled:hover:text-fg',
     danger: 'bg-rose-500/10 text-rose-500 enabled:hover:bg-rose-500/20 dark:text-rose-400',
+    /** Solid dark button for use on bright, coloured surfaces. */
+    inverse: 'bg-emerald-950 text-white shadow-lg shadow-emerald-950/30 enabled:hover:bg-emerald-900',
   },
   size: {
     sm: 'h-8 px-3 text-xs',

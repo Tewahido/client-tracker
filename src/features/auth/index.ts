@@ -1,1 +1,1 @@
-export { SignInScreen } from './SignInScreen'
+export { SignInPanel } from './components/SignInPanel'

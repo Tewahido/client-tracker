@@ -1,0 +1,22 @@
+export const tryItStyles = {
+  root: 'mx-auto w-full max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6',
+  grid: 'grid items-center gap-10 lg:grid-cols-2',
+  eyebrow: 'text-xs font-bold tracking-widest text-brand-600 uppercase dark:text-brand-300',
+  title: 'mt-2 text-3xl font-extrabold tracking-tight text-balance sm:text-4xl',
+  lead: 'mt-3 max-w-lg text-balance text-muted',
+  form: 'glass mt-8 grid gap-4 rounded-3xl p-6 sm:grid-cols-3',
+  result: 'relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-300 via-brand-400 to-sky-brand p-8 text-emerald-950 shadow-2xl shadow-brand-500/25',
+  resultPattern:
+    'absolute inset-0 opacity-[0.12] [background-image:radial-gradient(circle_at_1px_1px,#022c22_1px,transparent_0)] [background-size:18px_18px]',
+  resultBody: 'relative',
+  resultLabel: 'text-xs font-bold tracking-widest text-emerald-950/60 uppercase',
+  // Scales down on phones and wraps rather than clipping a long amount.
+  resultTotal: 'mt-1 text-4xl font-extrabold tracking-tight break-words tabular sm:text-5xl',
+  resultSub: 'mt-1 text-sm font-semibold text-emerald-950/75',
+  timeline: 'mt-6 flex flex-col gap-3',
+  event: 'flex items-center gap-3 rounded-2xl bg-white/35 px-4 py-3 text-sm font-semibold backdrop-blur',
+  eventIcon: 'h-4 w-4 shrink-0',
+  eventWhen: 'ml-auto font-bold tabular',
+  invalid: 'relative text-sm font-semibold',
+  cta: 'mt-6',
+}
