@@ -2,6 +2,7 @@ import { CircleCheck } from 'lucide-react'
 import { motion } from 'motion/react'
 import type { RefObject } from 'react'
 import { SignInPanel } from '../../../auth'
+import { FloatingArt } from '../FloatingArt'
 import { HeroPreview } from '../HeroPreview'
 import { heroStyles as s } from './Hero.styles'
 
@@ -44,6 +45,7 @@ export function Hero({ signUpRef }: { signUpRef: RefObject<HTMLDivElement | null
           </motion.ul>
 
           <motion.div ref={signUpRef} className={s.card} variants={rise} initial="hidden" animate="show" custom={4}>
+            <FloatingArt art="money-with-wings" size={80} className={s.artPhone} eager />
             <SignInPanel
               title="Get started free"
               intro="Enter your email and we'll send you a sign-in link. New here? That creates your account."
@@ -52,6 +54,9 @@ export function Hero({ signUpRef }: { signUpRef: RefObject<HTMLDivElement | null
         </div>
 
         <div className={s.previewWrap}>
+          <FloatingArt art="money-bag" size={96} className={s.artBag} eager />
+          <FloatingArt art="money-with-wings" size={112} className={s.artWings} delay={0.8} eager />
+          <FloatingArt art="coin" size={80} className={s.artCoin} delay={1.6} eager />
           <HeroPreview />
         </div>
       </div>

@@ -50,7 +50,7 @@ export function HeroPreview() {
                 <div className={s.rowName}>{loan.name}</div>
                 <div className={s.rowSub}>{loan.detail}</div>
               </div>
-              <span className={s.rowAmount}>{money(loan.cents, { compact: true })}</span>
+              <span className={s.rowAmount}>{money(loan.cents)}</span>
               <ProgressRing value={progress[i]} size={40} stroke={4} colorClass={STATUS_META[loan.status].stroke} showLabel={false} />
               <StatusBadge status={loan.status} />
             </motion.div>

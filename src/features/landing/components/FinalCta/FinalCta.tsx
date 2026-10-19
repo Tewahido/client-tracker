@@ -1,6 +1,7 @@
 import { ArrowRight } from 'lucide-react'
 import { motion } from 'motion/react'
 import { Button } from '../../../../components/ui'
+import { FloatingArt } from '../FloatingArt'
 import { finalCtaStyles as s } from './FinalCta.styles'
 
 export function FinalCta({ onStart }: { onStart: () => void }) {
@@ -15,6 +16,8 @@ export function FinalCta({ onStart }: { onStart: () => void }) {
       >
         <div className={s.glowA} />
         <div className={s.glowB} />
+        <FloatingArt art="money-bag" size={112} className={s.artLeft} />
+        <FloatingArt art="coin" size={88} className={s.artRight} delay={1} />
         <div className={s.body}>
           <h2 id="cta-title" className={s.title}>
             Stop keeping score in your head
