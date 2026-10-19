@@ -21,3 +21,17 @@ test('shows no warning on a normal visit', async ({ signIn }) => {
   await expect(signIn.heading).toBeVisible()
   await expect(signIn.linkProblem).toHaveCount(0)
 })
+
+test('clears the warning once a new link is requested', async ({ signIn }) => {
+  await signIn.arriveFromEmailLink('#error=access_denied&error_code=otp_expired')
+  await expect(signIn.linkProblem).toBeVisible()
+  // The fake project can't send email, but the old warning must go as soon as we ask again.
+  await signIn.requestLink('lender@example.com')
+  await expect(signIn.linkProblem).toHaveCount(0)
+})
+
+test('never displays text taken from the link itself', async ({ signIn }) => {
+  await signIn.arriveFromEmailLink('#error=x&error_description=Your+account+is+locked.+Call+0800+123+456')
+  await expect(signIn.linkProblem).toContainText("That sign-in link didn't work")
+  await expect(signIn.linkProblem).not.toContainText('0800')
+})

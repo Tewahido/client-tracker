@@ -1,4 +1,4 @@
-import { useCallback, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { useWorkspace } from '../../../providers/workspaceContext'
 import { signInLinkError } from '../../../services/supabase'
 
@@ -15,7 +15,9 @@ export function useSignIn() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // Why the sign-in link that brought the user here failed (e.g. expired), if it did.
-  const [linkProblem, setLinkProblem] = useState<string | null>(signInLinkError)
+  // Consumed once, so it doesn't reappear when this screen mounts again after a sign-out.
+  const [linkProblem, setLinkProblem] = useState<string | null>(signInLinkError.peek)
+  useEffect(() => signInLinkError.clear(), [])
 
   const send = useCallback(
     async (e?: FormEvent) => {
@@ -48,6 +50,7 @@ export function useSignIn() {
       }
       setBusy(true)
       setError(null)
+      setLinkProblem(null)
       try {
         await verifyCode(email, code)
         // The auth listener takes it from here.

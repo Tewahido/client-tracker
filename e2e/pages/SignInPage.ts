@@ -20,6 +20,11 @@ export class SignInPage {
     await this.page.goto(`/${hash}`)
   }
 
+  async requestLink(email: string) {
+    await this.email.fill(email)
+    await this.sendLinkButton.click()
+  }
+
   async open() {
     await this.page.goto('/')
   }
