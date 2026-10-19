@@ -63,9 +63,9 @@ export function Hero({ signUpRef, signUpHighlighted }: { signUpRef: RefObject<HT
         </div>
 
         <div className={s.previewWrap}>
-          <FloatingArt art="money-bag" size={96} className={s.artBag} eager />
-          <FloatingArt art="money-with-wings" size={112} className={s.artWings} delay={0.8} eager />
-          <FloatingArt art="coin" size={80} className={s.artCoin} delay={1.6} eager />
+          <FloatingArt art="money-bag" size={96} className={s.artBag} />
+          <FloatingArt art="money-with-wings" size={112} className={s.artWings} delay={0.8} />
+          <FloatingArt art="coin" size={80} className={s.artCoin} delay={1.6} />
           <HeroPreview />
         </div>
       </div>
