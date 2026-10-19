@@ -17,6 +17,14 @@ export class SettingsPage extends AppPage {
     await this.goto('settings')
   }
 
+  /** Colours the browser uses to draw a dropdown's option list (it can't be screenshotted). */
+  async dropdownOptionColors(label: string): Promise<{ color: string; background: string }> {
+    return this.page.getByLabel(label).evaluate((select) => {
+      const style = getComputedStyle((select as HTMLSelectElement).options[0])
+      return { color: style.color, background: style.backgroundColor }
+    })
+  }
+
   themeTab(name: 'Auto' | 'Light' | 'Dark') {
     return this.page.getByRole('tab', { name })
   }

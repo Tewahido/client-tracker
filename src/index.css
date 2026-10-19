@@ -80,6 +80,17 @@
     cursor: not-allowed;
   }
 
+  /*
+   * Dropdown lists are drawn by the OS/browser. Selects use a translucent background, so
+   * give options a solid themed background and text colour; otherwise Chrome on Windows
+   * draws a white list and light dark-mode text disappears.
+   */
+  select option,
+  select optgroup {
+    background-color: var(--bg);
+    color: var(--fg);
+  }
+
   ::selection {
     @apply bg-brand-400/30;
   }
