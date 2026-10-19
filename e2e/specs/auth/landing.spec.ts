@@ -21,12 +21,14 @@ test.describe('landing page', () => {
     await landing.acceptSignInRequests()
     await landing.signUp('new.lender@example.com')
     await expect(landing.checkEmailHeading).toBeVisible()
-    await expect(landing.page.getByText('new.lender@example.com')).toBeVisible()
+    await expect(landing.text('new.lender@example.com')).toBeVisible()
   })
 
   test('every call to action takes you to the sign-up email field', async ({ landing }) => {
     for (const cta of [landing.navSignIn, landing.trackRealLoan, landing.finalCta]) {
-      await landing.page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+      await landing.clearFocus()
+      // Start each check from an un-highlighted card, or a leftover highlight would pass it.
+      await expect.poll(() => landing.signUpHighlighted(), { timeout: 4000 }).toBe(false)
       await cta.click()
       await expect(landing.signUpEmail).toBeFocused()
       // A visible cue shows where the button took you.
@@ -68,6 +70,21 @@ test.describe('landing page', () => {
   })
 })
 
+test.describe('sign-up highlight timing', () => {
+  test('clicking another call to action restarts the highlight', async ({ landing }) => {
+    await landing.controlTime()
+    await landing.open()
+    await landing.navSignIn.click()
+    await landing.advanceTime(1200)
+    await landing.navSignIn.click()
+    // 2.2 s after the first click, but only 1 s after the second: still highlighted.
+    await landing.advanceTime(1000)
+    expect(await landing.signUpHighlighted()).toBe(true)
+    await landing.advanceTime(1000)
+    expect(await landing.signUpHighlighted()).toBe(false)
+  })
+})
+
 test.describe('landing navigation (desktop)', () => {
   test.skip(({ isMobile }) => !!isMobile, 'section links are in the desktop nav')
 
@@ -86,7 +103,8 @@ test.describe('with reduced motion', () => {
 
   test('shows the hero preview in its final state straight away', async ({ landing }) => {
     await landing.open()
-    // No waiting for timed animations: the reminder is already there.
-    await expect(landing.reminderToast).toBeVisible({ timeout: 1000 })
+    await expect(landing.headline).toBeVisible()
+    // No timed animations: the reminder is fully shown straight away (normally it waits ~1.5 s).
+    await expect(landing.reminderToast).toHaveCSS('opacity', '1', { timeout: 300 })
   })
 })

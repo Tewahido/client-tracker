@@ -32,13 +32,22 @@ export class LandingPage {
     this.calculatorAmount = tryIt.getByLabel('Amount lent')
     this.calculatorInterest = tryIt.getByLabel('Interest %')
     this.calculatorTerm = tryIt.getByLabel('Pay back in')
-    this.calculatorResult = tryIt.locator('[aria-live="polite"]')
+    this.calculatorResult = tryIt.getByRole('status', { name: 'Loan preview' })
     this.trackRealLoan = tryIt.getByRole('button', { name: 'Track a real loan' })
     this.finalCta = page.getByRole('button', { name: /Get started, it's free/ })
   }
 
   async open() {
     await this.page.goto('/')
+  }
+
+  /** Take control of timers (call before open), so time-based behaviour can be stepped through. */
+  async controlTime() {
+    await this.page.clock.install()
+  }
+
+  async advanceTime(ms: number) {
+    await this.page.clock.runFor(ms)
   }
 
   navLink(name: 'Features' | 'How it works' | 'Try it') {
@@ -63,6 +72,16 @@ export class LandingPage {
     await this.calculatorAmount.fill(amount)
     await this.calculatorInterest.fill(interest)
     await this.calculatorTerm.selectOption({ label: term })
+  }
+
+  /** Text shown anywhere on the page, e.g. the email address in "Check your email". */
+  text(value: string) {
+    return this.page.getByText(value)
+  }
+
+  /** Move keyboard focus away, so a test can see a CTA put it back on the email field. */
+  async clearFocus() {
+    await this.page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
   }
 
   /** Whether the sign-up card is showing its "you are here" highlight. */
