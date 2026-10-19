@@ -46,7 +46,8 @@ export function TryItCalculator({ onStart }: { onStart: () => void }) {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.5 }}
-          aria-live="polite"
+          role="status"
+          aria-label="Loan preview"
         >
           <div className={s.resultPattern} />
           <div className={s.resultBody}>
