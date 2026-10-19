@@ -1,11 +1,11 @@
-import { ArrowRight, MailCheck } from 'lucide-react'
+import { ArrowRight, MailCheck, TriangleAlert } from 'lucide-react'
 import { CenteredLayout } from '../../../components/layout/CenteredLayout'
 import { Button, TextInput } from '../../../components/ui'
 import { useSignIn } from '../hooks/useSignIn'
 import { signInStyles as s } from './SignInScreen.styles'
 
 export function SignInScreen() {
-  const { stage, email, setEmail, code, setCode, busy, error, send, verify, startOver } = useSignIn()
+  const { stage, email, setEmail, code, setCode, busy, error, linkProblem, send, verify, startOver } = useSignIn()
 
   return (
     <CenteredLayout footer="No password needed. We'll email you a secure sign-in link.">
@@ -13,6 +13,12 @@ export function SignInScreen() {
         <>
           <h1 className={s.title}>Welcome</h1>
           <p className={s.text}>Sign in or create an account to track loans with your team.</p>
+          {linkProblem && (
+            <div role="alert" className={s.notice}>
+              <TriangleAlert className={s.noticeIcon} />
+              <p>{linkProblem}</p>
+            </div>
+          )}
           <form className={s.form} onSubmit={send} noValidate>
             <TextInput
               label="Email"
