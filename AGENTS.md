@@ -62,6 +62,7 @@ Before pushing, run both reviewers on the branch and address their findings:
 
 - **`security-reviewer`**: tenant isolation, RLS, privilege escalation, auth, injection, data exposure.
 - **`code-reviewer`**: bugs, tests, conventions, design and PR description, ending with a merge verdict.
+- **`ux-reviewer`** (for any change people can see): first impression, task flow, hierarchy, brand consistency, mobile, accessibility and copy, judged from real screenshots of the running app.
 
 They are Claude Code subagents in `.claude/agents/`, and their full briefs live in [`.github/reviewers/`](.github/reviewers). Fix what they find, or note in the PR description why a finding doesn't apply.
 
