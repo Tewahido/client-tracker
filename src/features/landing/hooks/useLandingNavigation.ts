@@ -9,14 +9,17 @@ export type LandingSection = 'features' | 'how-it-works' | 'try-it'
  */
 export function useLandingNavigation() {
   const signUpRef = useRef<HTMLDivElement>(null)
-  // Briefly highlights the card so people see where a call to action took them.
+  // Briefly highlights the card so people see where a call to action took them. Each
+  // click bumps the counter, which restarts the timer even if the highlight is still on.
+  const [highlightRequest, setHighlightRequest] = useState(0)
   const [signUpHighlighted, setSignUpHighlighted] = useState(false)
 
   useEffect(() => {
-    if (!signUpHighlighted) return
+    if (highlightRequest === 0) return
+    setSignUpHighlighted(true)
     const timer = window.setTimeout(() => setSignUpHighlighted(false), 1600)
     return () => window.clearTimeout(timer)
-  }, [signUpHighlighted])
+  }, [highlightRequest])
 
   const scrollTo = useCallback((section: LandingSection) => {
     document.getElementById(section)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -29,7 +32,7 @@ export function useLandingNavigation() {
     card.scrollIntoView({ behavior: 'smooth', block: 'start' })
     // Focus without a second jump; the smooth scroll above handles positioning.
     card.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true })
-    setSignUpHighlighted(true)
+    setHighlightRequest((n) => n + 1)
   }, [])
 
   return { signUpRef, signUpHighlighted, scrollTo, goToSignUp }
