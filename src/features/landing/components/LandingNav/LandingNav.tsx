@@ -29,7 +29,7 @@ export function LandingNav({ onNavigate, onSignIn }: LandingNavProps) {
           ))}
         </div>
         <div className={s.actions}>
-          <Button variant="secondary" size="sm" onClick={onSignIn}>
+          <Button variant="secondary" size="sm" className={s.signIn} onClick={onSignIn}>
             Sign in
           </Button>
         </div>

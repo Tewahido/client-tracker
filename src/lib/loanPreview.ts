@@ -32,3 +32,15 @@ export function previewLoan({ principalCents, interestRate, termDays, lentOn, re
     firstReminderOn: reminder < lentOn ? lentOn : reminder,
   }
 }
+
+/** Most anyone would lend in the calculator; keeps figures readable and believable. */
+export const TRY_IT_MAX_CENTS = 1_000_000_000 // R10,000,000
+export const TRY_IT_MAX_RATE = 100
+
+/** A friendly message for the first thing wrong with the calculator inputs, or null. */
+export function tryItProblem(principalCents: number | null, interestRate: number): string | null {
+  if (principalCents === null || principalCents <= 0) return 'Enter how much you lent.'
+  if (principalCents > TRY_IT_MAX_CENTS) return 'Try an amount up to 10 million.'
+  if (!Number.isFinite(interestRate) || interestRate < 0 || interestRate > TRY_IT_MAX_RATE) return 'Interest can be anything from 0% to 100%.'
+  return null
+}

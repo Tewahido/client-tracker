@@ -11,7 +11,7 @@ import { landingPageStyles as s } from './LandingPage.styles'
 
 /** What signed-out visitors see: what Lendly does, with sign-up (passwordless) built into the hero. */
 export function LandingPage() {
-  const { signUpRef, scrollTo, goToSignUp } = useLandingNavigation()
+  const { signUpRef, signUpHighlighted, scrollTo, goToSignUp } = useLandingNavigation()
 
   return (
     // Honour the OS "reduce motion" setting for every animation on the page.
@@ -19,7 +19,7 @@ export function LandingPage() {
       <div className={s.root}>
         <LandingNav onNavigate={scrollTo} onSignIn={goToSignUp} />
         <main>
-          <Hero signUpRef={signUpRef} />
+          <Hero signUpRef={signUpRef} signUpHighlighted={signUpHighlighted} />
           <FeatureGrid />
           <HowItWorks />
           <TryItCalculator onStart={goToSignUp} />

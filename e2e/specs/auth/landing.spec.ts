@@ -29,6 +29,8 @@ test.describe('landing page', () => {
       await landing.page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
       await cta.click()
       await expect(landing.signUpEmail).toBeFocused()
+      // A visible cue shows where the button took you.
+      await expect.poll(() => landing.signUpHighlighted()).toBe(true)
     }
   })
 
@@ -39,7 +41,23 @@ test.describe('landing page', () => {
     await expect(landing.calculatorResult).toContainText('Payment due')
 
     await landing.calculatorAmount.fill('abc')
-    await expect(landing.calculatorResult).toContainText('Enter an amount')
+    await expect(landing.calculatorResult).toContainText('Enter how much you lent.')
+    await landing.useCalculator({ amount: '1500', interest: '250', term: '1 month' })
+    await expect(landing.calculatorResult).toContainText('Interest can be anything from 0% to 100%.')
+    await landing.useCalculator({ amount: '99999999', interest: '10', term: '1 month' })
+    await expect(landing.calculatorResult).toContainText('Try an amount up to 10 million.')
+  })
+
+  test('the largest allowed amount still fits its card', async ({ landing }) => {
+    await landing.useCalculator({ amount: '10000000', interest: '100', term: '3 months' })
+    await expect(landing.calculatorResult).toContainText('20,000,000.00')
+    expect(await landing.calculatorOverflows()).toBe(false)
+  })
+
+  test('the Sign in button is big enough to tap on phones', async ({ landing, isMobile }) => {
+    test.skip(!isMobile, 'touch target size matters on phones')
+    const box = await landing.navSignIn.boundingBox()
+    expect(box?.height).toBeGreaterThanOrEqual(44)
   })
 
   test('the phone layout never scrolls sideways', async ({ landing }) => {

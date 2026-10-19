@@ -1,6 +1,7 @@
 import { CircleCheck } from 'lucide-react'
 import { motion } from 'motion/react'
 import type { RefObject } from 'react'
+import { cn } from '../../../../lib/cn'
 import { SignInPanel } from '../../../auth'
 import { FloatingArt } from '../FloatingArt'
 import { HeroPreview } from '../HeroPreview'
@@ -14,7 +15,7 @@ const rise = {
 }
 
 /** Headline, promise and the sign-up card, beside an animated preview of the app. */
-export function Hero({ signUpRef }: { signUpRef: RefObject<HTMLDivElement | null> }) {
+export function Hero({ signUpRef, signUpHighlighted }: { signUpRef: RefObject<HTMLDivElement | null>; signUpHighlighted: boolean }) {
   return (
     <section className={s.root} aria-labelledby="landing-title">
       <div className={s.blobs}>
@@ -44,7 +45,15 @@ export function Hero({ signUpRef }: { signUpRef: RefObject<HTMLDivElement | null
             ))}
           </motion.ul>
 
-          <motion.div ref={signUpRef} className={s.card} variants={rise} initial="hidden" animate="show" custom={4}>
+          <motion.div
+            ref={signUpRef}
+            data-highlighted={signUpHighlighted || undefined}
+            className={cn(s.card, signUpHighlighted && s.cardHighlighted)}
+            variants={rise}
+            initial="hidden"
+            animate="show"
+            custom={4}
+          >
             <FloatingArt art="money-with-wings" size={80} className={s.artPhone} eager />
             <SignInPanel
               title="Get started free"

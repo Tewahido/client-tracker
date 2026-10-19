@@ -7,4 +7,6 @@ export const landingNavStyles = {
   links: 'hidden items-center gap-1 md:flex',
   link: 'rounded-lg px-3 py-2 text-sm font-semibold text-muted transition-colors hover:bg-surface-2 hover:text-fg',
   actions: 'flex items-center gap-2',
+  /** 44px tall on phones (touch target), compact from sm up. */
+  signIn: 'h-11 px-4 text-sm sm:h-8 sm:px-3 sm:text-xs',
 }

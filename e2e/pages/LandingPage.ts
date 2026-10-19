@@ -65,6 +65,19 @@ export class LandingPage {
     await this.calculatorTerm.selectOption({ label: term })
   }
 
+  /** Whether the sign-up card is showing its "you are here" highlight. */
+  async signUpHighlighted(): Promise<boolean> {
+    return (await this.page.locator('[data-highlighted]').count()) > 0
+  }
+
+  /** True when the calculator's figures don't fit their card (clipped or overflowing). */
+  async calculatorOverflows(): Promise<boolean> {
+    // Text wider than its box (e.g. a long amount that can't wrap) shows up as scrollWidth > clientWidth.
+    return this.calculatorResult.evaluate((card) =>
+      Array.from(card.querySelectorAll<HTMLElement>('*')).some((el) => el.clientWidth > 0 && el.scrollWidth > el.clientWidth + 1),
+    )
+  }
+
   /** True when the page is wider than the screen (sideways scrolling on phones). */
   async overflowsHorizontally(): Promise<boolean> {
     return this.page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)

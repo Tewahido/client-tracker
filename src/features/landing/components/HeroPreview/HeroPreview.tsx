@@ -7,8 +7,8 @@ import { useHeroDemo } from '../../hooks/useHeroDemo'
 import { heroPreviewStyles as s } from './HeroPreview.styles'
 
 const SAMPLE: { name: string; detail: string; cents: number; status: LoanStatus }[] = [
-  { name: 'Sipho Dlamini', detail: 'Car repair · due in 3 days', cents: 115_000, status: 'due-soon' },
-  { name: 'Thandi Nkosi', detail: 'School fees · paid on time', cents: 80_000, status: 'paid' },
+  { name: 'Sipho Dlamini', detail: 'Due Friday', cents: 115_000, status: 'due-soon' },
+  { name: 'Thandi Nkosi', detail: 'Paid on time', cents: 80_000, status: 'paid' },
 ]
 const TOTAL_OUT_CENTS = 417_500
 

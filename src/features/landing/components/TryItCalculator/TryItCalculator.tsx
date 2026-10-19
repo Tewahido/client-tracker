@@ -9,7 +9,7 @@ import { tryItStyles as s } from './TryItCalculator.styles'
 
 /** Interactive preview: play with a loan and see what Lendly would track and when it would remind you. */
 export function TryItCalculator({ onStart }: { onStart: () => void }) {
-  const { amount, setAmount, interest, setInterest, termDays, setTermDays, result } = useTryItCalculator()
+  const { amount, setAmount, interest, setInterest, termDays, setTermDays, result, problem } = useTryItCalculator()
   const { defaults } = useLendingDefaults()
 
   return (
@@ -68,7 +68,7 @@ export function TryItCalculator({ onStart }: { onStart: () => void }) {
                 <div className={s.resultSub}>Including {result.interest} interest</div>
                 <ul className={s.timeline}>
                   <li className={s.event}>
-                    <HandCoins className={s.eventIcon} /> Lent today
+                    <HandCoins className={s.eventIcon} /> Lent today <span className={s.eventWhen}>{result.lentOn}</span>
                   </li>
                   <li className={s.event}>
                     <BellRing className={s.eventIcon} /> Lendly reminds you <span className={s.eventWhen}>{result.remindOn}</span>
@@ -79,7 +79,7 @@ export function TryItCalculator({ onStart }: { onStart: () => void }) {
                 </ul>
               </>
             ) : (
-              <p className={s.invalid}>Enter an amount and an interest rate between 0 and 1000%.</p>
+              <p className={s.invalid}>{problem}</p>
             )}
             <div className={s.cta}>
               <Button variant="inverse" size="lg" trailingIcon={ArrowRight} onClick={onStart}>

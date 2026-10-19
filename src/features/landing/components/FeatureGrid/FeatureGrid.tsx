@@ -12,11 +12,11 @@ interface Feature {
 
 const FEATURES: Feature[] = [
   { icon: HandCoins, tone: 'emerald', title: 'Every loan at a glance', text: 'Amounts, interest, partial payments and what is still owed, with progress you can see.' },
-  { icon: BellRing, tone: 'amber', title: 'Reminders before it gets awkward', text: 'A nudge before, on and after the due date, plus calendar alerts that work even when the app is closed.' },
+  { icon: BellRing, tone: 'cyan', title: 'Reminders before it gets awkward', text: 'A nudge before, on and after the due date, plus calendar alerts that work even when the app is closed.' },
   { icon: Users, tone: 'violet', title: 'Share it with your partner', text: 'One ledger for your household or team, with owner, member and view-only roles.' },
-  { icon: Star, tone: 'sky', title: 'Know who pays on time', text: 'Each person gets an on-time rating, so the next "can I borrow…" is an easier call.' },
-  { icon: FileSpreadsheet, tone: 'rose', title: 'Your records, your way', text: 'Export to a spreadsheet, download a backup, and restore it anywhere by drag and drop.' },
-  { icon: ShieldCheck, tone: 'teal', title: 'Private by design', text: 'Only people you invite can see your organisation. It installs on your phone and works offline.' },
+  { icon: Star, tone: 'emerald', title: 'Know who pays on time', text: 'Each person gets an on-time rating, so the next "can I borrow…" is an easier call.' },
+  { icon: FileSpreadsheet, tone: 'cyan', title: 'Your records, your way', text: 'Export to a spreadsheet, download a backup, and restore it anywhere by drag and drop.' },
+  { icon: ShieldCheck, tone: 'violet', title: 'Private by design', text: 'Only people you invite can see your organisation. It installs on your phone and works offline.' },
 ]
 
 export function FeatureGrid() {

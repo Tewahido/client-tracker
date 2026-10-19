@@ -6,7 +6,7 @@ export const finalCtaStyles = {
   body: 'relative mx-auto max-w-xl',
   artLeft: 'absolute top-1/2 left-8 hidden w-28 -translate-y-1/2 md:block',
   artRight: 'absolute top-10 right-10 hidden w-22 md:block',
-  title: 'text-3xl font-extrabold tracking-tight sm:text-4xl',
+  title: 'text-3xl font-extrabold tracking-tight text-balance sm:text-4xl',
   text: 'mt-3 text-muted',
   action: 'mt-8 flex justify-center',
 }
