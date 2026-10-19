@@ -52,7 +52,7 @@ The **pre-push hook** (`.githooks/pre-push`, enabled by `npm install`; run `npx 
 | Tests | `npm test` | Unit tests and database (RLS) tests in PGlite |
 | Dependency audit | `npm run audit:prod` | Fails on high/critical advisories in production dependencies |
 | Build | `npm run build` | Production build, including the service worker |
-| End-to-end | `npm run test:e2e` | Playwright on desktop and phone viewports, against the app in local mode |
+| End-to-end | `npm run test:e2e` | Playwright on desktop and phone viewports against the app in local mode, plus an `auth` project that runs Supabase-mode screens (sign-in) against a fake project; specs under `e2e/specs/auth/` run only there |
 
 Never bypass the hook (`--no-verify`). If a check is wrong, fix the check in its own commit.
 
