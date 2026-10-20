@@ -14,6 +14,7 @@
     "icons": "node scripts/generate-icons.mjs",
     "check:tests": "node scripts/tests-required.mjs",
     "audit:prod": "npm audit --omit=dev --audit-level=high",
+    "deploy:functions": "npx supabase functions deploy send-invite --no-verify-jwt",
     "verify": "npm run typecheck && npm run lint && npm run check:tests && npm test && npm run audit:prod && npm run build && npm run test:e2e",
     "prepare": "git config core.hooksPath .githooks",
     "test:e2e": "playwright test",

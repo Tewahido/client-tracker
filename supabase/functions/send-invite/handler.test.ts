@@ -1,3 +1,4 @@
+import { corsHeaders as supabaseCors } from '@supabase/supabase-js/cors'
 import { describe, expect, it, vi } from 'vitest'
 import { ClaimError, handleSendInvite, type SendInviteDeps } from './handler'
 
@@ -8,6 +9,7 @@ function deps(overrides: Partial<SendInviteDeps> = {}) {
     claim: vi.fn(async () => ({ email: 'partner@example.com', orgName: 'Test Lenders', inviterEmail: 'owner@example.com' })),
     inviteNewUser: vi.fn(async (): Promise<'sent' | 'exists'> => 'sent'),
     sendSignInLink: vi.fn(async () => {}),
+    release: vi.fn(async () => {}),
     ...overrides,
   }
 }
@@ -25,6 +27,7 @@ describe('send-invite', () => {
     expect(d.claim).toHaveBeenCalledWith('Bearer user-token', INVITE_ID)
     expect(d.inviteNewUser).toHaveBeenCalledWith('partner@example.com', { invited_to: 'Test Lenders', invited_by: 'owner@example.com' })
     expect(d.sendSignInLink).not.toHaveBeenCalled()
+    expect(d.release).not.toHaveBeenCalled()
   })
 
   it('sends a sign-in link instead when the address already has an account', async () => {
@@ -47,6 +50,33 @@ describe('send-invite', () => {
       expect(d.inviteNewUser).not.toHaveBeenCalled()
       expect(d.sendSignInLink).not.toHaveBeenCalled()
     }
+  })
+
+  it('logs why a send failed, for the project owner, without telling the browser', async () => {
+    const log = vi.fn()
+    const d = deps({ log, inviteNewUser: vi.fn(async () => Promise.reject(Object.assign(new Error('Error sending invite email'), { status: 500, code: 'unexpected_failure' }))) })
+    const res = await handleSendInvite(post({ inviteId: INVITE_ID }), d)
+
+    expect(res.status).toBe(502)
+    expect(log).toHaveBeenCalledWith('send-invite: sending the email failed', { code: 'unexpected_failure', status: 500, message: 'Error sending invite email' })
+    expect(await res.text()).not.toContain('Error sending invite email')
+  })
+
+  it('releases the claim when the email fails, so a retry is not blocked by the limits', async () => {
+    const d = deps({ inviteNewUser: vi.fn(async () => Promise.reject(new Error('525 Unauthorized IP address'))) })
+    expect((await handleSendInvite(post({ inviteId: INVITE_ID }), d)).status).toBe(502)
+    expect(d.release).toHaveBeenCalledWith(INVITE_ID)
+  })
+
+  it('still answers 502 (and logs) when releasing the claim also fails', async () => {
+    const log = vi.fn()
+    const d = deps({
+      log,
+      inviteNewUser: vi.fn(async () => Promise.reject(new Error('smtp down'))),
+      release: vi.fn(async () => Promise.reject(new Error('db down'))),
+    })
+    expect((await handleSendInvite(post({ inviteId: INVITE_ID }), d)).status).toBe(502)
+    expect(log).toHaveBeenCalledWith('send-invite: releasing the claim failed', expect.objectContaining({ message: 'db down' }))
   })
 
   it('reports a failed send without leaking the provider’s error', async () => {
@@ -76,9 +106,19 @@ describe('send-invite', () => {
     expect(d.claim).not.toHaveBeenCalled()
   })
 
-  it('answers the browser’s CORS preflight', async () => {
+  it('allows every header supabase-js may send, or browsers silently drop the call', async () => {
     const res = await handleSendInvite(new Request('https://x/functions/v1/send-invite', { method: 'OPTIONS' }), deps())
     expect(res.status).toBe(204)
-    expect(res.headers.get('Access-Control-Allow-Headers')).toContain('authorization')
+    const allowed = res.headers.get('Access-Control-Allow-Headers')!.split(',').map((h) => h.trim())
+    const sdkSends = supabaseCors['Access-Control-Allow-Headers'].split(',').map((h) => h.trim())
+    expect(allowed).toEqual(expect.arrayContaining(sdkSends))
+  })
+
+  it('answers 401 when the database rejects the caller’s token', async () => {
+    for (const code of ['PGRST301', 'PGRST302', 'PGRST303']) {
+      const d = deps({ claim: vi.fn(async () => Promise.reject(new ClaimError(code, 'JWT invalid'))) })
+      expect((await handleSendInvite(post({ inviteId: INVITE_ID }), d)).status).toBe(401)
+      expect(d.inviteNewUser).not.toHaveBeenCalled()
+    }
   })
 })

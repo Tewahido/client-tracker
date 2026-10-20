@@ -18,10 +18,15 @@ if it isn't deployed or fails, the app falls back to "share the invite yourself"
 ### Set-up (once, by the project owner)
 
 1. **Apply the migration**: `npx supabase db push` (asks for your database password).
-2. **Deploy the function** (after `npx supabase login`):
+2. **Deploy the function** (after `npx supabase login` and `npx supabase link`):
    ```bash
-   npx supabase functions deploy send-invite --project-ref <your-project-ref>
+   npm run deploy:functions
    ```
+   This deploys with `--no-verify-jwt`. Projects using Supabase's newer asymmetric (ES256)
+   signing keys get every signed-in request rejected by the gateway's JWT check, so the
+   function would never run. The token is still verified: the function forwards it to
+   `claim_invite_email`, PostgREST validates it, and a missing or invalid token can't pass
+   the owner check (the function answers 401).
 3. **Site URL**: Dashboard › Authentication › URL Configuration › *Site URL* must be the
    address people open Lendly at. Invite links point there.
 4. **Email templates**: Dashboard › Authentication › Email Templates. Paste:
