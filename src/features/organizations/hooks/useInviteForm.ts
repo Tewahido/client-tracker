@@ -1,15 +1,15 @@
 import { useCallback, useState, type FormEvent } from 'react'
-import type { OrgRole } from '../../../services/organizations'
+import type { InviteDelivery, OrgRole } from '../../../services/organizations'
 
-export type SentInvite = { email: string; role: OrgRole; emailed: boolean }
+export type SentInvite = { email: string; role: OrgRole; delivery: InviteDelivery }
 
 /**
  * Email + role fields for inviting someone; `send` resolves to null when the invite failed,
- * or says whether it was also emailed.
+ * or says what happened to its email.
  * After a success `sentOpen` is true and `sent` holds the invite, so the screen can explain
  * the next steps. `sent` outlives `sentOpen` so the dialog keeps its content while it closes.
  */
-export function useInviteForm(send: (email: string, role: OrgRole) => Promise<{ emailed: boolean } | null>) {
+export function useInviteForm(send: (email: string, role: OrgRole) => Promise<{ delivery: InviteDelivery } | null>) {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<OrgRole>('member')
   const [error, setError] = useState<string | null>(null)
@@ -26,7 +26,7 @@ export function useInviteForm(send: (email: string, role: OrgRole) => Promise<{ 
       setError(null)
       const result = await send(value, role)
       if (result) {
-        setSent({ email: value, role, emailed: result.emailed })
+        setSent({ email: value, role, delivery: result.delivery })
         setSentOpen(true)
         setEmail('')
         setRole('member')

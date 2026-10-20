@@ -45,7 +45,8 @@ test('emails the invite and says so', async ({ org, backend }) => {
   await org.invite('Partner@Example.com', 'Viewer')
 
   await expect(org.inviteSent.root).toBeVisible()
-  await expect(org.inviteSent.root).toContainText(`We emailed partner@example.com a link to join ${ORG.name} as a Viewer`)
+  await expect(org.inviteSent.root).toContainText(`We emailed partner@example.com an invite to join ${ORG.name} as a Viewer`)
+  await expect(org.inviteSent.root).toContainText('tap Accept invite')
   // The function was asked to email exactly the invite that was just created.
   expect(backend.emailed).toEqual(backend.invites.map((i) => i.id))
   expect(backend.emailed).toHaveLength(1)
@@ -57,8 +58,25 @@ test('emails the invite and says so', async ({ org, backend }) => {
   await expect(org.pendingInvite('partner@example.com')).toBeVisible()
 })
 
+test('tells the owner when someone who already uses Lendly was sent a sign-in link', async ({ org, backend }) => {
+  backend.emailResult = 'sign-in-link'
+  await org.invite('partner@example.com')
+
+  await expect(org.inviteSent.root).toContainText('partner@example.com already uses Lendly, so we emailed them a sign-in link')
+  // That email doesn't name the inviter, so sharing a personal message is suggested.
+  await expect(org.inviteSent.root).toContainText("doesn't mention you")
+})
+
+test('says why when the invite was not emailed because of the limits', async ({ org, backend }) => {
+  backend.emailResult = 'rate-limited'
+  await org.invite('partner@example.com')
+
+  await expect(org.inviteReady.root).toContainText('sent lots of invites recently')
+  await expect(org.inviteReady.sendButton).toBeVisible()
+})
+
 test('when the email cannot be sent, explains how to share the invite instead', async ({ org, backend }) => {
-  backend.emailWorks = false
+  backend.emailResult = 'failed'
   // The old always-visible instructions are gone from the form.
   await expect(org.text(/Send them the app link/)).toBeHidden()
 
@@ -75,7 +93,7 @@ test('when the email cannot be sent, explains how to share the invite instead', 
 })
 
 test('the invite message says who invited them and which email to use', async ({ org, backend }) => {
-  backend.emailWorks = false
+  backend.emailResult = 'failed'
   await org.invite('partner@example.com')
   await org.inviteReady.sendButton.click()
   await expect.poll(() => org.lastInviteMessage()).toContain(`added you to ${ORG.name} on Lendly`)
@@ -95,20 +113,24 @@ test('a failed invite shows the error and no next steps', async ({ org, backend 
 
   await expect(org.toast('That email has already been invited')).toBeVisible()
   await expect(org.inviteReady.root).toBeHidden()
+  await expect(org.inviteSent.root).toBeHidden()
+  // No invite was created, so there was nothing to email.
+  expect(backend.emailed).toEqual([])
   await expect(org.inviteEmail).toHaveValue('partner@example.com')
 })
 
 test.describe('on a very narrow phone', () => {
   test.use({ viewport: { width: 320, height: 640 } })
 
-  test('the role guide and a long pending invite still fit the screen', async ({ org, backend }) => {
-    backend.emailWorks = false
+  test('the role guide, the invite dialog and a long pending invite all fit the screen', async ({ org }) => {
     await org.roleInfoButton.click()
     expect(await org.roleGuideFitsWindow()).toBe(true)
     await org.page.keyboard.press('Escape')
 
     await org.invite('a.really.long.email.address@example.com')
-    await org.inviteReady.doneButton.click()
+    await expect(org.inviteSent.root).toBeVisible()
+    expect(await org.overflowsHorizontally()).toBe(false)
+    await org.inviteSent.doneButton.click()
     await expect(org.pendingInvite('a.really.long.email.address@example.com')).toBeVisible()
     expect(await org.overflowsHorizontally()).toBe(false)
   })

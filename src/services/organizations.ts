@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { type SupabaseClient, FunctionsHttpError } from '@supabase/supabase-js'
 
 export type OrgRole = 'owner' | 'member' | 'viewer'
 
@@ -62,6 +62,12 @@ const toInvite = (r: InviteRow): Invite => ({
   role: r.role,
   createdAt: r.created_at,
 })
+
+/**
+ * What happened to an invite's email: an invite email or (existing account) a sign-in link
+ * was sent, the database's rate limit refused it, or it failed for another reason.
+ */
+export type InviteDelivery = 'invite' | 'sign-in-link' | 'rate-limited' | 'failed'
 
 /** Organisation membership and invitations. Access rules live in the database (RLS + RPCs). */
 export function createOrganizationService(client: SupabaseClient) {
@@ -147,16 +153,21 @@ export function createOrganizationService(client: SupabaseClient) {
     },
 
     /**
-     * Asks the send-invite Edge Function to email the invitee. Resolves false (never throws)
-     * when it couldn't: not deployed, rate limited, or mail failed. The invite still exists
-     * and can be shared by hand.
+     * Asks the send-invite Edge Function to email the invitee, and says what happened.
+     * Never throws: when no email went out (not deployed, rate limited, mail failed, or
+     * no answer within 10 s) the invite still exists and can be shared by hand.
      */
-    async emailInvite(inviteId: string): Promise<boolean> {
+    async emailInvite(inviteId: string): Promise<InviteDelivery> {
       try {
-        const { error } = await client.functions.invoke('send-invite', { body: { inviteId } })
-        return !error
+        const { data, error } = await client.functions.invoke<{ kind?: string }>('send-invite', {
+          body: { inviteId },
+          timeout: 10_000,
+        })
+        if (!error) return data?.kind === 'sign-in-link' ? 'sign-in-link' : 'invite'
+        if (error instanceof FunctionsHttpError && (error.context as Response | undefined)?.status === 429) return 'rate-limited'
+        return 'failed'
       } catch {
-        return false
+        return 'failed'
       }
     },
 
