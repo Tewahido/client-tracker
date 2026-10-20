@@ -1,3 +1,4 @@
+import { corsHeaders as supabaseCors } from '@supabase/supabase-js/cors'
 import { describe, expect, it, vi } from 'vitest'
 import { ClaimError, handleSendInvite, type SendInviteDeps } from './handler'
 
@@ -76,9 +77,19 @@ describe('send-invite', () => {
     expect(d.claim).not.toHaveBeenCalled()
   })
 
-  it('answers the browser’s CORS preflight', async () => {
+  it('allows every header supabase-js may send, or browsers silently drop the call', async () => {
     const res = await handleSendInvite(new Request('https://x/functions/v1/send-invite', { method: 'OPTIONS' }), deps())
     expect(res.status).toBe(204)
-    expect(res.headers.get('Access-Control-Allow-Headers')).toContain('authorization')
+    const allowed = res.headers.get('Access-Control-Allow-Headers')!.split(',').map((h) => h.trim())
+    const sdkSends = supabaseCors['Access-Control-Allow-Headers'].split(',').map((h) => h.trim())
+    expect(allowed).toEqual(expect.arrayContaining(sdkSends))
+  })
+
+  it('answers 401 when the database rejects the caller’s token', async () => {
+    for (const code of ['PGRST301', 'PGRST302', 'PGRST303']) {
+      const d = deps({ claim: vi.fn(async () => Promise.reject(new ClaimError(code, 'JWT invalid'))) })
+      expect((await handleSendInvite(post({ inviteId: INVITE_ID }), d)).status).toBe(401)
+      expect(d.inviteNewUser).not.toHaveBeenCalled()
+    }
   })
 })

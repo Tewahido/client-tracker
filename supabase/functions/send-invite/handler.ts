@@ -36,9 +36,11 @@ export interface SendInviteDeps {
 /** What the invitee was sent: an invite email, or (already a user) a sign-in link. */
 export type InviteEmailKind = 'invite' | 'sign-in-link'
 
+// Every header supabase-js may send (its own list is in '@supabase/supabase-js/cors'; a test
+// keeps this in step). A header missing here makes the browser drop the request silently.
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-retry-count, traceparent, tracestate, baggage',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
@@ -47,8 +49,13 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const reply = (status: number, body: Record<string, unknown>) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } })
 
-/** Database error codes from claim_invite_email, mapped to HTTP statuses. */
-const CLAIM_STATUS: Record<string, number> = { '42501': 403, P0001: 429 }
+/**
+ * Error codes from the claim, mapped to HTTP statuses: claim_invite_email's own (not an
+ * owner, rate limited) and PostgREST's for a missing, invalid or expired token. The token is
+ * verified there rather than at Supabase's gateway, which can't verify this project's
+ * asymmetric (ES256) tokens; see supabase/functions/README.md.
+ */
+const CLAIM_STATUS: Record<string, number> = { '42501': 403, P0001: 429, PGRST301: 401, PGRST302: 401, PGRST303: 401 }
 
 export async function handleSendInvite(req: Request, deps: SendInviteDeps): Promise<Response> {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS })
