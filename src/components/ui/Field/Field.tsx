@@ -48,9 +48,9 @@ export function Field({ label, labelAccessory, hint, error, className, children 
 
 type Common = { label: string; labelAccessory?: ReactNode; hint?: ReactNode; error?: string | null; className?: string }
 
-export function TextInput({ label, hint, error, className, prefix, ...rest }: Common & InputHTMLAttributes<HTMLInputElement> & { prefix?: string }) {
+export function TextInput({ label, labelAccessory, hint, error, className, prefix, ...rest }: Common & InputHTMLAttributes<HTMLInputElement> & { prefix?: string }) {
   return (
-    <Field label={label} hint={hint} error={error} className={className}>
+    <Field label={label} labelAccessory={labelAccessory} hint={hint} error={error} className={className}>
       {(id, describedBy) => (
         <div className={s.adornmentWrap}>
           {prefix && <span className={s.adornment}>{prefix}</span>}
@@ -67,9 +67,9 @@ export function TextInput({ label, hint, error, className, prefix, ...rest }: Co
   )
 }
 
-export function TextArea({ label, hint, error, className, ...rest }: Common & TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function TextArea({ label, labelAccessory, hint, error, className, ...rest }: Common & TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
-    <Field label={label} hint={hint} error={error} className={className}>
+    <Field label={label} labelAccessory={labelAccessory} hint={hint} error={error} className={className}>
       {(id, describedBy) => <textarea id={id} aria-describedby={describedBy} aria-invalid={!!error} className={s.textarea} {...rest} />}
     </Field>
   )
