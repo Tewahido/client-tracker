@@ -11,7 +11,7 @@ interface InfoTipProps {
 
 /** A small info button that opens extra help on click or tap (works on phones, unlike hover tooltips). */
 export function InfoTip({ label, children }: InfoTipProps) {
-  const { rootRef, panelRef, open, align, toggle } = usePopover<HTMLSpanElement>()
+  const { rootRef, panelRef, panelStyle, open, toggle } = usePopover<HTMLSpanElement>()
   const panelId = useId()
 
   return (
@@ -27,7 +27,7 @@ export function InfoTip({ label, children }: InfoTipProps) {
         <Info className={s.icon} />
       </button>
       {open && (
-        <div ref={panelRef} id={panelId} role="region" aria-label={label} className={s.panel[align]}>
+        <div ref={panelRef} id={panelId} role="region" aria-label={label} className={s.panel} style={panelStyle}>
           {children}
         </div>
       )}

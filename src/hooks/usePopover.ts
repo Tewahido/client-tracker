@@ -1,34 +1,48 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { useDismissable } from './useDismissable'
 
-/** Keep this far from the window edge when deciding whether a panel fits. */
+/** Keep at least this far from the window edges. */
 const EDGE = 8
 
 /**
  * Open/close state for a click-to-open popover that closes on Escape or an outside press.
- * `align` is 'start' (panel grows rightwards) unless that would run off the window and
- * growing leftwards fits, in which case it's 'end'.
+ * The panel starts at its anchor's left edge and is shifted (via `panelStyle`) just enough
+ * to stay inside the window, even on very narrow phones; it is re-measured on resize.
  */
 export function usePopover<T extends HTMLElement = HTMLDivElement>() {
   const rootRef = useRef<T>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
-  const [align, setAlign] = useState<'start' | 'end'>('start')
+  const [shift, setShift] = useState(0)
   const close = useCallback(() => setOpen(false), [])
   const toggle = useCallback(() => setOpen((o) => !o), [])
   useDismissable(rootRef, open, close)
 
-  // Measure before paint so the panel never flashes in the wrong place.
-  useLayoutEffect(() => {
+  const place = useCallback(() => {
     const root = rootRef.current
     const panel = panelRef.current
-    if (!open || !root || !panel) return
-    const anchor = root.getBoundingClientRect()
-    const width = panel.offsetWidth
-    const fitsRight = anchor.left + width <= window.innerWidth - EDGE
-    const fitsLeft = anchor.right - width >= EDGE
-    setAlign(!fitsRight && fitsLeft ? 'end' : 'start')
-  }, [open])
+    if (!root || !panel) return
+    const anchorLeft = root.getBoundingClientRect().left
+    // clientWidth, not innerWidth: on phones innerWidth grows while the panel overflows.
+    const maxLeft = document.documentElement.clientWidth - panel.offsetWidth - EDGE
+    const left = Math.max(EDGE, Math.min(anchorLeft, maxLeft))
+    setShift(left - anchorLeft)
+  }, [])
 
-  return { rootRef, panelRef, open, align, toggle, close }
+  // Measure before paint so the panel never flashes in the wrong place.
+  useLayoutEffect(() => {
+    if (!open) return
+    place()
+    // On phones the panel can open below the fold or under the bottom navigation.
+    panelRef.current?.scrollIntoView?.({ block: 'nearest' })
+  }, [open, place])
+
+  useEffect(() => {
+    if (!open) return
+    window.addEventListener('resize', place)
+    return () => window.removeEventListener('resize', place)
+  }, [open, place])
+
+  const panelStyle: CSSProperties = { left: shift }
+  return { rootRef, panelRef, panelStyle, open, toggle, close }
 }
