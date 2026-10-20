@@ -95,10 +95,8 @@ export class FakeSupabase {
       }
       if (method === 'DELETE') {
         const id = url.searchParams.get('id')?.replace(/^eq\./, '')
-        this.invites.splice(
-          this.invites.findIndex((i) => i.id === id),
-          1,
-        )
+        const index = this.invites.findIndex((i) => i.id === id)
+        if (index >= 0) this.invites.splice(index, 1)
         return route.fulfill({ status: 204, body: '' })
       }
     }

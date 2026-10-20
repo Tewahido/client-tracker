@@ -2,14 +2,22 @@ import type { Locator, Page } from '@playwright/test'
 import { AppPage } from './AppPage'
 import { Dialog } from './Dialog'
 
+declare global {
+  interface Window {
+    /** Text handed to the (stubbed) system share sheet, newest last. */
+    __shared?: string[]
+  }
+}
+
 /** "Invite ready" dialog: next steps after inviting someone. */
 export class InviteReadyDialog extends Dialog {
-  readonly copyLinkButton: Locator
+  /** "Share invite" on phones, "Copy invite message" elsewhere. */
+  readonly sendButton: Locator
   readonly doneButton: Locator
 
   constructor(page: Page) {
     super(page, 'Invite ready')
-    this.copyLinkButton = this.root.getByRole('button', { name: 'Copy app link' })
+    this.sendButton = this.root.getByRole('button', { name: /Share invite|Copy invite message|Copied/ })
     this.doneButton = this.root.getByRole('button', { name: 'Done' })
   }
 }
@@ -33,6 +41,25 @@ export class OrganizationSettings extends AppPage {
     this.inviteReady = new InviteReadyDialog(page)
   }
 
+  /**
+   * Record what gets shared or copied: stubs the system share sheet (phones use it) and
+   * allows clipboard access (desktop copies). Call before open().
+   */
+  async captureInviteMessages() {
+    await this.page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+    await this.page.addInitScript(() => {
+      window.__shared = []
+      navigator.share = async (data?: ShareData) => {
+        window.__shared!.push(data?.text ?? '')
+      }
+    })
+  }
+
+  /** The last invite message shared (phones) or copied (desktop). */
+  async lastInviteMessage(): Promise<string> {
+    return this.page.evaluate(async () => window.__shared?.at(-1) ?? (await navigator.clipboard.readText()))
+  }
+
   async open() {
     await this.goto('settings')
   }
@@ -52,6 +79,15 @@ export class OrganizationSettings extends AppPage {
 
   pendingInvite(email: string) {
     return this.page.getByRole('button', { name: `Cancel invite for ${email}` })
+  }
+
+  shareInviteFor(email: string) {
+    return this.page.getByRole('button', { name: new RegExp(`^(Share|Copy) invite message for ${email.replace('.', '\\.')}$`) })
+  }
+
+  /** Whether the page is wider than the window (something forces sideways scrolling). */
+  async overflowsHorizontally() {
+    return this.page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)
   }
 
   text(value: string | RegExp) {
