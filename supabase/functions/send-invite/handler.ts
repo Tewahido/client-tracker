@@ -5,7 +5,8 @@
  * Flow: the browser calls this with the owner's own access token and an invite id.
  * `claim` runs the claim_invite_email database function *as that user*, so the database
  * decides whether they may send (owners only, rate limited). Only after a successful
- * claim does `sendEmail` use the service role to send the email through Supabase Auth.
+ * claim does the function email the invitee through Supabase Auth: an invite email for
+ * someone new to Lendly, or a sign-in link for someone who already has an account.
  */
 
 /** Thrown by `claim` with the Postgres error code the database function raised. */
@@ -18,10 +19,22 @@ export class ClaimError extends Error {
   }
 }
 
-export interface SendInviteDeps {
-  claim(authorization: string, inviteId: string): Promise<{ email: string; orgName: string }>
-  sendEmail(email: string, orgName: string): Promise<void>
+export interface ClaimedInvite {
+  email: string
+  orgName: string
+  inviterEmail: string
 }
+
+export interface SendInviteDeps {
+  claim(authorization: string, inviteId: string): Promise<ClaimedInvite>
+  /** Sends Supabase's "Invite user" email; 'exists' when the address already has an account. */
+  inviteNewUser(email: string, data: { invited_to: string; invited_by: string }): Promise<'sent' | 'exists'>
+  /** Sends Supabase's "Magic link" email to an existing account. */
+  sendSignInLink(email: string): Promise<void>
+}
+
+/** What the invitee was sent: an invite email, or (already a user) a sign-in link. */
+export type InviteEmailKind = 'invite' | 'sign-in-link'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -48,7 +61,7 @@ export async function handleSendInvite(req: Request, deps: SendInviteDeps): Prom
   const inviteId = body?.inviteId
   if (typeof inviteId !== 'string' || !UUID.test(inviteId)) return reply(400, { error: 'inviteId must be a UUID' })
 
-  let invite: { email: string; orgName: string }
+  let invite: ClaimedInvite
   try {
     invite = await deps.claim(authorization, inviteId)
   } catch (err) {
@@ -56,11 +69,14 @@ export async function handleSendInvite(req: Request, deps: SendInviteDeps): Prom
     return reply(500, { error: 'Could not check the invite' })
   }
 
+  let kind: InviteEmailKind
   try {
-    await deps.sendEmail(invite.email, invite.orgName)
+    const result = await deps.inviteNewUser(invite.email, { invited_to: invite.orgName, invited_by: invite.inviterEmail })
+    if (result === 'exists') await deps.sendSignInLink(invite.email)
+    kind = result === 'exists' ? 'sign-in-link' : 'invite'
   } catch {
     // Don't echo provider errors back to the browser; they can include internal details.
     return reply(502, { error: 'The email could not be sent' })
   }
-  return reply(200, { sent: true })
+  return reply(200, { sent: true, kind })
 }

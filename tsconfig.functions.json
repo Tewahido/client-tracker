@@ -14,9 +14,12 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    // Deno's npm: imports, resolved to the copy the app installs (same pinned version).
+    "paths": {
+      "npm:@supabase/supabase-js@2.118.0": ["./node_modules/@supabase/supabase-js"]
+    }
   },
-  // Edge Function logic and its tests. index.ts files run on Deno (Deno globals, npm:
-  // imports) and are checked by Supabase when deployed, not here.
-  "include": ["supabase/functions/**/handler.ts", "supabase/functions/**/*.test.ts"]
+  // Edge Functions run on Deno; deno.d.ts declares the Deno APIs they use.
+  "include": ["supabase/functions/**/*.ts"]
 }
