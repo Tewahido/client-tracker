@@ -48,6 +48,10 @@ export class FakeSupabase {
   readonly invites: InviteRow[] = []
   /** When set, the next invite insert fails with this Postgres error code. */
   failNextInviteWith: string | null = null
+  /** How the send-invite Edge Function answers: which email it sent, or why it didn't. */
+  emailResult: 'invite' | 'sign-in-link' | 'rate-limited' | 'failed' = 'invite'
+  /** Invite ids the send-invite function was asked to email. */
+  readonly emailed: string[] = []
 
   constructor(private readonly page: Page) {}
 
@@ -61,6 +65,18 @@ export class FakeSupabase {
         : route.fulfill({ status: 204, body: '' }),
     )
     await this.page.route('**/rest/v1/**', (route) => this.rest(route))
+    await this.page.route('**/functions/v1/send-invite', (route) => {
+      if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204 })
+      this.emailed.push((route.request().postDataJSON() as { inviteId: string }).inviteId)
+      switch (this.emailResult) {
+        case 'rate-limited':
+          return route.fulfill({ status: 429, json: { error: 'This address was sent an invite recently' } })
+        case 'failed':
+          return route.fulfill({ status: 502, json: { error: 'The email could not be sent' } })
+        default:
+          return route.fulfill({ json: { sent: true, kind: this.emailResult } })
+      }
+    })
   }
 
   private async rest(route: Route) {
@@ -90,8 +106,10 @@ export class FakeSupabase {
           return route.fulfill({ status: 409, json: { code, message: 'duplicate key value', details: null, hint: null } })
         }
         const body = request.postDataJSON() as Omit<InviteRow, 'id' | 'created_at'>
-        this.invites.push({ ...body, id: `invite-${this.invites.length + 1}`, created_at: new Date().toISOString() })
-        return route.fulfill({ status: 201, body: '' })
+        const row = { ...body, id: crypto.randomUUID(), created_at: new Date().toISOString() }
+        this.invites.push(row)
+        // The app asks for the new row back (insert … select('id').single()).
+        return route.fulfill({ status: 201, json: { id: row.id } })
       }
       if (method === 'DELETE') {
         const id = url.searchParams.get('id')?.replace(/^eq\./, '')

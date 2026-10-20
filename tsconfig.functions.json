@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.functions.tsbuildinfo",
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    // Deno's npm: imports, resolved to the copy the app installs (same pinned version).
+    "paths": {
+      "npm:@supabase/supabase-js@2.118.0": ["./node_modules/@supabase/supabase-js"]
+    }
+  },
+  // Edge Functions run on Deno; deno.d.ts declares the Deno APIs they use.
+  "include": ["supabase/functions/**/*.ts"]
+}

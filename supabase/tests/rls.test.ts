@@ -6,7 +6,7 @@
 import { PGlite } from '@electric-sql/pglite'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 const MIGRATIONS = join(__dirname, '..', 'migrations')
 
@@ -321,6 +321,86 @@ describe('restore_snapshot', () => {
     expect(await names()).toEqual([{ name: 'Restored person' }])
     const [payment] = await as<{ amount_cents: number; org_id: string }>('alice', 'select amount_cents, org_id from payments where id = $1', [ids.payment])
     expect(payment).toEqual({ amount_cents: 500, org_id: org })
+  })
+})
+
+describe('claim_invite_email', () => {
+  let org: string
+
+  const invite = async (email: string, inOrg = org) => {
+    const [i] = await as<{ id: string }>('alice', 'insert into organization_invites (org_id, email) values ($1, $2) returning id', [inOrg, email])
+    return i.id
+  }
+  const claim = (user: User, inviteId: string) =>
+    as<{ invite_email: string; org_name: string; inviter_email: string }>(user, 'select * from public.claim_invite_email($1)', [inviteId])
+  /** Pretend every email so far was sent this long ago. */
+  const age = (interval: string) => db.query(`update invite_email_log set sent_at = sent_at - $1::interval`, [interval])
+
+  beforeAll(async () => {
+    org = await createOrg('alice', 'Invite Mailers')
+  })
+
+  beforeEach(async () => {
+    await db.query('delete from invite_email_log')
+    await db.query('delete from organization_invites where org_id = $1', [org])
+  })
+
+  it('refuses anyone but an owner of the invite’s organisation', async () => {
+    const id = await invite('carol@example.com')
+    await expect(claim('bob', id)).rejects.toThrow(/Only owners/)
+    // Carol is the invitee: she can see the invite, but can't make Lendly email it.
+    await expect(claim('carol', id)).rejects.toThrow(/Only owners/)
+  })
+
+  it('gives an owner the address, organisation and their own email', async () => {
+    const id = await invite('carol@example.com')
+    expect(await claim('alice', id)).toEqual([{ invite_email: 'carol@example.com', org_name: 'Invite Mailers', inviter_email: 'alice@example.com' }])
+  })
+
+  it('emails an address at most once per 10 minutes, even if the invite is deleted and re-created', async () => {
+    await claim('alice', await invite('carol@example.com'))
+    await as('alice', 'delete from organization_invites where org_id = $1', [org])
+    await expect(claim('alice', await invite('carol@example.com'))).rejects.toThrow(/sent an invite recently/)
+
+    // …or re-created in another organisation.
+    const other = await createOrg('alice', 'Second Org')
+    await expect(claim('alice', await invite('carol@example.com', other))).rejects.toThrow(/sent an invite recently/)
+  })
+
+  it('emails an address at most 3 times a day', async () => {
+    const id = await invite('carol@example.com')
+    for (let n = 0; n < 3; n++) {
+      await claim('alice', id)
+      await age('11 minutes')
+    }
+    await expect(claim('alice', id)).rejects.toThrow(/sent an invite recently/)
+    await age('1 day')
+    expect(await claim('alice', id)).toHaveLength(1)
+  })
+
+  it('lets one person send at most 20 invite emails a day, across organisations', async () => {
+    await db.query(
+      `insert into invite_email_log (sender, recipient, org_id)
+       select $1, 'bulk' || n || '@example.com', gen_random_uuid() from generate_series(1, 20) n`,
+      [users.alice.id],
+    )
+    await expect(claim('alice', await invite('fresh@example.com'))).rejects.toThrow(/Daily invite email limit/)
+  })
+
+  it('keeps the email log out of reach of app users', async () => {
+    await claim('alice', await invite('carol@example.com'))
+    await expect(as('alice', 'select * from invite_email_log')).rejects.toThrow(/permission denied/)
+    await expect(as('alice', 'delete from invite_email_log')).rejects.toThrow(/permission denied/)
+  })
+
+  it('is not available to signed-out visitors', async () => {
+    const id = await invite('carol@example.com')
+    await expect(
+      db.transaction(async (tx) => {
+        await tx.exec('set local role anon')
+        return tx.query('select * from public.claim_invite_email($1)', [id])
+      }),
+    ).rejects.toThrow(/permission denied/)
   })
 })
 
