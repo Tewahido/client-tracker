@@ -6,8 +6,9 @@ Emails an organisation invite. The app calls it right after an owner creates an 
 if it isn't deployed or fails, the app falls back to "share the invite yourself".
 
 - **Who may send** is decided by the database: the function first runs
-  `claim_invite_email` *as the signed-in owner* (owners only, once per 10 minutes per
-  invite). See `supabase/migrations/20261020000000_invite_emails.sql`.
+  `claim_invite_email` *as the signed-in owner*. Owners only; each address gets at most 1
+  invite email per 10 minutes and 3 a day; each person sends at most 20 a day. See
+  `supabase/migrations/20261020000000_invite_emails.sql`.
 - **Sending** uses Supabase Auth's own mailer: an "Invite user" email for people new to
   Lendly, or a normal "Magic link" sign-in email for people who already have an account.
 - The logic is in `handler.ts` (unit-tested with Vitest); `index.ts` is the Deno wrapper.
@@ -25,8 +26,10 @@ if it isn't deployed or fails, the app falls back to "share the invite yourself"
    address people open Lendly at. Invite links point there.
 4. **Email templates**: Dashboard › Authentication › Email Templates. Paste:
    - *Invite user*: `supabase/templates/invite.html`, subject
-     `You're invited to {{ .Data.invited_to }} on Lendly`
-   - *Magic link*: `supabase/templates/magic-link.html`, subject `Your Lendly sign-in link`
+     `{{ .Data.invited_by }} invited you to Lendly`
+   - *Magic link*: `supabase/templates/magic-link.html`, subject `Your Lendly sign-in link`.
+     This is also everyone's normal sign-in email, and what people who already have an
+     account receive when invited (the app tells the owner so).
 5. **Custom SMTP (needed for real use)**: Supabase's built-in mailer only delivers to
    members of your Supabase team and is heavily rate limited. To email anyone else
    (including sign-in links for your partner), set up SMTP under Dashboard ›
