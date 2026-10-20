@@ -9,6 +9,7 @@ function deps(overrides: Partial<SendInviteDeps> = {}) {
     claim: vi.fn(async () => ({ email: 'partner@example.com', orgName: 'Test Lenders', inviterEmail: 'owner@example.com' })),
     inviteNewUser: vi.fn(async (): Promise<'sent' | 'exists'> => 'sent'),
     sendSignInLink: vi.fn(async () => {}),
+    release: vi.fn(async () => {}),
     ...overrides,
   }
 }
@@ -26,6 +27,7 @@ describe('send-invite', () => {
     expect(d.claim).toHaveBeenCalledWith('Bearer user-token', INVITE_ID)
     expect(d.inviteNewUser).toHaveBeenCalledWith('partner@example.com', { invited_to: 'Test Lenders', invited_by: 'owner@example.com' })
     expect(d.sendSignInLink).not.toHaveBeenCalled()
+    expect(d.release).not.toHaveBeenCalled()
   })
 
   it('sends a sign-in link instead when the address already has an account', async () => {
@@ -58,6 +60,23 @@ describe('send-invite', () => {
     expect(res.status).toBe(502)
     expect(log).toHaveBeenCalledWith('send-invite: sending the email failed', { code: 'unexpected_failure', status: 500, message: 'Error sending invite email' })
     expect(await res.text()).not.toContain('Error sending invite email')
+  })
+
+  it('releases the claim when the email fails, so a retry is not blocked by the limits', async () => {
+    const d = deps({ inviteNewUser: vi.fn(async () => Promise.reject(new Error('525 Unauthorized IP address'))) })
+    expect((await handleSendInvite(post({ inviteId: INVITE_ID }), d)).status).toBe(502)
+    expect(d.release).toHaveBeenCalledWith(INVITE_ID)
+  })
+
+  it('still answers 502 (and logs) when releasing the claim also fails', async () => {
+    const log = vi.fn()
+    const d = deps({
+      log,
+      inviteNewUser: vi.fn(async () => Promise.reject(new Error('smtp down'))),
+      release: vi.fn(async () => Promise.reject(new Error('db down'))),
+    })
+    expect((await handleSendInvite(post({ inviteId: INVITE_ID }), d)).status).toBe(502)
+    expect(log).toHaveBeenCalledWith('send-invite: releasing the claim failed', expect.objectContaining({ message: 'db down' }))
   })
 
   it('reports a failed send without leaking the provider’s error', async () => {

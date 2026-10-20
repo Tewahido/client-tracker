@@ -31,6 +31,8 @@ export interface SendInviteDeps {
   inviteNewUser(email: string, data: { invited_to: string; invited_by: string }): Promise<'sent' | 'exists'>
   /** Sends Supabase's "Magic link" email to an existing account. */
   sendSignInLink(email: string): Promise<void>
+  /** Undoes the claim after a failed send, so it doesn't count against the limits. */
+  release(inviteId: string): Promise<void>
   /** Server-side log (Supabase › Edge Functions › Logs). Never sent to the browser. */
   log?(message: string, detail?: unknown): void
 }
@@ -93,6 +95,7 @@ export async function handleSendInvite(req: Request, deps: SendInviteDeps): Prom
   } catch (err) {
     // Log the provider's error for the project owner, but don't echo it back to the browser.
     deps.log?.('send-invite: sending the email failed', describe(err))
+    await deps.release(inviteId).catch((releaseErr) => deps.log?.('send-invite: releasing the claim failed', describe(releaseErr)))
     return reply(502, { error: 'The email could not be sent' })
   }
   return reply(200, { sent: true, kind })

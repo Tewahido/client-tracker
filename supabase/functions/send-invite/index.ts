@@ -45,6 +45,12 @@ Deno.serve((req) =>
       if (error) throw error
     },
 
+    async release(inviteId) {
+      // Service role only: owners can't release claims themselves (see the migration).
+      const { error } = await admin.rpc('release_invite_email', { p_invite: inviteId })
+      if (error) throw error
+    },
+
     log: (message, detail) => console.error(message, JSON.stringify(detail)),
   }),
 )
