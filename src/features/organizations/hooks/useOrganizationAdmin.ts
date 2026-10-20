@@ -57,8 +57,16 @@ export function useOrganizationAdmin() {
     loading,
     owners: members.filter((m) => m.role === 'owner').length,
 
-    // No toast: the "Invite ready" dialog explains the next steps instead.
-    invite: (email: string, role: OrgRole) => act(() => service!.invite(orgId!, email, role)),
+    /** Creates the invite and tries to email it; null when the invite itself failed. */
+    invite: async (email: string, role: OrgRole): Promise<{ emailed: boolean } | null> => {
+      let emailed = false
+      // No toast: the invite dialog explains the next steps instead.
+      const ok = await act(async () => {
+        const inviteId = await service!.invite(orgId!, email, role)
+        emailed = await service!.emailInvite(inviteId)
+      })
+      return ok ? { emailed } : null
+    },
     revokeInvite: (inviteId: string) => act(() => service!.revokeInvite(inviteId), 'Invite cancelled'),
     setRole: (userId: string, role: OrgRole) => act(() => service!.setRole(orgId!, userId, role), role === 'owner' ? 'Made an owner' : 'Changed to member'),
     removeMember: (userId: string) => act(() => service!.removeMember(orgId!, userId), 'Removed from the organisation'),

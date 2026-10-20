@@ -41,7 +41,24 @@ test('role descriptions stay out of the way until asked for', async ({ org }) =>
   await expect(org.roleGuide).toBeHidden()
 })
 
-test('after inviting someone, explains what they need to do next', async ({ org, backend }) => {
+test('emails the invite and says so', async ({ org, backend }) => {
+  await org.invite('Partner@Example.com', 'Viewer')
+
+  await expect(org.inviteSent.root).toBeVisible()
+  await expect(org.inviteSent.root).toContainText(`We emailed partner@example.com a link to join ${ORG.name} as a Viewer`)
+  // The function was asked to email exactly the invite that was just created.
+  expect(backend.emailed).toEqual(backend.invites.map((i) => i.id))
+  expect(backend.emailed).toHaveLength(1)
+
+  // Sharing by hand is still there as a backup.
+  await org.inviteSent.sendButton.click()
+  await expect.poll(() => org.lastInviteMessage()).toContain('with partner@example.com')
+  await org.inviteSent.doneButton.click()
+  await expect(org.pendingInvite('partner@example.com')).toBeVisible()
+})
+
+test('when the email cannot be sent, explains how to share the invite instead', async ({ org, backend }) => {
+  backend.emailWorks = false
   // The old always-visible instructions are gone from the form.
   await expect(org.text(/Send them the app link/)).toBeHidden()
 
@@ -57,7 +74,8 @@ test('after inviting someone, explains what they need to do next', async ({ org,
   await expect(org.inviteEmail).toHaveValue('')
 })
 
-test('the invite message says who invited them and which email to use', async ({ org }) => {
+test('the invite message says who invited them and which email to use', async ({ org, backend }) => {
+  backend.emailWorks = false
   await org.invite('partner@example.com')
   await org.inviteReady.sendButton.click()
   await expect.poll(() => org.lastInviteMessage()).toContain(`added you to ${ORG.name} on Lendly`)
@@ -83,7 +101,8 @@ test('a failed invite shows the error and no next steps', async ({ org, backend 
 test.describe('on a very narrow phone', () => {
   test.use({ viewport: { width: 320, height: 640 } })
 
-  test('the role guide and a long pending invite still fit the screen', async ({ org }) => {
+  test('the role guide and a long pending invite still fit the screen', async ({ org, backend }) => {
+    backend.emailWorks = false
     await org.roleInfoButton.click()
     expect(await org.roleGuideFitsWindow()).toBe(true)
     await org.page.keyboard.press('Escape')

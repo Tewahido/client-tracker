@@ -9,7 +9,20 @@ declare global {
   }
 }
 
-/** "Invite ready" dialog: next steps after inviting someone. */
+/** "Invite sent" dialog: shown when Lendly emailed the invite. */
+export class InviteSentDialog extends Dialog {
+  /** Backup: share or copy the invite yourself. */
+  readonly sendButton: Locator
+  readonly doneButton: Locator
+
+  constructor(page: Page) {
+    super(page, 'Invite sent')
+    this.sendButton = this.root.getByRole('button', { name: /Share invite|Copy invite message|Copied/ })
+    this.doneButton = this.root.getByRole('button', { name: 'Done' })
+  }
+}
+
+/** "Invite ready" dialog: next steps when the invite couldn't be emailed. */
 export class InviteReadyDialog extends Dialog {
   /** "Share invite" on phones, "Copy invite message" elsewhere. */
   readonly sendButton: Locator
@@ -30,6 +43,7 @@ export class OrganizationSettings extends AppPage {
   readonly roleInfoButton: Locator
   readonly roleGuide: Locator
   readonly inviteReady: InviteReadyDialog
+  readonly inviteSent: InviteSentDialog
 
   constructor(page: Page) {
     super(page)
@@ -39,6 +53,7 @@ export class OrganizationSettings extends AppPage {
     this.roleInfoButton = page.getByRole('button', { name: 'What each role can do' })
     this.roleGuide = page.getByRole('region', { name: 'What each role can do' })
     this.inviteReady = new InviteReadyDialog(page)
+    this.inviteSent = new InviteSentDialog(page)
   }
 
   /**

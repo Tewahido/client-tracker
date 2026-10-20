@@ -135,10 +135,29 @@ export function createOrganizationService(client: SupabaseClient) {
       return rows.map(toInvite)
     },
 
-    async invite(orgId: string, email: string, role: OrgRole = 'member'): Promise<void> {
-      const result = await client.from('organization_invites').insert({ org_id: orgId, email: email.trim().toLowerCase(), role })
+    /** Creates the invite and returns its id. */
+    async invite(orgId: string, email: string, role: OrgRole = 'member'): Promise<string> {
+      const result = await client
+        .from('organization_invites')
+        .insert({ org_id: orgId, email: email.trim().toLowerCase(), role })
+        .select('id')
+        .single<{ id: string }>()
       if (result.error?.code === '23505') throw new Error('That email has already been invited')
-      unwrap(result)
+      return unwrap<{ id: string }>(result).id
+    },
+
+    /**
+     * Asks the send-invite Edge Function to email the invitee. Resolves false (never throws)
+     * when it couldn't: not deployed, rate limited, or mail failed. The invite still exists
+     * and can be shared by hand.
+     */
+    async emailInvite(inviteId: string): Promise<boolean> {
+      try {
+        const { error } = await client.functions.invoke('send-invite', { body: { inviteId } })
+        return !error
+      } catch {
+        return false
+      }
     },
 
     async revokeInvite(inviteId: string): Promise<void> {
