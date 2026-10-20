@@ -18,7 +18,8 @@ export const organizationSectionStyles = {
 
   inviteForm: 'grid gap-2 sm:grid-cols-[1fr_9rem_auto] sm:items-end',
   hint: 'text-xs text-muted',
-  link: 'font-semibold text-brand-600 underline-offset-4 hover:underline dark:text-brand-300',
+  roleGuide: 'flex flex-col gap-2 leading-relaxed text-muted',
+  roleGuideName: 'font-semibold text-fg',
 
   pending: 'flex items-center gap-3 rounded-xl bg-surface-2/60 px-3 py-2 text-sm',
   pendingIcon: 'h-4 w-4 shrink-0 text-muted',

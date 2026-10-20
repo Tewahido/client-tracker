@@ -57,8 +57,8 @@ export function useOrganizationAdmin() {
     loading,
     owners: members.filter((m) => m.role === 'owner').length,
 
-    invite: (email: string, role: OrgRole) =>
-      act(() => service!.invite(orgId!, email, role), `Invite sent to ${email}. They'll see it when they sign in with that address.`),
+    // No toast: the "Invite ready" dialog explains the next steps instead.
+    invite: (email: string, role: OrgRole) => act(() => service!.invite(orgId!, email, role)),
     revokeInvite: (inviteId: string) => act(() => service!.revokeInvite(inviteId), 'Invite cancelled'),
     setRole: (userId: string, role: OrgRole) => act(() => service!.setRole(orgId!, userId, role), role === 'owner' ? 'Made an owner' : 'Changed to member'),
     removeMember: (userId: string) => act(() => service!.removeMember(orgId!, userId), 'Removed from the organisation'),
