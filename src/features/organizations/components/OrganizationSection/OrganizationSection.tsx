@@ -1,16 +1,16 @@
 import { cn } from '../../../../lib/cn'
-import { Building2, Clock, Copy, LogOut, Trash2, UserMinus, UserPlus, X } from 'lucide-react'
+import { Building2, Check, Clock, Copy, LogOut, Share2, Trash2, UserMinus, UserPlus, X } from 'lucide-react'
 import { useState } from 'react'
 import { SettingsSection } from '../../../../components/layout/SettingsSection'
 import { Avatar, Button, ConfirmDialog, InfoTip, SelectInput, TextInput } from '../../../../components/ui'
-import { useCopyToClipboard } from '../../../../hooks/useCopyToClipboard'
 import { formatDate } from '../../../../lib/dates'
 import { useWorkspace } from '../../../../providers/workspaceContext'
 import type { Member, OrgRole } from '../../../../services/organizations'
 import { useInviteForm } from '../../hooks/useInviteForm'
+import { useShareInvite } from '../../hooks/useShareInvite'
 import { useRenameOrgForm } from '../../hooks/useRenameOrgForm'
 import { useOrganizationAdmin, type OrganizationAdmin } from '../../hooks/useOrganizationAdmin'
-import { ROLE_LABEL, ROLES } from '../../roles'
+import { ROLE_LABEL, ROLES, withArticle } from '../../roles'
 import { InviteList } from '../InviteList'
 import { InviteSentDialog } from '../InviteSentDialog'
 import { organizationSectionStyles as s } from './OrganizationSection.styles'
@@ -163,52 +163,71 @@ function MemberList({ admin, onRemove }: { admin: OrganizationAdmin; onRemove: (
 
 function InviteBlock({ admin }: { admin: OrganizationAdmin }) {
   const form = useInviteForm(admin.invite)
-  const copy = useCopyToClipboard()
-  const copyLink = () => copy(window.location.origin, 'Link copied')
+  const sharing = useShareInvite(admin.org?.name ?? '')
 
   return (
-    <div className={s.block}>
-      <div className={s.blockTitle}>Invite someone</div>
-      <form className={s.inviteForm} onSubmit={form.submit} noValidate>
-        <TextInput label="Email" type="email" value={form.email} onChange={(e) => form.setEmail(e.target.value)} placeholder="partner@example.com" error={form.error} />
-        <SelectInput
-          label="Role"
-          labelAccessory={
-            <InfoTip label="What each role can do">
-              <ul className={s.roleGuide}>
-                {ROLES.map((r) => (
-                  <li key={r.value}>
-                    <span className={s.roleGuideName}>{r.label}</span> {r.can}
-                  </li>
-                ))}
-              </ul>
-            </InfoTip>
-          }
-          value={form.role}
-          onChange={(e) => form.setRole(e.target.value as OrgRole)}
-        >
-          {ROLES.map((r) => (
-            <option key={r.value} value={r.value}>
-              {r.label}
-            </option>
-          ))}
-        </SelectInput>
-        <Button type="submit" icon={UserPlus} loading={form.busy}>
-          Invite
-        </Button>
-      </form>
+    <>
+      <div className={s.block}>
+        <div className={s.blockTitle}>Invite someone</div>
+        <form className={s.inviteForm} onSubmit={form.submit} noValidate>
+          <TextInput label="Email" type="email" value={form.email} onChange={(e) => form.setEmail(e.target.value)} placeholder="partner@example.com" error={form.error} />
+          <SelectInput
+            label="Role"
+            labelAccessory={
+              <InfoTip label="What each role can do">
+                <ul className={s.roleGuide}>
+                  {ROLES.map((r) => (
+                    <li key={r.value}>
+                      <span className={s.roleGuideName}>{r.label}</span> {r.can}
+                    </li>
+                  ))}
+                </ul>
+              </InfoTip>
+            }
+            value={form.role}
+            onChange={(e) => form.setRole(e.target.value as OrgRole)}
+          >
+            {ROLES.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
+          </SelectInput>
+          <Button type="submit" icon={UserPlus} loading={form.busy}>
+            Invite
+          </Button>
+        </form>
+      </div>
 
-      {admin.invites.map((invite) => (
-        <div key={invite.id} className={s.pending}>
-          <Clock className={s.pendingIcon} />
-          <span className={s.pendingEmail}>{invite.email}</span>
-          <span className={s.hint}>{ROLE_LABEL[invite.role]} · pending</span>
-          <Button variant="ghost" size="sm" iconOnly icon={Copy} aria-label={`Copy app link for ${invite.email}`} title="Copy app link" onClick={copyLink} />
-          <Button variant="ghost" size="sm" iconOnly icon={X} aria-label={`Cancel invite for ${invite.email}`} onClick={() => admin.revokeInvite(invite.id)} />
+      {admin.invites.length > 0 && (
+        <div className={s.block}>
+          <div className={s.blockTitle}>Waiting to join</div>
+          {admin.invites.map((invite) => {
+            const copied = sharing.copiedFor === invite.email
+            return (
+              <div key={invite.id} className={s.pending}>
+                <Clock className={s.pendingIcon} />
+                <div className={s.pendingMain}>
+                  <span className={s.pendingEmail}>{invite.email}</span>
+                  <span className={s.hint}>Invited as {withArticle(invite.role)}</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={sharing.canShare ? Share2 : copied ? Check : Copy}
+                  aria-label={`${sharing.canShare ? 'Share' : 'Copy'} invite message for ${invite.email}`}
+                  onClick={() => sharing.share(invite.email)}
+                >
+                  <span className={s.pendingShareText}>{sharing.canShare ? 'Share' : copied ? 'Copied' : 'Copy message'}</span>
+                </Button>
+                <Button variant="ghost" size="sm" iconOnly icon={X} aria-label={`Cancel invite for ${invite.email}`} onClick={() => admin.revokeInvite(invite.id)} />
+              </div>
+            )
+          })}
         </div>
-      ))}
+      )}
 
-      <InviteSentDialog invite={form.sent} orgName={admin.org?.name ?? ''} onCopyLink={copyLink} onClose={form.dismissSent} />
-    </div>
+      <InviteSentDialog open={form.sentOpen} invite={form.sent} orgName={admin.org?.name ?? ''} sharing={sharing} onClose={form.dismissSent} />
+    </>
   )
 }
