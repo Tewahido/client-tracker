@@ -44,5 +44,7 @@ Deno.serve((req) =>
       const { error } = await mailer.auth.signInWithOtp({ email, options: { shouldCreateUser: false } })
       if (error) throw error
     },
+
+    log: (message, detail) => console.error(message, JSON.stringify(detail)),
   }),
 )

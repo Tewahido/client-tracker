@@ -31,7 +31,15 @@ export interface SendInviteDeps {
   inviteNewUser(email: string, data: { invited_to: string; invited_by: string }): Promise<'sent' | 'exists'>
   /** Sends Supabase's "Magic link" email to an existing account. */
   sendSignInLink(email: string): Promise<void>
+  /** Server-side log (Supabase › Edge Functions › Logs). Never sent to the browser. */
+  log?(message: string, detail?: unknown): void
 }
+
+/** The useful part of an error for the server log: code, status and message, no stack. */
+const describe = (err: unknown) =>
+  err && typeof err === 'object'
+    ? { code: (err as { code?: unknown }).code, status: (err as { status?: unknown }).status, message: (err as { message?: unknown }).message }
+    : err
 
 /** What the invitee was sent: an invite email, or (already a user) a sign-in link. */
 export type InviteEmailKind = 'invite' | 'sign-in-link'
@@ -72,6 +80,7 @@ export async function handleSendInvite(req: Request, deps: SendInviteDeps): Prom
   try {
     invite = await deps.claim(authorization, inviteId)
   } catch (err) {
+    deps.log?.('send-invite: claim refused or failed', describe(err))
     if (err instanceof ClaimError && err.code && CLAIM_STATUS[err.code]) return reply(CLAIM_STATUS[err.code], { error: err.message })
     return reply(500, { error: 'Could not check the invite' })
   }
@@ -81,8 +90,9 @@ export async function handleSendInvite(req: Request, deps: SendInviteDeps): Prom
     const result = await deps.inviteNewUser(invite.email, { invited_to: invite.orgName, invited_by: invite.inviterEmail })
     if (result === 'exists') await deps.sendSignInLink(invite.email)
     kind = result === 'exists' ? 'sign-in-link' : 'invite'
-  } catch {
-    // Don't echo provider errors back to the browser; they can include internal details.
+  } catch (err) {
+    // Log the provider's error for the project owner, but don't echo it back to the browser.
+    deps.log?.('send-invite: sending the email failed', describe(err))
     return reply(502, { error: 'The email could not be sent' })
   }
   return reply(200, { sent: true, kind })

@@ -50,6 +50,16 @@ describe('send-invite', () => {
     }
   })
 
+  it('logs why a send failed, for the project owner, without telling the browser', async () => {
+    const log = vi.fn()
+    const d = deps({ log, inviteNewUser: vi.fn(async () => Promise.reject(Object.assign(new Error('Error sending invite email'), { status: 500, code: 'unexpected_failure' }))) })
+    const res = await handleSendInvite(post({ inviteId: INVITE_ID }), d)
+
+    expect(res.status).toBe(502)
+    expect(log).toHaveBeenCalledWith('send-invite: sending the email failed', { code: 'unexpected_failure', status: 500, message: 'Error sending invite email' })
+    expect(await res.text()).not.toContain('Error sending invite email')
+  })
+
   it('reports a failed send without leaking the provider’s error', async () => {
     const leaky = new Error('SMTP 535 auth failed for smtp.internal')
     for (const d of [
