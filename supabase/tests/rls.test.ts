@@ -324,6 +324,59 @@ describe('restore_snapshot', () => {
   })
 })
 
+describe('claim_invite_email', () => {
+  let org: string
+  let invite: string
+
+  beforeAll(async () => {
+    org = await createOrg('alice', 'Invite Mailers')
+    const [i] = await as<{ id: string }>('alice', "insert into organization_invites (org_id, email) values ($1, 'carol@example.com') returning id", [org])
+    invite = i.id
+  })
+
+  const claim = (user: User) =>
+    as<{ invite_email: string; org_name: string }>(user, 'select * from public.claim_invite_email($1)', [invite])
+
+  it('refuses anyone but an owner of the invite’s organisation', async () => {
+    await expect(claim('bob')).rejects.toThrow(/Only owners/)
+    // Carol is the invitee: she can see the invite, but can't make Lendly email it.
+    await expect(claim('carol')).rejects.toThrow(/Only owners/)
+  })
+
+  it('gives an owner the address and organisation name, once per 10 minutes', async () => {
+    expect(await claim('alice')).toEqual([{ invite_email: 'carol@example.com', org_name: 'Invite Mailers' }])
+    await expect(claim('alice')).rejects.toThrow(/emailed a few minutes ago/)
+
+    await db.query("update organization_invites set emailed_at = now() - interval '11 minutes' where id = $1", [invite])
+    expect(await claim('alice')).toHaveLength(1)
+  })
+
+  it('cannot be bypassed by clearing emailed_at directly', async () => {
+    await as('alice', 'update organization_invites set emailed_at = null where id = $1', [invite])
+    await expect(claim('alice')).rejects.toThrow(/emailed a few minutes ago/)
+  })
+
+  it('caps invite emails at 20 per organisation per day', async () => {
+    // 19 more invites emailed today, plus the one above: the organisation is at its limit.
+    await db.query(
+      `insert into organization_invites (org_id, email, emailed_at)
+       select $1, 'bulk' || n || '@example.com', now() from generate_series(1, 19) n`,
+      [org],
+    )
+    const [fresh] = await as<{ id: string }>('alice', "insert into organization_invites (org_id, email) values ($1, 'one-more@example.com') returning id", [org])
+    await expect(as('alice', 'select * from public.claim_invite_email($1)', [fresh.id])).rejects.toThrow(/Daily invite email limit/)
+  })
+
+  it('is not available to signed-out visitors', async () => {
+    await expect(
+      db.transaction(async (tx) => {
+        await tx.exec('set local role anon')
+        return tx.query('select * from public.claim_invite_email($1)', [invite])
+      }),
+    ).rejects.toThrow(/permission denied/)
+  })
+})
+
 describe('signed-out visitors', () => {
   async function asAnon(sql: string) {
     return db.transaction(async (tx) => {
