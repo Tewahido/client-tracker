@@ -4,6 +4,7 @@ const control =
 export const fieldStyles = {
   root: 'flex flex-col gap-1.5',
   label: 'text-xs font-semibold tracking-wide text-muted',
+  labelRow: 'flex items-center gap-1.5',
   hint: 'text-xs text-muted',
   error: 'text-xs font-medium text-rose-500 dark:text-rose-400',
   input: `${control} h-11`,

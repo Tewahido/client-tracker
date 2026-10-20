@@ -39,6 +39,9 @@ export class LandingPage {
 
   async open() {
     await this.page.goto('/')
+    // The landing page is a lazy chunk; on a cold dev server under a full parallel run it
+    // can take longer than the default 5 s to compile, so wait for it here, generously.
+    await this.headline.waitFor({ timeout: 20_000 })
   }
 
   /** Take control of timers (call before open), so time-based behaviour can be stepped through. */

@@ -4,6 +4,8 @@ import { fieldStyles as s } from './Field.styles'
 
 interface FieldProps {
   label: string
+  /** Shown beside the label (outside it), e.g. an InfoTip. */
+  labelAccessory?: ReactNode
   hint?: ReactNode
   error?: string | null
   className?: string
@@ -11,14 +13,23 @@ interface FieldProps {
 }
 
 /** Label + hint + error wrapper that wires up ids for accessibility. */
-export function Field({ label, hint, error, className, children }: FieldProps) {
+export function Field({ label, labelAccessory, hint, error, className, children }: FieldProps) {
   const id = useId()
   const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined
   return (
     <div className={cn(s.root, className)}>
-      <label htmlFor={id} className={s.label}>
-        {label}
-      </label>
+      {labelAccessory ? (
+        <div className={s.labelRow}>
+          <label htmlFor={id} className={s.label}>
+            {label}
+          </label>
+          {labelAccessory}
+        </div>
+      ) : (
+        <label htmlFor={id} className={s.label}>
+          {label}
+        </label>
+      )}
       {children(id, describedBy)}
       {error ? (
         <p id={`${id}-error`} className={s.error}>
@@ -35,11 +46,11 @@ export function Field({ label, hint, error, className, children }: FieldProps) {
   )
 }
 
-type Common = { label: string; hint?: ReactNode; error?: string | null; className?: string }
+type Common = { label: string; labelAccessory?: ReactNode; hint?: ReactNode; error?: string | null; className?: string }
 
-export function TextInput({ label, hint, error, className, prefix, ...rest }: Common & InputHTMLAttributes<HTMLInputElement> & { prefix?: string }) {
+export function TextInput({ label, labelAccessory, hint, error, className, prefix, ...rest }: Common & InputHTMLAttributes<HTMLInputElement> & { prefix?: string }) {
   return (
-    <Field label={label} hint={hint} error={error} className={className}>
+    <Field label={label} labelAccessory={labelAccessory} hint={hint} error={error} className={className}>
       {(id, describedBy) => (
         <div className={s.adornmentWrap}>
           {prefix && <span className={s.adornment}>{prefix}</span>}
@@ -56,17 +67,17 @@ export function TextInput({ label, hint, error, className, prefix, ...rest }: Co
   )
 }
 
-export function TextArea({ label, hint, error, className, ...rest }: Common & TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function TextArea({ label, labelAccessory, hint, error, className, ...rest }: Common & TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
-    <Field label={label} hint={hint} error={error} className={className}>
+    <Field label={label} labelAccessory={labelAccessory} hint={hint} error={error} className={className}>
       {(id, describedBy) => <textarea id={id} aria-describedby={describedBy} aria-invalid={!!error} className={s.textarea} {...rest} />}
     </Field>
   )
 }
 
-export function SelectInput({ label, hint, error, className, children, ...rest }: Common & SelectHTMLAttributes<HTMLSelectElement>) {
+export function SelectInput({ label, labelAccessory, hint, error, className, children, ...rest }: Common & SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <Field label={label} hint={hint} error={error} className={className}>
+    <Field label={label} labelAccessory={labelAccessory} hint={hint} error={error} className={className}>
       {(id, describedBy) => (
         <select id={id} aria-describedby={describedBy} aria-invalid={!!error} className={s.select} {...rest}>
           {children}

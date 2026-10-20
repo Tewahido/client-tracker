@@ -18,11 +18,14 @@ export const organizationSectionStyles = {
 
   inviteForm: 'grid gap-2 sm:grid-cols-[1fr_9rem_auto] sm:items-end',
   hint: 'text-xs text-muted',
-  link: 'font-semibold text-brand-600 underline-offset-4 hover:underline dark:text-brand-300',
+  roleGuide: 'flex flex-col gap-2 leading-relaxed text-muted',
+  roleGuideName: 'font-semibold text-fg',
 
-  pending: 'flex items-center gap-3 rounded-xl bg-surface-2/60 px-3 py-2 text-sm',
+  pending: 'flex items-center gap-2 rounded-xl bg-surface-2/60 py-2 pr-1 pl-3 text-sm',
   pendingIcon: 'h-4 w-4 shrink-0 text-muted',
-  pendingEmail: 'min-w-0 flex-1 truncate',
+  pendingMain: 'flex min-w-0 flex-1 flex-col',
+  pendingEmail: 'truncate font-medium',
+  pendingShareText: 'hidden sm:inline',
 
   footer: 'flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4',
   footerText: 'text-xs text-muted',
