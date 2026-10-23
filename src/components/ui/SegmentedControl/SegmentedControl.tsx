@@ -25,6 +25,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange, l
         return (
           <button
             key={option.value}
+            type="button"
             role="tab"
             aria-selected={active}
             className={cn(s.option, active && s.active)}
