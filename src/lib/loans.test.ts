@@ -250,3 +250,23 @@ describe('extendedDueDate', () => {
     expect(extendedDueDate(late, 7, TODAY)).toBe('2026-10-25')
   })
 })
+
+describe('portfolioStats with monthly plans', () => {
+  it('counts only what is behind as overdue, and the next instalment as due this week', () => {
+    const plan = { principalCents: 600_000, lentOn: '2026-07-01', instalmentCount: 6, agreedTotalCents: 600_000 }
+    const views = buildLoanViews(
+      [
+        // R1,000 a month from 1 Aug: Aug, Sep and Oct missed.
+        loan({ id: 'behind', ...plan, firstDueOn: '2026-08-01', dueOn: '2027-01-01' }),
+        // Next instalment on 20 Oct.
+        loan({ id: 'soon', ...plan, firstDueOn: '2026-10-20', dueOn: '2027-03-20' }),
+      ],
+      [],
+      [borrower],
+      TODAY,
+      3,
+    )
+    const stats = portfolioStats(views, [], TODAY)
+    expect(stats).toMatchObject({ overdueCents: 300_000, overdueCount: 1, dueThisWeekCents: 100_000, dueThisWeekCount: 1, outstandingCents: 1_200_000 })
+  })
+})

@@ -163,10 +163,10 @@ export function portfolioStats(views: LoanView[], payments: Payment[], todayDate
     debtors.add(v.loan.borrowerId)
     if (v.status === 'overdue') {
       stats.overdueCount++
-      stats.overdueCents += v.balanceCents
+      stats.overdueCents += amountDueNowCents(v)
     } else if (v.daysUntilDue <= 7) {
       stats.dueThisWeekCount++
-      stats.dueThisWeekCents += v.balanceCents
+      stats.dueThisWeekCents += amountDueNowCents(v)
     }
   }
   for (const p of payments) {
