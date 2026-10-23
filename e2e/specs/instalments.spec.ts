@@ -76,6 +76,9 @@ test.describe('monthly repayment plans', () => {
     await expect(loanDetail.instalment(1)).toContainText('Missed')
     await expect(loanDetail.instalment(3)).toContainText('Missed')
     await expect(loanDetail.instalment(4)).toContainText('Next')
+    // The tile names the same instalment as the list.
+    await expect(loanDetail.fact('Next payment')).toContainText('1 Nov 2026')
+    await expect(loanDetail.fact('Next payment')).toContainText(/R\s?3,000\.00 behind/)
     await expect(loanDetail.status('Overdue')).toBeVisible()
     // Moving the whole plan would wipe this record; changing a plan means editing it.
     await expect(loanDetail.button('+1 week')).toHaveCount(0)

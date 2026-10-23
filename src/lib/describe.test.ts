@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { dueLabel, instalmentHistoryLabel, loanSubtitle, periodLabel, planProgressLabel } from './describe'
+import { daysBetween } from './dates'
+import { dueLabel, instalmentHistoryLabel, loanSubtitle, nextPaymentFact, periodLabel, planProgressLabel } from './describe'
 import { buildSchedule, planProgress } from './instalments'
 import type { LoanView } from './loans'
+import type { Payment } from './types'
 
 const base = { nextDueOn: '2026-12-25', settledOn: null } as unknown as LoanView
 
@@ -70,5 +72,36 @@ describe('loanSubtitle', () => {
   it('leads with the monthly amount and progress for a plan', () => {
     const plan = planProgress(buildSchedule('2026-07-01', 12, 2_400_000), [], '2026-08-15')
     expect(loanSubtitle({ loan: { ...loan, note: 'School fees' }, plan } as never, money)).toBe('R2000/month · 0 of 12 paid · 2 missed · School fees')
+  })
+})
+
+describe('nextPaymentFact', () => {
+  const money = (cents: number) => `R${cents / 100}`
+  const view = (payments: Payment[], today: string, patch: Partial<LoanView> = {}) => {
+    const plan = planProgress(buildSchedule('2026-08-01', 6, 600_000), payments, today)
+    const nextDueOn = plan.next?.dueOn ?? '2027-01-01'
+    return { loan: { dueOn: '2027-01-01' }, plan, status: 'active', nextDueOn, daysUntilDue: daysBetween(today, nextDueOn), settledOn: null, ...patch } as unknown as LoanView
+  }
+
+  it('names the same upcoming instalment as the plan list, with how far behind they are', () => {
+    expect(nextPaymentFact(view([], '2026-10-23', { status: 'overdue' }), money)).toEqual({
+      label: 'Next payment',
+      date: '2026-11-01',
+      sub: 'R3000 behind',
+      urgent: true,
+    })
+  })
+
+  it('says which payment is next and when, without repeating the date', () => {
+    expect(nextPaymentFact(view([], '2026-07-01'), money)).toEqual({ label: 'Next payment', date: '2026-08-01', sub: 'Payment 1 of 6 · in 31 days', urgent: false })
+  })
+
+  it('falls back to the oldest unpaid instalment once the plan has ended', () => {
+    expect(nextPaymentFact(view([], '2027-03-01', { status: 'overdue' }), money)).toMatchObject({ date: '2026-08-01', sub: 'R6000 behind' })
+  })
+
+  it('shows the last payment date once the loan is closed', () => {
+    const paid = view([{ id: 'p', loanId: 'l', amountCents: 600_000, paidOn: '2026-07-15', note: null, createdAt: '' }], '2026-10-23', { status: 'paid', settledOn: '2026-07-15' })
+    expect(nextPaymentFact(paid, money)).toEqual({ label: 'Last payment', date: '2027-01-01', sub: 'Paid off 15 Jul', urgent: false })
   })
 })

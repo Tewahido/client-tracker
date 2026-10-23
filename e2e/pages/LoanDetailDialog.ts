@@ -20,6 +20,11 @@ export class LoanDetailDialog extends Dialog {
     return this.root.getByText(label, { exact: true }).first()
   }
 
+  /** A fact tile such as "Next payment", with its value and the line under it. */
+  fact(label: string) {
+    return this.root.getByText(label, { exact: true }).locator('..')
+  }
+
   /** The instalment at 1-based position `number`. */
   instalment(number: number) {
     return this.instalments.nth(number - 1)

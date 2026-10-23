@@ -5,7 +5,7 @@ import { Avatar, Button, ConfirmDialog, Modal, ProgressRing, STATUS_META, Status
 import { useMoney } from '../../../../hooks/useMoney'
 import { usePermissions } from '../../../../hooks/usePermissions'
 import { formatDate } from '../../../../lib/dates'
-import { dueLabel, instalmentHistoryLabel, planProgressLabel } from '../../../../lib/describe'
+import { dueLabel, instalmentHistoryLabel, nextPaymentFact, planProgressLabel } from '../../../../lib/describe'
 import { isOpen } from '../../../../lib/loans'
 import { useLoanDetail } from '../../hooks/useLoanDetail'
 import { InstalmentList } from '../InstalmentList'
@@ -38,6 +38,7 @@ export function LoanDetailModal({ loanId, onClose, onEdit, onRecordPayment, onOp
   const { loan, borrower, status, plan } = view
   const open = isOpen(status)
   const name = borrower?.name ?? 'Unknown'
+  const next = plan ? nextPaymentFact(view, money) : null
 
   return (
     <>
@@ -69,7 +70,7 @@ export function LoanDetailModal({ loanId, onClose, onEdit, onRecordPayment, onOp
             <Fact label="Lent" value={money(loan.principalCents)} sub={`on ${formatDate(loan.lentOn)}`} />
             <Fact label="Interest" value={loan.interestRate ? `${loan.interestRate}%` : 'None'} />
             <Fact label="Each month" value={money(plan.instalments[0].amountCents)} sub={`for ${plan.instalments.length} months`} />
-            <Fact label={open ? 'Next payment' : 'Last payment'} value={formatDate(open ? view.nextDueOn : loan.dueOn)} sub={dueLabel(view)} urgent={status === 'overdue'} />
+            <Fact label={next!.label} value={formatDate(next!.date)} sub={next!.sub} urgent={next!.urgent} />
           </div>
         ) : (
           <div className={s.facts}>

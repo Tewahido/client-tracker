@@ -1,6 +1,7 @@
-import { formatDate } from './dates'
+import { formatDate, relativeDays } from './dates'
 import type { InstalmentState, PlanProgress } from './instalments'
-import type { LoanView } from './loans'
+import { isOpen, type LoanView } from './loans'
+import type { ISODate } from './types'
 
 /** Short, friendly description of where a loan stands, e.g. "Overdue by 3 days". */
 export function dueLabel(view: Pick<LoanView, 'status' | 'daysUntilDue' | 'settledOn' | 'nextDueOn'>): string {
@@ -49,6 +50,30 @@ export function loanSubtitle(view: Pick<LoanView, 'loan' | 'plan'>, formatMoney:
   const { loan, plan } = view
   if (!plan) return loan.note ?? `Lent ${formatDate(loan.lentOn, 'd MMM yyyy')}`
   return [`${formatMoney(plan.instalments[0].amountCents)}/month`, planProgressLabel(plan), loan.note].filter(Boolean).join(' · ')
+}
+
+/**
+ * The "Next payment" tile for a monthly plan. It names the same instalment the
+ * plan list marks as next; when payments were missed it says how far behind
+ * they are instead, since the banner and list already show which ones.
+ */
+export function nextPaymentFact(
+  view: Pick<LoanView, 'loan' | 'plan' | 'status' | 'nextDueOn' | 'daysUntilDue' | 'settledOn'>,
+  formatMoney: (cents: number) => string,
+): { label: string; date: ISODate; sub: string; urgent: boolean } {
+  const { plan } = view
+  if (!plan || !isOpen(view.status)) return { label: 'Last payment', date: view.loan.dueOn, sub: dueLabel(view), urgent: false }
+
+  const upcoming = plan.instalments.find((i) => i.state === 'next')
+  const date = upcoming?.dueOn ?? view.nextDueOn
+  if (plan.missedCount) return { label: 'Next payment', date, sub: `${formatMoney(plan.arrearsCents)} behind`, urgent: true }
+  const number = upcoming?.number ?? plan.next?.number ?? plan.instalments.length
+  return {
+    label: 'Next payment',
+    date,
+    sub: `Payment ${number} of ${plan.instalments.length} · ${relativeDays(view.daysUntilDue)}`,
+    urgent: false,
+  }
 }
 
 /** How reliably someone pays their instalments, e.g. "2 missed instalments · 1 paid late"; null with nothing to report. */
