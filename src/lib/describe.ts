@@ -38,18 +38,30 @@ export const INSTALMENT_STATE_LABEL: Record<InstalmentState, string> = {
   forgiven: 'Forgiven',
 }
 
+const paidCount = (plan: PlanProgress) => plan.instalments.filter((i) => i.state === 'paid' || i.state === 'paid-late').length
+
 /** "3 of 12 paid", plus how many are missed, e.g. "3 of 12 paid · 2 missed". */
 export function planProgressLabel(plan: PlanProgress): string {
-  const paid = plan.instalments.filter((i) => i.state === 'paid' || i.state === 'paid-late').length
-  const label = `${paid} of ${plan.instalments.length} paid`
+  const label = `${paidCount(plan)} of ${plan.instalments.length} paid`
   return plan.missedCount ? `${label} · ${plan.missedCount} missed` : label
 }
 
-/** A loan row's second line: the plan and its progress, then the note; or the note, else when it was lent. */
+/**
+ * A loan row's second line. For a plan: missed instalments first (the line is cut
+ * off on phones), then progress, the monthly amount and the note. Otherwise the
+ * note, else when it was lent.
+ */
 export function loanSubtitle(view: Pick<LoanView, 'loan' | 'plan'>, formatMoney: (cents: number) => string): string {
   const { loan, plan } = view
   if (!plan) return loan.note ?? `Lent ${formatDate(loan.lentOn, 'd MMM yyyy')}`
-  return [`${formatMoney(plan.instalments[0].amountCents)}/month`, planProgressLabel(plan), loan.note].filter(Boolean).join(' · ')
+  return [
+    plan.missedCount ? `${plan.missedCount} missed` : null,
+    `${paidCount(plan)} of ${plan.instalments.length} paid`,
+    `${formatMoney(plan.instalments[0].amountCents)}/month`,
+    loan.note,
+  ]
+    .filter(Boolean)
+    .join(' · ')
 }
 
 /**

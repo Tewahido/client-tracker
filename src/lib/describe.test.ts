@@ -69,9 +69,14 @@ describe('loanSubtitle', () => {
     expect(loanSubtitle({ loan, plan: null } as never, money)).toBe('Lent 1 Oct 2026')
   })
 
-  it('leads with the monthly amount and progress for a plan', () => {
+  it('leads with missed instalments, which matter most and survive truncation on phones', () => {
     const plan = planProgress(buildSchedule('2026-07-01', 12, 2_400_000), [], '2026-08-15')
-    expect(loanSubtitle({ loan: { ...loan, note: 'School fees' }, plan } as never, money)).toBe('R2000/month · 0 of 12 paid · 2 missed · School fees')
+    expect(loanSubtitle({ loan: { ...loan, note: 'School fees' }, plan } as never, money)).toBe('2 missed · 0 of 12 paid · R2000/month · School fees')
+  })
+
+  it('shows progress and the monthly amount for a plan on track', () => {
+    const plan = planProgress(buildSchedule('2026-07-01', 12, 2_400_000), [], '2026-06-15')
+    expect(loanSubtitle({ loan, plan } as never, money)).toBe('0 of 12 paid · R2000/month')
   })
 })
 
