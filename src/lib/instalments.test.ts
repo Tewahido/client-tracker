@@ -89,3 +89,11 @@ describe('planProgress', () => {
     expect(p.missedCount).toBe(2)
   })
 })
+
+describe('planProgress with empty instalments', () => {
+  it('does not crash when a total is smaller than the number of instalments', () => {
+    // The form and database refuse this, but older or hand-edited local data might not.
+    const p = planProgress(buildSchedule('2026-07-01', 12, 5), [], '2026-08-15')
+    expect(p.instalments[0].paidOn).toBeNull()
+  })
+})

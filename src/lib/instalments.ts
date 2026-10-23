@@ -94,7 +94,8 @@ export function planProgress(schedule: Instalment[], payments: Payment[], todayD
 
     // Walk the payments until the running total reaches this instalment's end.
     while (running < target && paymentIndex < sorted.length) running += sorted[paymentIndex++].amountCents
-    const paidOn = running >= target ? sorted[paymentIndex - 1].paidOn : null
+    // A zero-cent instalment (only in data the database would refuse) counts as unpaid rather than crashing.
+    const paidOn = running >= target && paymentIndex > 0 ? sorted[paymentIndex - 1].paidOn : null
 
     let state: InstalmentState
     if (paidOn) {

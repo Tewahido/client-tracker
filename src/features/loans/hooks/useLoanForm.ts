@@ -64,6 +64,7 @@ export function validateLoan(v: LoanFormValues): Partial<Record<keyof LoanFormVa
     if (monthly === null || monthly <= 0) errors.monthly = 'Enter the monthly payment'
     const total = parseMoney(v.total)
     if (total === null || total <= 0) errors.total = 'Enter the total to pay back'
+    else if (months && total < months) errors.total = "That's less than a cent a month"
     else if (amount && total < amount) errors.total = "That's less than you lent"
     else if (amount && impliedRate(amount, total) > MAX_RATE) errors.total = `That's more than ${MAX_RATE}% interest`
     if (!v.firstDueOn) errors.firstDueOn = 'Pick a date'
