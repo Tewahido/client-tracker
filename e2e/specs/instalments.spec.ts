@@ -28,6 +28,20 @@ test.describe('monthly repayment plans', () => {
     await expect(loanDetail.instalment(2)).toContainText('Upcoming')
   })
 
+  test('leaves the interest alone after switching back to all at once', async ({ app, loanForm }) => {
+    await app.goto('home')
+    await app.openNewLoan()
+    await loanForm.choosePerson('Ayanda')
+    await loanForm.amount.fill('20000')
+    await loanForm.payBack('Monthly')
+    await loanForm.monthly.fill('2000')
+    await expect(loanForm.interest).toHaveValue('20')
+
+    await loanForm.payBack('All at once')
+    await loanForm.amount.fill('10000')
+    await expect(loanForm.interest).toHaveValue('20')
+  })
+
   test('tracks each instalment and shows the ones that were missed', async ({ app, loanForm, loanDetail, payment, person }) => {
     await app.setToday('2026-10-23')
     await app.goto('home')

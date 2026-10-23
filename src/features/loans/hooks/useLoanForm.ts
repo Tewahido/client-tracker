@@ -137,14 +137,15 @@ export function useLoanForm(
     [setValue, values],
   )
 
-  /** Change one of the linked figures and recompute the ones that follow from it. */
+  /** Change one of the linked figures and recompute the ones that follow from it (monthly plans only). */
   const setPlanField = useCallback(
     (field: PlanField, value: string) => {
+      if (values.repayment === 'once') return setValue(field, value)
       const anchor = anchorFor(field, values.anchor)
       const plan = reconcilePlan({ ...values, [field]: value }, anchor)
       setValues({ ...plan, [field]: value, anchor })
     },
-    [values, setValues],
+    [values, setValue, setValues],
   )
 
   /** `onChange` for the amount, interest, months, monthly payment and total inputs. */
@@ -155,11 +156,12 @@ export function useLoanForm(
 
   const setRepayment = useCallback(
     (repayment: Repayment) => {
-      if (repayment === 'once') return setValue('repayment', repayment)
+      // Once-off loans are driven by the interest; a plan picks up from it when chosen again.
+      if (repayment === 'once') return setValues({ repayment, anchor: 'rate' })
       const months = values.months || String(DEFAULT_MONTHS)
       setValues({ ...reconcilePlan({ ...values, months }, values.anchor), repayment })
     },
-    [setValue, setValues, values],
+    [setValues, values],
   )
 
   /** Moving the loan date drags an untouched first payment date along with it. */
