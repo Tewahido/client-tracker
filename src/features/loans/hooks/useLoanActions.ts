@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { toast } from 'sonner'
 import { useMoney } from '../../../hooks/useMoney'
 import { formatDate, today } from '../../../lib/dates'
-import { extendDueDate } from '../../../lib/loans'
+import { extendedDueDate } from '../../../lib/loans'
 import { useLoanStore } from '../../../providers/loanStoreContext'
 import { celebrate } from '../../../services/celebrate'
 
@@ -27,9 +27,9 @@ export function useLoanActions(loanId: string) {
       },
 
       async extendDueDate(days: number) {
-        const { patch, nextDueOn } = extendDueDate(view(), days, today())
-        await updateLoan(loanId, patch)
-        toast.success(`New due date: ${formatDate(nextDueOn)}`)
+        const dueOn = extendedDueDate(view(), days, today())
+        await updateLoan(loanId, { dueOn })
+        toast.success(`New due date: ${formatDate(dueOn)}`)
       },
 
       async forgive() {

@@ -61,6 +61,8 @@ test.describe('monthly repayment plans', () => {
     await expect(loanDetail.instalment(3)).toContainText('Missed')
     await expect(loanDetail.instalment(4)).toContainText('Next')
     await expect(loanDetail.status('Overdue')).toBeVisible()
+    // Moving the whole plan would wipe this record; changing a plan means editing it.
+    await expect(loanDetail.button('+1 week')).toHaveCount(0)
 
     // The payment form suggests catching up on what was missed.
     await loanDetail.recordPayment()

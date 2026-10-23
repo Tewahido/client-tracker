@@ -1,5 +1,5 @@
-import { daysBetween, shiftDate, shiftMonths } from './dates'
-import { buildSchedule, hasPlan, lastInstalmentOn, planProgress, type PlanProgress } from './instalments'
+import { daysBetween, shiftDate } from './dates'
+import { buildSchedule, hasPlan, planProgress, type PlanProgress } from './instalments'
 import type { Borrower, ISODate, Loan, LoanStatus, Payment } from './types'
 
 export interface LoanView {
@@ -238,20 +238,12 @@ export function amountDueNowCents(view: Pick<LoanView, 'balanceCents' | 'plan'>)
 }
 
 /**
- * Give the borrower `days` more for their next payment, counted from today when
- * it is already late. A monthly plan moves as a whole, keeping one payment a month.
- * Returns the loan changes and the next payment's new date.
+ * New due date giving a once-off loan `days` more, counted from today when it is
+ * already late. Monthly plans aren't moved this way: shifting them would erase
+ * their missed instalments, so they are rescheduled by editing the plan.
  */
-export function extendDueDate(view: Pick<LoanView, 'loan' | 'nextDueOn' | 'plan'>, days: number, todayDate: ISODate) {
-  const target = shiftDate(view.nextDueOn < todayDate ? todayDate : view.nextDueOn, days)
-  const { loan, plan } = view
-  if (!plan?.next || !hasPlan(loan)) return { patch: { dueOn: target }, nextDueOn: target }
-
-  const firstDueOn = shiftDate(loan.firstDueOn!, daysBetween(view.nextDueOn, target))
-  return {
-    patch: { firstDueOn, dueOn: lastInstalmentOn(firstDueOn, loan.instalmentCount!) },
-    nextDueOn: shiftMonths(firstDueOn, plan.next.number - 1),
-  }
+export function extendedDueDate(view: Pick<LoanView, 'nextDueOn'>, days: number, todayDate: ISODate): ISODate {
+  return shiftDate(view.nextDueOn < todayDate ? todayDate : view.nextDueOn, days)
 }
 
 /** Collected amount per month for the last `months` months, oldest first. */

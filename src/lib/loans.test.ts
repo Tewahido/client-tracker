@@ -4,7 +4,7 @@ import {
   attentionList,
   borrowerStats,
   buildLoanViews,
-  extendDueDate,
+  extendedDueDate,
   loanStatus,
   monthlyCollections,
   needsAttention,
@@ -242,23 +242,11 @@ describe('monthly plans', () => {
   })
 })
 
-describe('extendDueDate', () => {
-  it('moves a once-off loan, from today when it is already late', () => {
+describe('extendedDueDate', () => {
+  it('counts from the due date, or from today when it is already late', () => {
     const [onTime] = buildLoanViews([loan({ dueOn: '2026-10-20' })], [], [borrower], TODAY, 3)
-    expect(extendDueDate(onTime, 7, TODAY)).toEqual({ patch: { dueOn: '2026-10-27' }, nextDueOn: '2026-10-27' })
+    expect(extendedDueDate(onTime, 7, TODAY)).toBe('2026-10-27')
     const [late] = buildLoanViews([loan({ dueOn: '2026-10-10' })], [], [borrower], TODAY, 3)
-    expect(extendDueDate(late, 7, TODAY).nextDueOn).toBe('2026-10-25')
-  })
-
-  it('moves a whole monthly plan so the next instalment gets the extra time', () => {
-    const [v] = buildLoanViews(
-      [loan({ lentOn: '2026-08-01', firstDueOn: '2026-09-01', dueOn: '2027-08-01', instalmentCount: 12, agreedTotalCents: 120_000 })],
-      [payment({ amountCents: 10_000, paidOn: '2026-09-01' })],
-      [borrower],
-      TODAY,
-      3,
-    )
-    // Instalment 2 was due 1 Oct; a week from today is 25 Oct, 24 days later.
-    expect(extendDueDate(v, 7, TODAY)).toEqual({ patch: { firstDueOn: '2026-09-25', dueOn: '2027-08-25' }, nextDueOn: '2026-10-25' })
+    expect(extendedDueDate(late, 7, TODAY)).toBe('2026-10-25')
   })
 })

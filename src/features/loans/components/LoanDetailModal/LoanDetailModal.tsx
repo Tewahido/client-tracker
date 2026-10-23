@@ -102,7 +102,8 @@ export function LoanDetailModal({ loanId, onClose, onEdit, onRecordPayment, onOp
 
         {extraActions && <div className={s.section}>{extraActions}</div>}
 
-        {open && canEdit && (
+        {/* Monthly plans are rescheduled by editing them, so missed instalments stay on record. */}
+        {open && canEdit && !plan && (
           <div className={s.section}>
             <div className={s.sectionTitle}>Give more time</div>
             <div className={s.chips}>
