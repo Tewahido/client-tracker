@@ -29,6 +29,10 @@ export class LoanDetailDialog extends Dialog {
     await this.button('Record payment').click()
   }
 
+  async edit() {
+    await this.button('Edit').click()
+  }
+
   async markFullyPaid() {
     await this.button('Mark fully paid').click()
   }

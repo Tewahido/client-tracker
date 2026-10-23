@@ -165,14 +165,14 @@ export function useLoanForm(
     [setValues, values],
   )
 
-  /** Moving the loan date drags an untouched first payment date along with it. */
+  /** On a new loan, moving the loan date drags an untouched first payment date along; saved plans keep theirs. */
   const onLentOnChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       const next = e.target.value
-      const followFirst = next && values.firstDueOn === shiftMonths(values.lentOn, 1)
+      const followFirst = !existing && next && values.firstDueOn === shiftMonths(values.lentOn, 1)
       setValues(followFirst ? { lentOn: next, firstDueOn: shiftMonths(next, 1) } : { lentOn: next })
     },
-    [setValues, values.firstDueOn, values.lentOn],
+    [existing, setValues, values.firstDueOn, values.lentOn],
   )
 
   const applyDuePreset = useCallback(

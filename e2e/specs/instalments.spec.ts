@@ -28,6 +28,22 @@ test.describe('monthly repayment plans', () => {
     await expect(loanDetail.instalment(2)).toContainText('Upcoming')
   })
 
+  test('keeps an existing plan’s first payment date when the loan date is corrected', async ({ app, loanForm, loanDetail, loanEditForm }) => {
+    await app.goto('home')
+    await app.openNewLoan()
+    await loanForm.choosePerson('Zanele')
+    await loanForm.amount.fill('6000')
+    await loanForm.payBack('Monthly')
+    await loanForm.months.fill('6')
+    await loanForm.lentOn.fill('2026-07-01')
+    await loanForm.save()
+
+    await loanDetail.edit()
+    await expect(loanEditForm.firstPayment).toHaveValue('2026-08-01')
+    await loanEditForm.lentOn.fill('2026-06-30')
+    await expect(loanEditForm.firstPayment).toHaveValue('2026-08-01')
+  })
+
   test('leaves the interest alone after switching back to all at once', async ({ app, loanForm }) => {
     await app.goto('home')
     await app.openNewLoan()

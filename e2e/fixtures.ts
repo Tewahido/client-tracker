@@ -12,6 +12,7 @@ interface PageObjects {
   loans: LoansPage
   settings: SettingsPage
   loanForm: LoanFormDialog
+  loanEditForm: LoanFormDialog
   loanDetail: LoanDetailDialog
   payment: PaymentDialog
   person: PersonDialog
@@ -27,6 +28,7 @@ export const test = base.extend<PageObjects>({
   loans: async ({ page }, provide) => provide(new LoansPage(page)),
   settings: async ({ page }, provide) => provide(new SettingsPage(page)),
   loanForm: async ({ page }, provide) => provide(new LoanFormDialog(page)),
+  loanEditForm: async ({ page }, provide) => provide(new LoanFormDialog(page, 'Edit loan')),
   loanDetail: async ({ page }, provide) => provide(new LoanDetailDialog(page)),
   payment: async ({ page }, provide) => provide(new PaymentDialog(page)),
   person: async ({ page }, provide) => provide(new PersonDialog(page)),
