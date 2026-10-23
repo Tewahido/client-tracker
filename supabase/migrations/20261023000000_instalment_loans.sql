@@ -12,7 +12,8 @@ alter table public.loans
   add column first_due_on date,
   add column total_due_cents bigint check (total_due_cents > 0),
   add constraint loans_instalment_plan check (
-    (instalment_count is null and first_due_on is null)
+    -- A once-off loan's total always comes from its principal and interest.
+    (instalment_count is null and first_due_on is null and total_due_cents is null)
     or (
       instalment_count is not null
       and first_due_on is not null

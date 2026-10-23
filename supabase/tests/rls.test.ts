@@ -375,6 +375,7 @@ describe('instalment loans', () => {
     ['more than 30 years of instalments', "'2056-11-01', 361, '2026-11-01', 2400000"],
     ['less than a cent per instalment', "'2027-10-01', 12, '2026-11-01', 11"],
     ['a first payment date without a count', "'2026-11-01', null, '2026-11-01', null"],
+    ['an agreed total on a once-off loan', "'2026-11-01', null, null, 100"],
   ])('rejects %s', async (_label, plan) => {
     await expect(insert(plan)).rejects.toThrow(/check constraint/)
   })

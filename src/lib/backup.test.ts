@@ -66,6 +66,10 @@ describe('backup', () => {
     ['a single instalment', { instalmentCount: 1, firstDueOn: '2026-11-01', agreedTotalCents: 24_000 }],
     ['a plan without a total', { instalmentCount: 12, firstDueOn: '2026-11-01' }],
     ['a first date without a count', { firstDueOn: '2026-11-01' }],
+    ['an agreed total without a plan', { agreedTotalCents: 24_000 }],
+    ['a due date that is not the last instalment', { instalmentCount: 12, firstDueOn: '2026-11-01', agreedTotalCents: 24_000, dueOn: '2027-09-01' }],
+    ['a first payment before the loan', { instalmentCount: 2, firstDueOn: '2026-09-01', agreedTotalCents: 24_000, dueOn: '2026-10-01' }],
+    ['less than a cent per instalment', { instalmentCount: 12, firstDueOn: '2026-11-01', agreedTotalCents: 11, dueOn: '2027-10-01' }],
   ])('rejects %s', (_label, plan) => {
     const broken = JSON.parse(serializeBackup(snapshot))
     Object.assign(broken.data.loans[0], plan)
