@@ -58,7 +58,8 @@ export function reconcilePlan(fields: PlanFields, anchor: PlanAnchor): PlanField
 
   const monthly = parseMoney(fields.monthly)
   const total = anchor === 'total' ? parseMoney(fields.total) : monthly !== null && months ? monthly * months : null
-  const interestRate = principal && total ? String(impliedRate(principal, total)) : fields.interestRate
+  // Blank rather than negative when the total is below the amount; the form says what's wrong.
+  const interestRate = principal && total ? (total < principal ? '' : String(impliedRate(principal, total))) : fields.interestRate
   return anchor === 'total'
     ? { ...fields, interestRate, monthly: money(perMonth(total)) }
     : { ...fields, interestRate, total: money(total) }

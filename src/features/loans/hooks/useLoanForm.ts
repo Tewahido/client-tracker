@@ -59,14 +59,18 @@ export function validateLoan(v: LoanFormValues): Partial<Record<keyof LoanFormVa
 
   if (v.repayment === 'monthly') {
     const months = parseMonths(v.months)
-    if (months === null || months < MIN_INSTALMENTS || months > MAX_INSTALMENTS) errors.months = `Use ${MIN_INSTALMENTS} to ${MAX_INSTALMENTS} months`
-    const monthly = parseMoney(v.monthly)
-    if (monthly === null || monthly <= 0) errors.monthly = 'Enter the monthly payment'
-    const total = parseMoney(v.total)
-    if (total === null || total <= 0) errors.total = 'Enter the total to pay back'
-    else if (months && total < months) errors.total = "That's less than a cent a month"
-    else if (amount && total < amount) errors.total = "That's less than you lent"
-    else if (amount && impliedRate(amount, total) > MAX_RATE) errors.total = `That's more than ${MAX_RATE}% interest`
+    if (months === null || months < MIN_INSTALMENTS || months > MAX_INSTALMENTS) {
+      // The monthly payment and total follow from the months, so flag only the months.
+      errors.months = `${MIN_INSTALMENTS} to ${MAX_INSTALMENTS} months`
+    } else {
+      const monthly = parseMoney(v.monthly)
+      if (monthly === null || monthly <= 0) errors.monthly = 'Enter the monthly payment'
+      const total = parseMoney(v.total)
+      if (total === null || total <= 0) errors.total = 'Enter the total to pay back'
+      else if (total < months) errors.total = "That's less than a cent a month"
+      else if (amount && total < amount) errors.total = "That's less than you lent"
+      else if (amount && impliedRate(amount, total) > MAX_RATE) errors.total = `That's more than ${MAX_RATE}% interest`
+    }
     if (!v.firstDueOn) errors.firstDueOn = 'Pick a date'
     else if (v.lentOn && v.firstDueOn < v.lentOn) errors.firstDueOn = "Can't be before the loan date"
     return errors
@@ -186,9 +190,11 @@ export function useLoanForm(
     if (values.repayment === 'monthly') {
       const months = parseMonths(values.months)
       const total = parseMoney(values.total)
-      if (!months || months < MIN_INSTALMENTS || !total || total < months || !values.firstDueOn) return null
+      // No summary while the plan has a problem the form will point out.
+      if (!months || months < MIN_INSTALMENTS || months > MAX_INSTALMENTS || !total || total < months || !values.firstDueOn) return null
+      if (principal && total < principal) return null
       const { regularCents, lastCents } = splitTotal(total, months)
-      const interestCents = principal ? Math.max(0, total - principal) : 0
+      const interestCents = principal ? total - principal : 0
       return { kind: 'monthly', months, regularCents, lastCents, lastOn: lastInstalmentOn(values.firstDueOn, months), interestCents }
     }
     const rate = Number(values.interestRate || 0)
@@ -234,6 +240,8 @@ export function useLoanForm(
 
   return {
     ...form,
+    /** On a plan driven by the total or monthly payment, the interest is an output; say so. */
+    interestHint: values.repayment === 'monthly' && values.anchor !== 'rate' ? 'From the total' : undefined,
     isEdit: !!existing,
     borrowers: sortedBorrowers,
     applyDuePreset,

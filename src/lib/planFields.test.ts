@@ -36,6 +36,10 @@ describe('reconcilePlan', () => {
     expect(reconcilePlan(fields({ amount: '', total: '24000', monthly: '2000' }), 'rate')).toMatchObject({ total: '', monthly: '' })
   })
 
+  it('leaves the interest blank rather than negative when the total is below the amount', () => {
+    expect(reconcilePlan(fields({ total: '15000' }), 'total').interestRate).toBe('')
+  })
+
   it('leaves the interest alone until the amount lent is known', () => {
     expect(reconcilePlan(fields({ amount: '', interestRate: '5', monthly: '2000' }), 'monthly').interestRate).toBe('5')
   })

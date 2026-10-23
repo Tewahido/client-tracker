@@ -12,7 +12,7 @@ const SHARES = [
 ]
 
 export function PaymentFormModal({ loanId, onClose }: { loanId: string; onClose: () => void }) {
-  const { values, errors, submitting, bind, onSubmit, view, balance, setShare } = usePaymentForm(loanId, onClose)
+  const { values, errors, submitting, bind, onSubmit, view, balance, amountHint, setShare } = usePaymentForm(loanId, onClose)
   const { defaults } = useLendingDefaults()
   const money = useMoney()
 
@@ -31,6 +31,7 @@ export function PaymentFormModal({ loanId, onClose }: { loanId: string; onClose:
           value={values.amount}
           onChange={bind('amount')}
           error={errors.amount}
+          hint={amountHint}
         />
         <div className={s.shares}>
           {SHARES.map((share) => (

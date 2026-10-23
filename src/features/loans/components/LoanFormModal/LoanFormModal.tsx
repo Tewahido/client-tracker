@@ -15,7 +15,7 @@ interface LoanFormModalProps {
 }
 
 export function LoanFormModal({ loanId, borrowerId, onClose, onSaved }: LoanFormModalProps) {
-  const { values, errors, submitting, bind, bindPlan, setRepayment, onLentOnChange, onSubmit, isEdit, borrowers, applyDuePreset, preview } = useLoanForm(
+  const { values, errors, submitting, bind, bindPlan, setRepayment, onLentOnChange, onSubmit, isEdit, borrowers, applyDuePreset, preview, interestHint } = useLoanForm(
     { loanId, borrowerId },
     onSaved,
   )
@@ -45,7 +45,7 @@ export function LoanFormModal({ loanId, borrowerId, onClose, onSaved }: LoanForm
 
         <div className={s.amountRow}>
           <TextInput label="Amount" inputMode="decimal" prefix={symbol} value={values.amount} onChange={bindPlan('amount')} error={errors.amount} placeholder="0.00" />
-          <TextInput label="Interest %" inputMode="decimal" value={values.interestRate} onChange={bindPlan('interestRate')} error={errors.interestRate} placeholder="0" />
+          <TextInput label="Interest %" inputMode="decimal" value={values.interestRate} onChange={bindPlan('interestRate')} error={errors.interestRate} hint={interestHint} placeholder="0" />
         </div>
 
         <div className={s.repayment}>
@@ -56,7 +56,7 @@ export function LoanFormModal({ loanId, borrowerId, onClose, onSaved }: LoanForm
         {monthly ? (
           <>
             <div className={s.planRow}>
-              <TextInput label="Months" inputMode="numeric" value={values.months} onChange={bindPlan('months')} error={errors.months} placeholder="12" />
+              <TextInput label="Months" inputMode="numeric" value={values.months} onChange={bindPlan('months')} error={errors.months} placeholder="e.g. 12" />
               <TextInput label="Each month" inputMode="decimal" prefix={symbol} value={values.monthly} onChange={bindPlan('monthly')} error={errors.monthly} placeholder="0.00" />
               <TextInput
                 label="Total to pay back"

@@ -2,6 +2,7 @@ import { useCallback, type FormEvent } from 'react'
 import { useFormState } from '../../../hooks/useFormState'
 import { useMoney } from '../../../hooks/useMoney'
 import { today } from '../../../lib/dates'
+import { instalmentHistoryLabel } from '../../../lib/describe'
 import { amountDueNowCents } from '../../../lib/loans'
 import { centsToInput, parseMoney } from '../../../lib/money'
 import { useLoanStore } from '../../../providers/loanStoreContext'
@@ -52,5 +53,12 @@ export function usePaymentForm(loanId: string, onSaved: () => void) {
     [submit, recordPayment, loanId, balance, onSaved],
   )
 
-  return { ...form, view, balance, setShare, onSubmit }
+  /** Why a monthly plan's amount was suggested. */
+  const amountHint = !view?.plan?.next
+    ? undefined
+    : view.plan.missedCount
+      ? `Catches up ${instalmentHistoryLabel(view.plan.missedCount, 0)}`
+      : `Instalment ${view.plan.next.number} of ${view.plan.instalments.length}`
+
+  return { ...form, view, balance, amountHint, setShare, onSubmit }
 }

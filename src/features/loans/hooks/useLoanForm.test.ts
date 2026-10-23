@@ -24,8 +24,8 @@ describe('validateLoan (monthly)', () => {
   })
 
   it.each([
-    [{ months: '1' }, 'months', 'Use 2 to 360 months'],
-    [{ months: '361' }, 'months', 'Use 2 to 360 months'],
+    [{ months: '1' }, 'months', '2 to 360 months'],
+    [{ months: '361' }, 'months', '2 to 360 months'],
     [{ monthly: '' }, 'monthly', 'Enter the monthly payment'],
     [{ total: '19999' }, 'total', "That's less than you lent"],
     [{ total: '300000' }, 'total', "That's more than 1000% interest"],
@@ -33,6 +33,10 @@ describe('validateLoan (monthly)', () => {
     [{ firstDueOn: '2026-09-30' }, 'firstDueOn', "Can't be before the loan date"],
   ] as const)('%j -> %s', (patch, field, message) => {
     expect(validateLoan(monthly(patch))[field]).toBe(message)
+  })
+
+  it('only complains about the months when they are missing', () => {
+    expect(validateLoan(monthly({ months: '', monthly: '', total: '' }))).toEqual({ months: '2 to 360 months' })
   })
 
   it('ignores the once-off due date', () => {

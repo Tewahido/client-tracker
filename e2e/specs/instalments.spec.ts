@@ -12,6 +12,7 @@ test.describe('monthly repayment plans', () => {
     await loanForm.monthly.fill('2000')
     await expect(loanForm.total).toHaveValue('24000')
     await expect(loanForm.interest).toHaveValue('20')
+    await expect(loanForm.interest).toHaveAccessibleDescription('From the total')
 
     await loanForm.total.fill('36000')
     await expect(loanForm.monthly).toHaveValue('3000')
@@ -99,6 +100,7 @@ test.describe('monthly repayment plans', () => {
     // The payment form suggests catching up on what was missed.
     await loanDetail.recordPayment()
     await expect(payment.amount).toHaveValue('3000')
+    await expect(payment.amount).toHaveAccessibleDescription('Catches up 3 missed instalments')
     await payment.pay('1000')
 
     await expect(loanDetail.instalment(1)).toContainText('Paid late')
