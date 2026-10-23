@@ -10,8 +10,11 @@ export class LoanDetailDialog extends Dialog {
   /** The large balance figure under "Still owed" / "Fully repaid". */
   readonly balance = this.root.getByText(/^R\s?[\d,]+\.\d{2}$/).first()
 
-  /** A monthly plan's instalments, in order. */
-  readonly instalments = this.root.getByRole('list', { name: 'Repayment plan' }).getByRole('listitem')
+  /** A monthly plan's list of instalments. */
+  readonly plan = this.root.getByRole('list', { name: 'Repayment plan' })
+
+  /** The plan's instalments, in order. */
+  readonly instalments = this.plan.getByRole('listitem')
 
   /** The warning about missed instalments, e.g. "2 missed instalments · R2,000.00 behind". */
   readonly behind = this.root.getByRole('status').filter({ hasText: 'behind' })

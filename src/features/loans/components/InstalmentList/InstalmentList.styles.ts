@@ -1,7 +1,8 @@
 import type { InstalmentState } from '../../../../lib/instalments'
 
 export const instalmentListStyles = {
-  list: 'max-h-80 divide-y divide-line overflow-y-auto rounded-2xl ring-1 ring-line',
+  // Phones scroll the whole sheet; a second scroll box inside it would cut rows off.
+  list: 'divide-y divide-line overflow-hidden rounded-2xl ring-1 ring-line sm:max-h-80 sm:overflow-y-auto',
   row: 'flex items-center gap-3 bg-surface px-4 py-2.5',
   number: 'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-xs font-bold text-muted tabular',
   main: 'min-w-0 flex-1',
