@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { dueLabel, periodLabel } from './describe'
 import type { LoanView } from './loans'
 
-const base = { loan: { dueOn: '2026-12-25' }, settledOn: null } as unknown as LoanView
+const base = { nextDueOn: '2026-12-25', settledOn: null } as unknown as LoanView
 
 describe('dueLabel', () => {
   it.each([

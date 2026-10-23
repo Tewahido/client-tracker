@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { toast } from 'sonner'
 import { useMoney } from '../../../hooks/useMoney'
-import { formatDate, shiftDate, today } from '../../../lib/dates'
+import { formatDate, today } from '../../../lib/dates'
+import { extendDueDate } from '../../../lib/loans'
 import { useLoanStore } from '../../../providers/loanStoreContext'
 import { celebrate } from '../../../services/celebrate'
 
@@ -26,12 +27,9 @@ export function useLoanActions(loanId: string) {
       },
 
       async extendDueDate(days: number) {
-        const v = view()
-        // Extend from today when already overdue, otherwise from the current due date.
-        const from = v.daysUntilDue < 0 ? today() : v.loan.dueOn
-        const dueOn = shiftDate(from, days)
-        await updateLoan(loanId, { dueOn })
-        toast.success(`New due date: ${formatDate(dueOn)}`)
+        const { patch, nextDueOn } = extendDueDate(view(), days, today())
+        await updateLoan(loanId, patch)
+        toast.success(`New due date: ${formatDate(nextDueOn)}`)
       },
 
       async forgive() {

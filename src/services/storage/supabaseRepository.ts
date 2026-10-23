@@ -22,6 +22,9 @@ interface LoanRow {
   due_on: string
   note: string | null
   written_off_on: string | null
+  instalment_count: number | null
+  first_due_on: string | null
+  total_due_cents: number | null
   created_at: string
 }
 
@@ -56,6 +59,9 @@ const toLoan = (r: LoanRow): Loan => ({
   dueOn: r.due_on,
   note: r.note,
   writtenOffOn: r.written_off_on,
+  instalmentCount: r.instalment_count,
+  firstDueOn: r.first_due_on,
+  agreedTotalCents: r.total_due_cents === null ? null : Number(r.total_due_cents),
   createdAt: r.created_at,
 })
 
@@ -69,6 +75,9 @@ const fromLoan = (l: Partial<Loan>): Partial<LoanRow> =>
     due_on: l.dueOn,
     note: l.note,
     written_off_on: l.writtenOffOn,
+    instalment_count: l.instalmentCount,
+    first_due_on: l.firstDueOn,
+    total_due_cents: l.agreedTotalCents,
     created_at: l.createdAt,
   })
 

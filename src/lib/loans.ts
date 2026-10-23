@@ -1,4 +1,5 @@
-import { daysBetween } from './dates'
+import { daysBetween, shiftDate, shiftMonths } from './dates'
+import { buildSchedule, hasPlan, lastInstalmentOn, planProgress, type PlanProgress } from './instalments'
 import type { Borrower, ISODate, Loan, LoanStatus, Payment } from './types'
 
 export interface LoanView {
@@ -11,14 +12,19 @@ export interface LoanView {
   /** 0..1 share of the total that has been repaid. */
   progress: number
   status: LoanStatus
-  /** Days until the due date; negative once overdue. */
+  /** When the next payment is expected: the due date, or the oldest unpaid instalment's. */
+  nextDueOn: ISODate
+  /** Days until `nextDueOn`; negative once overdue. */
   daysUntilDue: number
+  /** Monthly repayment plan and how it is going; null for loans repaid in one go. */
+  plan: PlanProgress | null
   /** Date the balance reached zero, if it has. */
   settledOn: ISODate | null
 }
 
-export function totalDueCents(loan: Pick<Loan, 'principalCents' | 'interestRate'>): number {
-  return Math.round(loan.principalCents * (1 + loan.interestRate / 100))
+/** The agreed total when one was set (monthly plans), otherwise the principal plus flat interest. */
+export function totalDueCents(loan: Pick<Loan, 'principalCents' | 'interestRate'> & Partial<Pick<Loan, 'agreedTotalCents'>>): number {
+  return loan.agreedTotalCents ?? Math.round(loan.principalCents * (1 + loan.interestRate / 100))
 }
 
 export function loanStatus(balanceCents: number, daysUntilDue: number, soonDays: number, writtenOff: boolean): LoanStatus {
@@ -64,7 +70,11 @@ export function buildLoanViews(
     const total = totalDueCents(loan)
     const paid = loanPayments.reduce((sum, p) => sum + p.amountCents, 0)
     const balance = Math.max(0, total - paid)
-    const daysUntilDue = daysBetween(todayDate, loan.dueOn)
+    const plan = hasPlan(loan)
+      ? planProgress(buildSchedule(loan.firstDueOn!, loan.instalmentCount!, total), loanPayments, todayDate, loan.writtenOffOn)
+      : null
+    const nextDueOn = plan?.next?.dueOn ?? loan.dueOn
+    const daysUntilDue = daysBetween(todayDate, nextDueOn)
 
     let settledOn: ISODate | null = null
     if (balance === 0) {
@@ -87,7 +97,9 @@ export function buildLoanViews(
       balanceCents: balance,
       progress: total === 0 ? 1 : Math.min(1, paid / total),
       status: loanStatus(balance, daysUntilDue, soonDays, loan.writtenOffOn !== null),
+      nextDueOn,
       daysUntilDue,
+      plan,
       settledOn,
     }
   })
@@ -110,7 +122,7 @@ export function outstandingCents(views: LoanView[]): number {
 
 export function sortByUrgency(views: LoanView[]): LoanView[] {
   return [...views].sort(
-    (a, b) => STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status] || a.loan.dueOn.localeCompare(b.loan.dueOn),
+    (a, b) => STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status] || a.nextDueOn.localeCompare(b.nextDueOn),
   )
 }
 
@@ -173,6 +185,10 @@ export interface BorrowerStats {
   /** Share of settled loans repaid on or before the due date; null with no history. */
   onTimeRate: number | null
   nextDue: LoanView | null
+  /** Monthly instalments past their due date and still unpaid, across their loans. */
+  missedInstalments: number
+  /** Monthly instalments they paid, but late. */
+  lateInstalments: number
 }
 
 export function borrowerStats(views: LoanView[]): BorrowerStats {
@@ -182,13 +198,17 @@ export function borrowerStats(views: LoanView[]): BorrowerStats {
   let settled = 0
   let onTime = 0
   let nextDue: LoanView | null = null
+  let missed = 0
+  let late = 0
 
   for (const v of views) {
     lent += v.loan.principalCents
+    missed += v.plan?.missedCount ?? 0
+    late += v.plan?.paidLateCount ?? 0
     if (isOpen(v.status)) {
       open++
       outstanding += v.balanceCents
-      if (!nextDue || v.loan.dueOn < nextDue.loan.dueOn) nextDue = v
+      if (!nextDue || v.nextDueOn < nextDue.nextDueOn) nextDue = v
     } else if (v.settledOn) {
       settled++
       if (v.settledOn <= v.loan.dueOn) onTime++
@@ -202,6 +222,35 @@ export function borrowerStats(views: LoanView[]): BorrowerStats {
     settledLoans: settled,
     onTimeRate: settled === 0 ? null : onTime / settled,
     nextDue,
+    missedInstalments: missed,
+    lateInstalments: late,
+  }
+}
+
+/**
+ * What the borrower should pay now: the whole balance on a once-off loan; on a
+ * monthly plan, the missed instalments, or else the next one.
+ */
+export function amountDueNowCents(view: Pick<LoanView, 'balanceCents' | 'plan'>): number {
+  const { plan } = view
+  if (!plan?.next) return view.balanceCents
+  return plan.arrearsCents || plan.next.amountCents - plan.next.paidCents
+}
+
+/**
+ * Give the borrower `days` more for their next payment, counted from today when
+ * it is already late. A monthly plan moves as a whole, keeping one payment a month.
+ * Returns the loan changes and the next payment's new date.
+ */
+export function extendDueDate(view: Pick<LoanView, 'loan' | 'nextDueOn' | 'plan'>, days: number, todayDate: ISODate) {
+  const target = shiftDate(view.nextDueOn < todayDate ? todayDate : view.nextDueOn, days)
+  const { loan, plan } = view
+  if (!plan?.next || !hasPlan(loan)) return { patch: { dueOn: target }, nextDueOn: target }
+
+  const firstDueOn = shiftDate(loan.firstDueOn!, daysBetween(view.nextDueOn, target))
+  return {
+    patch: { firstDueOn, dueOn: lastInstalmentOn(firstDueOn, loan.instalmentCount!) },
+    nextDueOn: shiftMonths(firstDueOn, plan.next.number - 1),
   }
 }
 

@@ -1,4 +1,4 @@
-import { withFreshIds } from '../../lib/snapshot'
+import { withFreshIds, withLoanDefaults } from '../../lib/snapshot'
 import type { Snapshot } from '../../lib/types'
 import type { DataRepository } from './repository'
 
@@ -11,7 +11,7 @@ function read(): Snapshot {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return empty()
     const parsed = JSON.parse(raw) as Partial<Snapshot>
-    return { borrowers: parsed.borrowers ?? [], loans: parsed.loans ?? [], payments: parsed.payments ?? [] }
+    return { borrowers: parsed.borrowers ?? [], loans: (parsed.loans ?? []).map(withLoanDefaults), payments: parsed.payments ?? [] }
   } catch {
     return empty()
   }

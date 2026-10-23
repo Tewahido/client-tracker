@@ -98,6 +98,9 @@ export function useLoanForm(
           lentOn: v.lentOn,
           dueOn: v.dueOn,
           note: v.note.trim() || null,
+          instalmentCount: null,
+          firstDueOn: null,
+          agreedTotalCents: null,
         }
         onSaved(existing ? await updateLoan(existing.id, input) : await addLoan(input))
       })

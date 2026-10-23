@@ -2,7 +2,7 @@ import { formatDate } from './dates'
 import type { LoanView } from './loans'
 
 /** Short, friendly description of where a loan stands, e.g. "Overdue by 3 days". */
-export function dueLabel(view: Pick<LoanView, 'status' | 'daysUntilDue' | 'settledOn' | 'loan'>): string {
+export function dueLabel(view: Pick<LoanView, 'status' | 'daysUntilDue' | 'settledOn' | 'nextDueOn'>): string {
   const { status, daysUntilDue: d } = view
   switch (status) {
     case 'paid':
@@ -14,7 +14,7 @@ export function dueLabel(view: Pick<LoanView, 'status' | 'daysUntilDue' | 'settl
     case 'due-today':
       return 'Due today'
     default:
-      return d === 1 ? 'Due tomorrow' : d <= 30 ? `Due in ${d} days` : `Due ${formatDate(view.loan.dueOn, 'd MMM yyyy')}`
+      return d === 1 ? 'Due tomorrow' : d <= 30 ? `Due in ${d} days` : `Due ${formatDate(view.nextDueOn, 'd MMM yyyy')}`
   }
 }
 

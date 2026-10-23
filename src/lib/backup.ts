@@ -1,7 +1,10 @@
+import { MAX_INSTALMENTS, MIN_INSTALMENTS } from './instalments'
+import { withLoanDefaults } from './snapshot'
 import type { Snapshot } from './types'
 
 const FORMAT = 'lendly-backup'
-const VERSION = 1
+/** 2 added monthly repayment plans; older apps refuse it rather than silently dropping them. */
+const VERSION = 2
 
 export interface Backup {
   format: typeof FORMAT
@@ -19,6 +22,11 @@ const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'obj
 const isDate = (v: unknown) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)
 /** Amounts must be whole cents above zero, matching the database's check constraints. */
 const isPositiveCents = (v: unknown) => Number.isInteger(v) && (v as number) > 0
+const isCount = (v: unknown) => Number.isInteger(v) && (v as number) >= MIN_INSTALMENTS && (v as number) <= MAX_INSTALMENTS
+/** No plan at all, or a complete one. */
+const isPlan = (l: Record<string, unknown>) =>
+  l.instalmentCount == null ? l.firstDueOn == null : isCount(l.instalmentCount) && isDate(l.firstDueOn) && isPositiveCents(l.agreedTotalCents)
+const isOptionalCents = (v: unknown) => v == null || isPositiveCents(v)
 
 /** Parse and validate a backup file. Throws an Error with a user-facing message when invalid. */
 export function parseBackup(text: string): Backup {
@@ -43,7 +51,7 @@ export function parseBackup(text: string): Backup {
     if (!isObject(b) || typeof b.id !== 'string' || typeof b.name !== 'string') throw bad('person', i)
   })
   data.loans.forEach((l, i) => {
-    if (!isObject(l) || typeof l.id !== 'string' || typeof l.borrowerId !== 'string' || !isPositiveCents(l.principalCents) || !isDate(l.lentOn) || !isDate(l.dueOn)) {
+    if (!isObject(l) || typeof l.id !== 'string' || typeof l.borrowerId !== 'string' || !isPositiveCents(l.principalCents) || !isDate(l.lentOn) || !isDate(l.dueOn) || !isPlan(l) || !isOptionalCents(l.agreedTotalCents)) {
       throw bad('loan', i)
     }
   })
@@ -62,5 +70,6 @@ export function parseBackup(text: string): Backup {
     if (new Set(ids).size !== ids.length) throw new Error(`The backup lists some ${label} more than once.`)
   }
 
-  return parsed as unknown as Backup
+  const backup = parsed as unknown as Backup
+  return { ...backup, data: { ...backup.data, loans: backup.data.loans.map(withLoanDefaults) } }
 }

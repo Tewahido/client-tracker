@@ -1,4 +1,9 @@
-import type { Snapshot } from './types'
+import type { Loan, Snapshot } from './types'
+
+/** Fill in fields added after a loan was saved (monthly plans), so older data reads as once-off loans. */
+export function withLoanDefaults(loan: Partial<Loan>): Loan {
+  return { instalmentCount: null, firstDueOn: null, agreedTotalCents: null, ...loan } as Loan
+}
 
 /** Copy of a snapshot with new ids everywhere, keeping loan/payment references intact. */
 export function withFreshIds(snapshot: Snapshot, makeId: () => string = () => crypto.randomUUID()): Snapshot {
