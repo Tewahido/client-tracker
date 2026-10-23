@@ -2,6 +2,7 @@ import { cn } from '../../../../lib/cn'
 import { Star } from 'lucide-react'
 import { Avatar, Card } from '../../../../components/ui'
 import { relativeDays } from '../../../../lib/dates'
+import { instalmentHistoryLabel } from '../../../../lib/describe'
 import { useMoney } from '../../../../hooks/useMoney'
 import type { PersonSummary } from '../../hooks/usePeople'
 import { personCardStyles as s } from './PersonCard.styles'
@@ -42,6 +43,7 @@ export function PersonCard({ person, onOpen }: { person: PersonSummary; onOpen: 
             <span className={s.metaStrong}>{stats.openLoans}</span> open · {stats.settledLoans} repaid
           </div>
           {next && <div className={next.daysUntilDue < 0 ? s.overdue : undefined}>Next due {relativeDays(next.daysUntilDue)}</div>}
+          {stats.missedInstalments > 0 && <div className={s.overdue}>{instalmentHistoryLabel(stats.missedInstalments, 0)}</div>}
         </div>
       </div>
     </Card>

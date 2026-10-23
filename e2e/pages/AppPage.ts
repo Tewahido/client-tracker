@@ -15,6 +15,11 @@ export class AppPage {
     await this.page.goto(`/#${route}`)
   }
 
+  /** Pretend today is `date` (YYYY-MM-DD, mid-morning in Johannesburg). Call before goto(). */
+  async setToday(date: string) {
+    await this.page.clock.setFixedTime(new Date(`${date}T10:00:00+02:00`))
+  }
+
   async reload() {
     await this.page.reload()
   }

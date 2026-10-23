@@ -2,6 +2,7 @@ import { useCallback, type FormEvent } from 'react'
 import { useFormState } from '../../../hooks/useFormState'
 import { useMoney } from '../../../hooks/useMoney'
 import { today } from '../../../lib/dates'
+import { amountDueNowCents } from '../../../lib/loans'
 import { centsToInput, parseMoney } from '../../../lib/money'
 import { useLoanStore } from '../../../providers/loanStoreContext'
 import { celebrate } from '../../../services/celebrate'
@@ -31,7 +32,9 @@ export function usePaymentForm(loanId: string, onSaved: () => void) {
     [balance, money],
   )
 
-  const form = useFormState<PaymentFormValues>({ amount: centsToInput(balance), paidOn: today(), note: '' }, validate)
+  // Monthly plans start from what is due now (missed instalments, or the next one) rather than everything.
+  const suggested = view ? amountDueNowCents(view) : 0
+  const form = useFormState<PaymentFormValues>({ amount: centsToInput(suggested), paidOn: today(), note: '' }, validate)
   const { submit, setValue } = form
 
   const setShare = useCallback((share: number) => setValue('amount', centsToInput(Math.round(balance * share))), [balance, setValue])

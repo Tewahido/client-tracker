@@ -9,6 +9,13 @@ export const personDetailStyles = {
   stat: 'rounded-xl bg-surface-2/60 px-3.5 py-3',
   statLabel: 'text-[11px] font-semibold tracking-wide text-muted uppercase',
   statValue: 'mt-0.5 text-base font-extrabold tabular',
+  /** Missed instalments warn; a record of late ones only informs. */
+  history: {
+    missed:
+      'mt-4 flex items-center gap-2 rounded-xl bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-600 ring-1 ring-rose-500/25 dark:text-rose-300',
+    late: 'mt-4 flex items-center gap-2 rounded-xl bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-700 ring-1 ring-amber-500/25 dark:text-amber-300',
+  },
+  historyIcon: 'h-4 w-4 shrink-0',
   notes: 'mt-4 rounded-xl border border-dashed border-line px-4 py-3 text-sm text-muted whitespace-pre-line',
   section: 'mt-6',
   sectionHead: 'mb-3 flex items-center justify-between',

@@ -4,6 +4,7 @@ import { LoanDetailDialog } from './pages/LoanDetailDialog'
 import { LoanFormDialog } from './pages/LoanFormDialog'
 import { LoansPage } from './pages/LoansPage'
 import { PaymentDialog } from './pages/PaymentDialog'
+import { PersonDialog } from './pages/PersonDialog'
 import { SettingsPage } from './pages/SettingsPage'
 
 interface PageObjects {
@@ -13,6 +14,7 @@ interface PageObjects {
   loanForm: LoanFormDialog
   loanDetail: LoanDetailDialog
   payment: PaymentDialog
+  person: PersonDialog
 }
 
 /**
@@ -27,6 +29,7 @@ export const test = base.extend<PageObjects>({
   loanForm: async ({ page }, provide) => provide(new LoanFormDialog(page)),
   loanDetail: async ({ page }, provide) => provide(new LoanDetailDialog(page)),
   payment: async ({ page }, provide) => provide(new PaymentDialog(page)),
+  person: async ({ page }, provide) => provide(new PersonDialog(page)),
 })
 
 export { expect } from '@playwright/test'
