@@ -323,6 +323,69 @@ describe('restore_snapshot', () => {
     const [payment] = await as<{ amount_cents: number; org_id: string }>('alice', 'select amount_cents, org_id from payments where id = $1', [ids.payment])
     expect(payment).toEqual({ amount_cents: 500, org_id: org })
   })
+
+  it('restores monthly repayment plans', async () => {
+    const plan = { instalment_count: 12, first_due_on: '2026-11-01', due_on: '2027-10-01', total_due_cents: 2_400_000 }
+    await as('alice', 'select public.restore_snapshot($1, $2::jsonb, $3::jsonb, $4::jsonb)', [
+      org,
+      JSON.stringify([{ id: ids.borrower, name: 'Restored person' }]),
+      JSON.stringify([{ id: ids.loan, borrower_id: ids.borrower, principal_cents: 2_000_000, interest_rate: 20, lent_on: '2026-10-01', ...plan }]),
+      '[]',
+    ])
+    const [loan] = await as('alice', 'select instalment_count, first_due_on::text, due_on::text, total_due_cents from loans where id = $1', [ids.loan])
+    expect(loan).toEqual({ ...plan, total_due_cents: 2_400_000 })
+  })
+})
+
+describe('instalment loans', () => {
+  let org: string
+  let borrower: string
+
+  /** Insert a loan as Bob (a member), with only the given plan columns set. */
+  const insert = (plan: string) =>
+    as<{ id: string }>(
+      'bob',
+      `insert into loans (org_id, borrower_id, principal_cents, lent_on, due_on, instalment_count, first_due_on, total_due_cents)
+       values ($1, $2, 2000000, '2026-10-01', ${plan}) returning id`,
+      [org, borrower],
+    )
+
+  beforeAll(async () => {
+    org = await createOrg('alice', 'Instalments Co')
+    const [invite] = await as<{ id: string }>('alice', "insert into organization_invites (org_id, email) values ($1, 'bob@example.com') returning id", [org])
+    await as('bob', 'select public.accept_invite($1)', [invite.id])
+    ;[{ id: borrower }] = await as<{ id: string }>('alice', "insert into borrowers (org_id, name) values ($1, 'Naledi') returning id", [org])
+  })
+
+  it('lets members record a monthly plan whose last payment matches the due date', async () => {
+    expect(await insert("'2027-10-01', 12, '2026-11-01', 2400000")).toHaveLength(1)
+    // Month ends clamp like the app's date maths: 31 Jan + 1 month is 28 Feb.
+    expect(await insert("'2027-02-28', 2, '2027-01-31', 2400000")).toHaveLength(1)
+  })
+
+  it('keeps once-off loans working without a plan', async () => {
+    expect(await insert("'2026-11-01', null, null, null")).toHaveLength(1)
+  })
+
+  it.each([
+    ['a due date that is not the last instalment', "'2027-09-01', 12, '2026-11-01', 2400000"],
+    ['a plan without a total', "'2027-10-01', 12, '2026-11-01', null"],
+    ['a plan without a first payment date', "'2027-10-01', 12, null, 2400000"],
+    ['a first payment before the money was lent', "'2027-08-15', 12, '2026-09-15', 2400000"],
+    ['a single instalment', "'2026-11-01', 1, '2026-11-01', 2400000"],
+    ['more than 30 years of instalments', "'2056-11-01', 361, '2026-11-01', 2400000"],
+    ['less than a cent per instalment', "'2027-10-01', 12, '2026-11-01', 11"],
+    ['a first payment date without a count', "'2026-11-01', null, '2026-11-01', null"],
+    ['an agreed total on a once-off loan', "'2026-11-01', null, null, 100"],
+  ])('rejects %s', async (_label, plan) => {
+    await expect(insert(plan)).rejects.toThrow(/check constraint/)
+  })
+
+  it('checks the plan again when a loan is edited', async () => {
+    const [{ id }] = await insert("'2027-10-01', 12, '2026-11-01', 2400000")
+    await expect(as('bob', 'update loans set instalment_count = 6 where id = $1', [id])).rejects.toThrow(/check constraint/)
+    await as('bob', "update loans set instalment_count = 6, due_on = '2027-04-01' where id = $1", [id])
+  })
 })
 
 describe('claim_invite_email', () => {

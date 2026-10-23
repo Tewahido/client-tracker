@@ -1,5 +1,6 @@
-import { Mail, Pencil, Phone, Plus, Trash2 } from 'lucide-react'
+import { CalendarX, Mail, Pencil, Phone, Plus, Trash2 } from 'lucide-react'
 import { Avatar, Button, ConfirmDialog, Modal } from '../../../../components/ui'
+import { instalmentHistoryLabel } from '../../../../lib/describe'
 import { useMoney } from '../../../../hooks/useMoney'
 import { usePermissions } from '../../../../hooks/usePermissions'
 import { LoanRow } from '../../../loans'
@@ -22,6 +23,7 @@ export function PersonDetailModal({ borrowerId, onClose, onEdit, onNewLoan, onOp
 
   if (!summary) return null
   const { borrower, stats } = summary
+  const instalmentHistory = instalmentHistoryLabel(stats.missedInstalments, stats.lateInstalments)
 
   return (
     <>
@@ -64,6 +66,13 @@ export function PersonDetailModal({ borrowerId, onClose, onEdit, onNewLoan, onOp
             </div>
           </div>
         </div>
+
+        {instalmentHistory && (
+          <p className={stats.missedInstalments > 0 ? s.history.missed : s.history.late}>
+            <CalendarX className={s.historyIcon} />
+            {instalmentHistory}
+          </p>
+        )}
 
         {borrower.notes && <p className={s.notes}>{borrower.notes}</p>}
 

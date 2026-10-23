@@ -32,6 +32,9 @@ describe('dueReminders', () => {
     dueOn,
     note: null,
     writtenOffOn: null,
+    instalmentCount: null,
+    firstDueOn: null,
+    agreedTotalCents: null,
     createdAt: '',
   })
 
@@ -50,5 +53,12 @@ describe('dueReminders', () => {
       title: 'Thandi Nkosi is 3 days overdue',
     })
     expect(reminders[0].body).toContain('R500')
+  })
+
+  it('reminds about each monthly instalment separately, with what is due now', () => {
+    const monthly = { ...loan('plan', '2027-03-01'), firstDueOn: '2026-10-01', instalmentCount: 6, agreedTotalCents: 60_000 }
+    const [reminder] = dueReminders(buildLoanViews([monthly], [], [borrower], '2026-10-04', 3), 3, (c) => `R${c / 100}`)
+    expect(reminder.key).toBe('plan:2026-10-01:overdue-3')
+    expect(reminder.body).toBe('R100 due now, R600 still owed in total. Tap to open the loan.')
   })
 })

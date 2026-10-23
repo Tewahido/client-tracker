@@ -1,4 +1,4 @@
-import { isOpen, type LoanView } from './loans'
+import { amountDueNowCents, isOpen, type LoanView } from './loans'
 
 /**
  * Reminder "stages" a loan moves through. Each stage notifies at most once, so a
@@ -38,11 +38,14 @@ export function dueReminders(views: LoanView[], soonDays: number, formatMoney: (
     const name = v.borrower?.name ?? 'Someone'
     const amount = formatMoney(v.balanceCents)
     reminders.push({
-      key: `${v.loan.id}:${v.loan.dueOn}:${stage}`,
+      // Keyed by the next due date, so each monthly instalment gets its own reminders.
+      key: `${v.loan.id}:${v.nextDueOn}:${stage}`,
       loanId: v.loan.id,
       stage,
       title: reminderTitle(stage, name, v.daysUntilDue),
-      body: `${amount} still owed to you. Tap to open the loan.`,
+      body: v.plan
+        ? `${formatMoney(amountDueNowCents(v))} due now, ${amount} still owed in total. Tap to open the loan.`
+        : `${amount} still owed to you. Tap to open the loan.`,
     })
   }
   return reminders

@@ -18,11 +18,17 @@ export const loanDetailStyles = {
   factSub: 'mt-0.5 text-[11px] font-semibold text-muted',
   factUrgent: 'text-rose-500 dark:text-rose-400',
 
+  behind:
+    'mt-4 flex items-center gap-2 rounded-xl bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-600 ring-1 ring-rose-500/25 dark:text-rose-300',
+  behindIcon: 'h-4 w-4 shrink-0',
+
   note: 'mt-4 rounded-xl border border-dashed border-line px-4 py-3 text-sm text-muted',
 
   primaryActions: 'mt-5 grid gap-2 sm:grid-cols-2',
   section: 'mt-6',
   sectionTitle: 'mb-2 text-xs font-semibold tracking-wide text-muted uppercase',
+  sectionHead: 'flex items-baseline justify-between gap-2',
+  sectionMeta: 'text-xs font-semibold text-muted tabular',
   chips: 'flex flex-wrap gap-2',
 
   payments: 'divide-y divide-line overflow-hidden rounded-2xl ring-1 ring-line',

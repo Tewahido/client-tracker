@@ -14,6 +14,9 @@ const snapshot: Snapshot = {
       dueOn: '2026-11-01',
       note: null,
       writtenOffOn: null,
+      instalmentCount: null,
+      firstDueOn: null,
+      agreedTotalCents: null,
       createdAt: '2026-10-01T00:00:00Z',
     },
   ],
@@ -44,6 +47,33 @@ describe('backup', () => {
     const zero = JSON.parse(serializeBackup(snapshot))
     zero.data.payments[0].amountCents = 0
     expect(() => parseBackup(JSON.stringify(zero))).toThrow('invalid payment (entry 1)')
+  })
+
+  it('round-trips a monthly plan', () => {
+    const planned = { ...snapshot, loans: [{ ...snapshot.loans[0], instalmentCount: 12, firstDueOn: '2026-11-01', dueOn: '2027-10-01', agreedTotalCents: 24_000 }] }
+    expect(parseBackup(serializeBackup(planned)).data).toEqual(planned)
+  })
+
+  it('reads backups from before monthly plans as once-off loans', () => {
+    const old = JSON.parse(serializeBackup(snapshot))
+    old.version = 1
+    for (const key of ['instalmentCount', 'firstDueOn', 'agreedTotalCents']) delete old.data.loans[0][key]
+    expect(parseBackup(JSON.stringify(old)).data).toEqual(snapshot)
+  })
+
+  it.each([
+    ['a count without a first date', { instalmentCount: 12 }],
+    ['a single instalment', { instalmentCount: 1, firstDueOn: '2026-11-01', agreedTotalCents: 24_000 }],
+    ['a plan without a total', { instalmentCount: 12, firstDueOn: '2026-11-01' }],
+    ['a first date without a count', { firstDueOn: '2026-11-01' }],
+    ['an agreed total without a plan', { agreedTotalCents: 24_000 }],
+    ['a due date that is not the last instalment', { instalmentCount: 12, firstDueOn: '2026-11-01', agreedTotalCents: 24_000, dueOn: '2027-09-01' }],
+    ['a first payment before the loan', { instalmentCount: 2, firstDueOn: '2026-09-01', agreedTotalCents: 24_000, dueOn: '2026-10-01' }],
+    ['less than a cent per instalment', { instalmentCount: 12, firstDueOn: '2026-11-01', agreedTotalCents: 11, dueOn: '2027-10-01' }],
+  ])('rejects %s', (_label, plan) => {
+    const broken = JSON.parse(serializeBackup(snapshot))
+    Object.assign(broken.data.loans[0], plan)
+    expect(() => parseBackup(JSON.stringify(broken))).toThrow('invalid loan (entry 1)')
   })
 
   it('rejects duplicate ids', () => {

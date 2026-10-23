@@ -15,6 +15,10 @@ export abstract class Dialog {
     await this.root.getByRole('button', { name: 'Close' }).click()
   }
 
+  async press(key: string) {
+    await this.page.keyboard.press(key)
+  }
+
   async pressEscape() {
     await this.page.keyboard.press('Escape')
   }

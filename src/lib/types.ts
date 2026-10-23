@@ -22,6 +22,12 @@ export interface Loan {
   note: string | null
   /** Set when the lender decides to forgive the remaining balance. */
   writtenOffOn: ISODate | null
+  /** Number of monthly repayments; null when the loan is repaid in one go. */
+  instalmentCount: number | null
+  /** Date of the first monthly repayment (`dueOn` is the last); null when repaid in one go. */
+  firstDueOn: ISODate | null
+  /** Agreed total to repay in cents, set for monthly plans; null derives it from the interest. */
+  agreedTotalCents: number | null
   createdAt: string
 }
 

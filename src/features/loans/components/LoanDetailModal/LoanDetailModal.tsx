@@ -1,13 +1,14 @@
 import { cn } from '../../../../lib/cn'
-import { ArrowDownLeft, CalendarPlus, Check, HandHeart, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react'
+import { AlarmClock, ArrowDownLeft, CalendarPlus, Check, HandHeart, Pencil, Plus, RotateCcw, Trash2, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Avatar, Button, ConfirmDialog, Modal, ProgressRing, STATUS_META, StatusBadge } from '../../../../components/ui'
 import { useMoney } from '../../../../hooks/useMoney'
 import { usePermissions } from '../../../../hooks/usePermissions'
 import { formatDate } from '../../../../lib/dates'
-import { dueLabel } from '../../../../lib/describe'
+import { dueLabel, instalmentHistoryLabel, nextPaymentFact, planProgressLabel } from '../../../../lib/describe'
 import { isOpen } from '../../../../lib/loans'
 import { useLoanDetail } from '../../hooks/useLoanDetail'
+import { InstalmentList } from '../InstalmentList'
 import { loanDetailStyles as s } from './LoanDetailModal.styles'
 
 interface LoanDetailModalProps {
@@ -34,9 +35,10 @@ export function LoanDetailModal({ loanId, onClose, onEdit, onRecordPayment, onOp
   // The loan was deleted (possibly from this dialog): nothing left to show.
   if (!view) return null
 
-  const { loan, borrower, status } = view
+  const { loan, borrower, status, plan } = view
   const open = isOpen(status)
   const name = borrower?.name ?? 'Unknown'
+  const next = plan ? nextPaymentFact(view, money) : null
 
   return (
     <>
@@ -63,12 +65,28 @@ export function LoanDetailModal({ loanId, onClose, onEdit, onRecordPayment, onOp
           </div>
         </div>
 
-        <div className={s.facts}>
-          <Fact label="Lent" value={money(loan.principalCents)} />
-          <Fact label="Interest" value={loan.interestRate ? `${loan.interestRate}%` : 'None'} />
-          <Fact label="Lent on" value={formatDate(loan.lentOn)} />
-          <Fact label="Due" value={formatDate(loan.dueOn)} sub={dueLabel(view)} urgent={status === 'overdue'} />
-        </div>
+        {plan ? (
+          <div className={s.facts}>
+            <Fact label="Lent" value={money(loan.principalCents)} sub={`on ${formatDate(loan.lentOn)}`} />
+            <Fact label="Interest" value={loan.interestRate ? `${loan.interestRate}%` : 'None'} />
+            <Fact label="Each month" value={money(plan.instalments[0].amountCents)} sub={`for ${plan.instalments.length} months`} />
+            <Fact label={next!.label} value={formatDate(next!.date)} sub={next!.sub} urgent={next!.urgent} />
+          </div>
+        ) : (
+          <div className={s.facts}>
+            <Fact label="Lent" value={money(loan.principalCents)} />
+            <Fact label="Interest" value={loan.interestRate ? `${loan.interestRate}%` : 'None'} />
+            <Fact label="Lent on" value={formatDate(loan.lentOn)} />
+            <Fact label="Due" value={formatDate(loan.dueOn)} sub={dueLabel(view)} urgent={status === 'overdue'} />
+          </div>
+        )}
+
+        {plan && plan.missedCount > 0 && (
+          <p className={s.behind} role="status">
+            <AlarmClock className={s.behindIcon} />
+            {instalmentHistoryLabel(plan.missedCount, 0)} · {money(plan.arrearsCents)} behind
+          </p>
+        )}
 
         {loan.note && <p className={s.note}>{loan.note}</p>}
 
@@ -85,7 +103,8 @@ export function LoanDetailModal({ loanId, onClose, onEdit, onRecordPayment, onOp
 
         {extraActions && <div className={s.section}>{extraActions}</div>}
 
-        {open && canEdit && (
+        {/* Monthly plans are rescheduled by editing them, so missed instalments stay on record. */}
+        {open && canEdit && !plan && (
           <div className={s.section}>
             <div className={s.sectionTitle}>Give more time</div>
             <div className={s.chips}>
@@ -102,6 +121,16 @@ export function LoanDetailModal({ loanId, onClose, onEdit, onRecordPayment, onOp
                 </Button>
               ))}
             </div>
+          </div>
+        )}
+
+        {plan && (
+          <div className={s.section}>
+            <div className={s.sectionHead}>
+              <span className={s.sectionTitle}>Repayment plan</span>
+              <span className={s.sectionMeta}>{planProgressLabel(plan)}</span>
+            </div>
+            <InstalmentList instalments={plan.instalments} />
           </div>
         )}
 

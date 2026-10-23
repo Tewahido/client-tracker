@@ -2,6 +2,10 @@ export const loanFormStyles = {
   form: 'flex flex-col gap-4',
   row: 'grid gap-4 sm:grid-cols-2',
   amountRow: 'grid grid-cols-[1fr_7.5rem] gap-3',
+  repayment: 'flex flex-wrap items-center justify-between gap-2',
+  repaymentLabel: 'text-sm font-semibold',
+  planRow: 'grid grid-cols-[6rem_1fr] gap-3 sm:grid-cols-[6rem_1fr_1fr]',
+  planTotal: 'col-span-2 sm:col-span-1',
   presets: '-mt-2 flex flex-wrap gap-1.5',
   preset:
     'rounded-lg border border-line bg-surface-2/60 px-2.5 py-1 text-xs font-semibold text-muted transition hover:border-brand-400/50 hover:text-fg',

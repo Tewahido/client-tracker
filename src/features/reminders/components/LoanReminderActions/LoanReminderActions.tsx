@@ -11,12 +11,17 @@ export function LoanReminderActions({ loanId }: { loanId: string }) {
   const { exportLoan } = useCalendarExport()
   const view = viewById.get(loanId)
   if (!view || !isOpen(view.status)) return null
+  const unpaid = view.plan?.instalments.filter((i) => !i.paidOn).length ?? 0
 
   return (
     <div className={s.root}>
       <div className={s.text}>
-        <div className={s.title}>Never miss the due date</div>
-        <div className={s.hint}>Adds it to your calendar with alerts the day before and on the day.</div>
+        <div className={s.title}>{unpaid > 1 ? 'Never miss a payment' : 'Never miss the due date'}</div>
+        <div className={s.hint}>
+          {unpaid > 1
+            ? `Adds all ${unpaid} payment dates to your calendar with alerts the day before and on the day.`
+            : 'Adds it to your calendar with alerts the day before and on the day.'}
+        </div>
       </div>
       <Button variant="secondary" size="sm" icon={CalendarPlus} onClick={() => exportLoan(view)}>
         Add to calendar

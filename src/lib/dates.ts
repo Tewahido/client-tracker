@@ -1,4 +1,4 @@
-import { addDays, differenceInCalendarDays, format, parseISO } from 'date-fns'
+import { addDays, addMonths, differenceInCalendarDays, format, parseISO } from 'date-fns'
 import type { ISODate } from './types'
 
 export function toISODate(date: Date): ISODate {
@@ -11,6 +11,11 @@ export function today(): ISODate {
 
 export function shiftDate(date: ISODate, days: number): ISODate {
   return toISODate(addDays(parseISO(date), days))
+}
+
+/** Same day `months` calendar months later; month ends clamp (31 Jan + 1 month = 28 Feb), as in Postgres. */
+export function shiftMonths(date: ISODate, months: number): ISODate {
+  return toISODate(addMonths(parseISO(date), months))
 }
 
 /** Whole calendar days from `from` to `to` (negative when `to` is earlier). */

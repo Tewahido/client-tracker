@@ -3,7 +3,7 @@ import { PartyPopper } from 'lucide-react'
 import { Avatar, StatusBadge } from '../../../../components/ui'
 import { useMoney } from '../../../../hooks/useMoney'
 import { dueLabel } from '../../../../lib/describe'
-import type { LoanView } from '../../../../lib/loans'
+import { amountDueNowCents, type LoanView } from '../../../../lib/loans'
 import { attentionListStyles as s } from './AttentionList.styles'
 
 export function AttentionList({ views, onOpen }: { views: LoanView[]; onOpen: (loanId: string) => void }) {
@@ -31,7 +31,7 @@ export function AttentionList({ views, onOpen }: { views: LoanView[]; onOpen: (l
               <div className={s.name}>{v.borrower?.name ?? 'Unknown'}</div>
               <div className={cn(s.due, v.status === 'overdue' && s.dueUrgent)}>{dueLabel(v)}</div>
             </div>
-            <span className={s.amount}>{money(v.balanceCents)}</span>
+            <span className={s.amount}>{money(amountDueNowCents(v))}</span>
             <StatusBadge status={v.status} className={s.badge} />
           </button>
         </li>
