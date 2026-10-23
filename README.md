@@ -6,7 +6,8 @@ Keep track of money you've lent: who owes what, when it's due, and what's been p
 
 - **Dashboard**: total outstanding, overdue and due-this-week totals, collections per month, what needs attention next.
 - **Loans**: amount, optional flat interest, lent and due dates, notes. Record partial payments, mark as fully paid, give more time, or forgive a loan.
-- **People**: everyone you've lent to, what they owe, their next due date and an on-time repayment rating.
+- **Monthly plans**: spread a loan over months. Months, the monthly payment and the total fill each other in (R2,000 × 12 = R24,000). Every instalment has its own due date and shows as paid, paid late or missed.
+- **People**: everyone you've lent to, what they owe, their next due date, an on-time repayment rating and any missed instalments.
 - **Reminders**:
   - browser notifications when a loan is due soon, due today, or 1, 3 and 7 days overdue (then weekly);
   - a bell with everything that needs attention;
