@@ -44,6 +44,13 @@ export function planProgressLabel(plan: PlanProgress): string {
   return plan.missedCount ? `${label} · ${plan.missedCount} missed` : label
 }
 
+/** A loan row's second line: the plan and its progress, then the note; or the note, else when it was lent. */
+export function loanSubtitle(view: Pick<LoanView, 'loan' | 'plan'>, formatMoney: (cents: number) => string): string {
+  const { loan, plan } = view
+  if (!plan) return loan.note ?? `Lent ${formatDate(loan.lentOn, 'd MMM yyyy')}`
+  return [`${formatMoney(plan.instalments[0].amountCents)}/month`, planProgressLabel(plan), loan.note].filter(Boolean).join(' · ')
+}
+
 /** How reliably someone pays their instalments, e.g. "2 missed instalments · 1 paid late"; null with nothing to report. */
 export function instalmentHistoryLabel(missed: number, late: number): string | null {
   const parts = []

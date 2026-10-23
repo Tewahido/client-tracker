@@ -1,8 +1,7 @@
 import { cn } from '../../../../lib/cn'
 import { Avatar, Card, ProgressBar, STATUS_META, StatusBadge } from '../../../../components/ui'
 import { useMoney } from '../../../../hooks/useMoney'
-import { formatDate } from '../../../../lib/dates'
-import { dueLabel, planProgressLabel } from '../../../../lib/describe'
+import { dueLabel, loanSubtitle } from '../../../../lib/describe'
 import { isOpen, type LoanView } from '../../../../lib/loans'
 import { loanRowStyles as s } from './LoanRow.styles'
 
@@ -15,12 +14,10 @@ interface LoanRowProps {
 
 export function LoanRow({ view, onOpen, hideBorrower }: LoanRowProps) {
   const money = useMoney()
-  const { loan, borrower, status, plan } = view
+  const { loan, borrower, status } = view
   const open = isOpen(status)
   const name = borrower?.name ?? 'Unknown'
-  const subtitle = plan
-    ? [`${money(plan.instalments[0].amountCents)}/month`, planProgressLabel(plan), loan.note].filter(Boolean).join(' · ')
-    : (loan.note ?? `Lent ${formatDate(loan.lentOn, 'd MMM yyyy')}`)
+  const subtitle = loanSubtitle(view, money)
 
   return (
     <Card padding="sm" interactive className={s.root} onClick={onOpen} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && onOpen()}>

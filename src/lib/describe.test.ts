@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dueLabel, instalmentHistoryLabel, periodLabel, planProgressLabel } from './describe'
+import { dueLabel, instalmentHistoryLabel, loanSubtitle, periodLabel, planProgressLabel } from './describe'
 import { buildSchedule, planProgress } from './instalments'
 import type { LoanView } from './loans'
 
@@ -55,5 +55,20 @@ describe('instalmentHistoryLabel', () => {
     [0, 3, '3 paid late'],
   ])('%i missed, %i late -> %s', (missed, late, expected) => {
     expect(instalmentHistoryLabel(missed, late)).toBe(expected)
+  })
+})
+
+describe('loanSubtitle', () => {
+  const money = (cents: number) => `R${cents / 100}`
+  const loan = { note: null, lentOn: '2026-10-01' }
+
+  it('shows the note, or when it was lent', () => {
+    expect(loanSubtitle({ loan: { ...loan, note: 'Car repair' }, plan: null } as never, money)).toBe('Car repair')
+    expect(loanSubtitle({ loan, plan: null } as never, money)).toBe('Lent 1 Oct 2026')
+  })
+
+  it('leads with the monthly amount and progress for a plan', () => {
+    const plan = planProgress(buildSchedule('2026-07-01', 12, 2_400_000), [], '2026-08-15')
+    expect(loanSubtitle({ loan: { ...loan, note: 'School fees' }, plan } as never, money)).toBe('R2000/month · 0 of 12 paid · 2 missed · School fees')
   })
 })

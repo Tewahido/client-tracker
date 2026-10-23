@@ -5,7 +5,7 @@ import { Avatar, Button, ConfirmDialog, Modal, ProgressRing, STATUS_META, Status
 import { useMoney } from '../../../../hooks/useMoney'
 import { usePermissions } from '../../../../hooks/usePermissions'
 import { formatDate } from '../../../../lib/dates'
-import { dueLabel, planProgressLabel } from '../../../../lib/describe'
+import { dueLabel, instalmentHistoryLabel, planProgressLabel } from '../../../../lib/describe'
 import { isOpen } from '../../../../lib/loans'
 import { useLoanDetail } from '../../hooks/useLoanDetail'
 import { InstalmentList } from '../InstalmentList'
@@ -83,7 +83,7 @@ export function LoanDetailModal({ loanId, onClose, onEdit, onRecordPayment, onOp
         {plan && plan.missedCount > 0 && (
           <p className={s.behind} role="status">
             <AlarmClock className={s.behindIcon} />
-            {plan.missedCount} missed {plan.missedCount === 1 ? 'instalment' : 'instalments'} · {money(plan.arrearsCents)} behind
+            {instalmentHistoryLabel(plan.missedCount, 0)} · {money(plan.arrearsCents)} behind
           </p>
         )}
 
