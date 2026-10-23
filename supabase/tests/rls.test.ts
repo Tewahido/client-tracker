@@ -13,6 +13,7 @@ const MIGRATIONS = join(__dirname, '..', 'migrations')
 const SUPABASE_STUBS = `
   create role authenticated nologin;
   create role anon nologin;
+  create role service_role nologin;
   create schema auth;
   create table auth.users (id uuid primary key, email text not null);
   create function auth.uid() returns uuid language sql stable as $$
@@ -448,6 +449,24 @@ describe('claim_invite_email', () => {
       [users.alice.id],
     )
     await expect(claim('alice', await invite('fresh@example.com'))).rejects.toThrow(/Daily invite email limit/)
+  })
+
+  it('lets the function release a claim whose email failed, so it does not count', async () => {
+    const id = await invite('carol@example.com')
+    await claim('alice', id)
+    await db.transaction(async (tx) => {
+      await tx.exec('set local role service_role')
+      await tx.query('select public.release_invite_email($1)', [id])
+    })
+    // The failed send no longer blocks a retry.
+    expect(await claim('alice', id)).toHaveLength(1)
+  })
+
+  it('does not let owners release claims (that would bypass the limits)', async () => {
+    const id = await invite('carol@example.com')
+    await claim('alice', id)
+    await expect(as('alice', 'select public.release_invite_email($1)', [id])).rejects.toThrow(/permission denied/)
+    await expect(claim('alice', id)).rejects.toThrow(/sent an invite recently/)
   })
 
   it('keeps the email log out of reach of app users', async () => {
