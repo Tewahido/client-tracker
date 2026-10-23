@@ -39,9 +39,14 @@ export class LoanFormDialog extends Dialog {
     }
   }
 
+  /** One of the "Paid back" choices (a radio group). */
+  repaymentOption(how: 'All at once' | 'Monthly') {
+    return this.root.getByRole('radiogroup', { name: 'Paid back' }).getByRole('radio', { name: how })
+  }
+
   /** Choose how the loan is paid back. */
   async payBack(how: 'All at once' | 'Monthly') {
-    await this.root.getByRole('tablist', { name: 'Paid back' }).getByRole('tab', { name: how }).click()
+    await this.repaymentOption(how).click()
   }
 
   async save() {

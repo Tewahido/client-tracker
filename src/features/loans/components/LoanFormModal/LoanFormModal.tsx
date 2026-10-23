@@ -50,7 +50,7 @@ export function LoanFormModal({ loanId, borrowerId, onClose, onSaved }: LoanForm
 
         <div className={s.repayment}>
           <span className={s.repaymentLabel}>Paid back</span>
-          <SegmentedControl label="Paid back" options={REPAYMENT_OPTIONS} value={values.repayment} onChange={setRepayment} />
+          <SegmentedControl kind="radio" label="Paid back" options={REPAYMENT_OPTIONS} value={values.repayment} onChange={setRepayment} />
         </div>
 
         {monthly ? (

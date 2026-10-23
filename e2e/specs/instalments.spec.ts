@@ -44,6 +44,19 @@ test.describe('monthly repayment plans', () => {
     await expect(loanEditForm.firstPayment).toHaveValue('2026-08-01')
   })
 
+  test('chooses how it is paid back with the arrow keys', async ({ app, loanForm }) => {
+    await app.goto('home')
+    await app.openNewLoan()
+    await expect(loanForm.repaymentOption('All at once')).toBeChecked()
+    await loanForm.repaymentOption('All at once').focus()
+    await loanForm.press('ArrowRight')
+    await expect(loanForm.repaymentOption('Monthly')).toBeChecked()
+    await expect(loanForm.repaymentOption('Monthly')).toBeFocused()
+    await expect(loanForm.months).toBeVisible()
+    // One tab stop for the whole group.
+    await expect(loanForm.repaymentOption('All at once')).toHaveAttribute('tabindex', '-1')
+  })
+
   test('leaves the interest alone after switching back to all at once', async ({ app, loanForm }) => {
     await app.goto('home')
     await app.openNewLoan()
