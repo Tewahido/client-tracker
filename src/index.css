@@ -13,6 +13,8 @@
   --glow-2: rgb(139 92 246 / 0.12);
   /* Chart series colour, validated for contrast and lightness against this surface. */
   --chart-1: #059669;
+  --scrollbar: rgb(15 23 42 / 0.18);
+  --scrollbar-hover: rgb(15 23 42 / 0.32);
   color-scheme: light;
 }
 
@@ -26,6 +28,8 @@
   --glow-1: rgb(52 211 153 / 0.14);
   --glow-2: rgb(139 92 246 / 0.14);
   --chart-1: #14a87a;
+  --scrollbar: rgb(255 255 255 / 0.16);
+  --scrollbar-hover: rgb(255 255 255 / 0.3);
   color-scheme: dark;
 }
 
@@ -102,6 +106,45 @@
 
   .dark input[type='date']::-webkit-calendar-picker-indicator {
     filter: invert(1);
+  }
+
+  /*
+   * Slim, themed scrollbars instead of the system ones (on Windows: wide, with arrow
+   * buttons). The thumb is inset with a transparent border, and the track keeps clear of
+   * rounded corners, so scrolling dialogs keep their shape.
+   */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: 14px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 9999px;
+    background: var(--scrollbar) padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-hover);
+  }
+
+  ::-webkit-scrollbar-button,
+  ::-webkit-scrollbar-corner {
+    display: none;
+    background: transparent;
+  }
+
+  /* Firefox has no ::-webkit-scrollbar; the standard properties get it close. */
+  @supports not selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--scrollbar) transparent;
+    }
   }
 }
 
