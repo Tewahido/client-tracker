@@ -58,7 +58,7 @@ export class OrganizationSettings extends AppPage {
     this.inviteReady = new InviteReadyDialog(page)
     this.inviteSent = new InviteSentDialog(page)
     this.orgName = page.getByLabel('Name', { exact: true })
-    this.saveOrgName = page.locator('form').filter({ has: this.orgName }).getByRole('button', { name: 'Save', exact: true })
+    this.saveOrgName = page.getByRole('form', { name: 'Organisation name' }).getByRole('button', { name: 'Save', exact: true })
   }
 
   /**
