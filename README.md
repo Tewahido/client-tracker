@@ -131,3 +131,49 @@ The build is a static site: deploy `dist/` to Vercel, Netlify, Cloudflare Pages,
 - **Content-Security-Policy:** every build carries one as a `<meta>` tag, allowing only the app's own scripts and connections to your Supabase project.
 - **Clickjacking:** a `<meta>` policy can't stop other sites framing the app, so the host must send `Content-Security-Policy: frame-ancestors 'none'` and `X-Frame-Options: DENY`.
 - **Own server:** [`deploy/Caddyfile`](deploy/Caddyfile) serves `dist/` with HTTPS, those headers and the right caching (the service worker must never be cached).
+
+### Deploying to your own server
+
+`npm run deploy` checks that you're on an up-to-date `main` with no local changes, runs every check (`npm run verify`), uploads `dist/`, and confirms the server serves exactly what was built. `npm run deploy -- --rollback` swaps the live and previous versions (so running it twice returns to the newer one). The **Deploy** GitHub Actions workflow does the same, but only when someone starts it: **Actions → Deploy → Run workflow**, or `gh workflow run deploy.yml`. Nothing deploys on merge.
+
+Uploads go to [`deploy/lendly-receive.sh`](deploy/lendly-receive.sh) on the server, which unpacks the build beside the live one, swaps it in, and keeps the previous version as `lendly.old`.
+
+**Once, on the server** (as root): a `deploy` user that owns `/var/www` (the receiver creates and renames folders there) and has your SSH key, plus the receiver itself:
+
+```bash
+adduser --disabled-password --gecos "" deploy
+install -d -o deploy -g deploy -m 700 /home/deploy/.ssh && install -o deploy -g deploy -m 600 ~/.ssh/authorized_keys /home/deploy/.ssh/authorized_keys
+chown deploy:deploy /var/www && mkdir -p /var/www/lendly && chown deploy:deploy /var/www/lendly
+install -o root -g root -m 755 lendly-receive.sh /usr/local/bin/lendly-receive
+```
+
+The `deploy` user needs no sudo.
+
+**For `npm run deploy`:** add to `.env.local`:
+
+```bash
+DEPLOY_HOST=deploy@<server-ip>
+DEPLOY_URL=https://<your-domain>
+```
+
+It uses your normal SSH key. Under Git Bash, `ssh` doesn't use the Windows ssh-agent, so a key with a passphrase must be loaded in Git Bash's own agent (`eval $(ssh-agent) && ssh-add`), or run the deploy from PowerShell.
+
+**For the workflow:**
+
+1. Make a key that can only deploy, and allow it on the server. On your PC:
+   ```bash
+   ssh-keygen -t ed25519 -N "" -C github-actions-deploy -f lendly-ci-key
+   ```
+   Then, on the server, add a line to `/home/deploy/.ssh/authorized_keys`. `restrict` turns off shells, forwarding and everything else, and `command` makes the key run the receiver whatever it asks for:
+   ```
+   restrict,command="/usr/local/bin/lendly-receive" <contents of lendly-ci-key.pub>
+   ```
+2. In GitHub, create a **production** environment (Settings → Environments) and set it up so only `main` can use it. GitHub runs the workflow file from whichever branch someone picks, so without this, a pushed branch with an edited workflow could read the secrets:
+   - **Deployment branches and tags:** Selected branches, `main` only.
+   - **Required reviewers:** yourself, so every deploy waits for your approval.
+   - **Secrets:** `DEPLOY_SSH_KEY` (the private key file), `DEPLOY_HOST` (`deploy@<server-ip>`), and `DEPLOY_KNOWN_HOSTS`. The last is the output of `ssh-keyscan -t ed25519 <server-ip>`, checked against the fingerprint you accepted when you first connected.
+   - **Variables:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `DEPLOY_URL`.
+3. Delete the private key from your PC once it's in GitHub.
+
+The workflow keeps secrets away from npm packages: a **build** job with no secrets installs, checks and builds; a **deploy** job with the secrets runs no packages and only uploads. The receiver accepts only plain files and folders, caps the upload size and time, and runs one deploy at a time.
+Database migrations stay a deliberate, manual step: apply them before deploying a release that needs them. The workflow has no database credentials, on purpose.

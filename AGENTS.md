@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Rules for anyone changing this repository, human or AI agent. Checks run **locally before every push** (there is no CI on GitHub); the pre-push hook enforces the automated parts and the review steps below cover the rest.
+Rules for anyone changing this repository, human or AI agent. Checks run **locally before every push** (no CI runs on pull requests; the only workflow is a manual **Deploy**, see README.md); the pre-push hook enforces the automated parts and the review steps below cover the rest.
 
 ## Non-negotiables
 
