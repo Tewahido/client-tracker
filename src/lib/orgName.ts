@@ -1,11 +1,11 @@
 export const ORG_NAME_MAX = 80
 
-// Mirrors public.is_plain_org_name (supabase/migrations/20261026000000_plain_org_names.sql),
+// Identical to public.is_plain_org_name (supabase/migrations/20261026000000_plain_org_names.sql),
 // which is what actually enforces it: names go into invite emails, so no links or markup.
 const MARKUP = /[<>]/
 const LINK = /(:\/\/|www\.)/i
-const DOMAIN =
-  /\b[a-z0-9-]+(\.[a-z0-9-]+)*\.(com|net|org|info|biz|io|co|app|dev|xyz|online|site|link|me|ly|za|uk|us|ru|cn|top|click|shop|live|support|help|bank|pay|money)\b/i
+/** A dot or look-alike dot between a word character and two more: any domain, short link or IP. */
+const DOMAIN = /[a-z0-9_\u0080-\u009f\u00a1-\u1fff\u2070-\uffff-][.\uff0e\u3002\uff61][a-z0-9\u0080-\u009f\u00a1-\u1fff\u2070-\uffff]{2,}/i
 
 /** A friendly message for the first thing wrong with an organisation name, or null. */
 export function orgNameProblem(name: string): string | null {

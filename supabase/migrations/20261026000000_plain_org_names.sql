@@ -16,9 +16,17 @@ set search_path = ''
 as $$
   select p_name !~ '[<>]'
      and p_name !~* '(://|www\.)'
-     -- Something that looks like a domain, e.g. "pay-here.com" or "bank.co.za".
-     and p_name !~* '\m[a-z0-9-]+(\.[a-z0-9-]+)*\.(com|net|org|info|biz|io|co|app|dev|xyz|online|site|link|me|ly|za|uk|us|ru|cn|top|click|shop|live|support|help|bank|pay|money)\M';
+     -- A dot (or a look-alike dot) between a word character and two more, as in any domain,
+     -- short link or IP address: "pay.me", "goo.gl/x", "45.33.32.156", "evil．com". Non-ASCII
+     -- letters count as word characters whatever the database locale; spaces and punctuation
+     -- (U+00A0, U+2000-U+206F) don't, so "St. Mary's", "J.R.’s Fund" and "Fund 2.0" are fine.
+     -- Kept identical to src/lib/orgName.ts.
+     and p_name !~* '([a-z0-9_-]|[^\x01-\x7f\u00a0\u2000-\u206f])[.\uff0e\u3002\uff61]([a-z0-9]|[^\x01-\x7f\u00a0\u2000-\u206f]){2,}';
 $$;
+
+-- The check constraint calls it as the signed-in user; signed-out visitors don't need it.
+revoke execute on function public.is_plain_org_name(text) from public, anon;
+grant execute on function public.is_plain_org_name(text) to authenticated;
 
 -- NOT VALID: names saved before this check are left alone (claim_invite_email refuses to
 -- email for them below); every new organisation and every rename is checked.

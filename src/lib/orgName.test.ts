@@ -1,19 +1,14 @@
 import { describe, expect, it } from 'vitest'
+import { ACCEPTED_ORG_NAMES, REFUSED_ORG_NAMES } from './orgName.cases'
 import { orgNameProblem } from './orgName'
 
 describe('orgNameProblem', () => {
-  // Same cases as the database tests, so the form and the database agree.
-  it.each([
-    'Urgent: verify at https://evil.example',
-    'Visit www.example.org now',
-    'Pay at lendly-support.com today',
-    'Claim it on secure-bank.co.za',
-    '<b>Important</b>',
-  ])('refuses %j', (name) => {
+  // The database tests use the same cases, so the form and the database agree.
+  it.each(REFUSED_ORG_NAMES)('refuses %j', (name) => {
     expect(orgNameProblem(name)).toBe("Names can't include web addresses or < >")
   })
 
-  it.each(["St. Mary's Stokvel", 'J.R. & Co.', 'Mom & Dad', 'Dlamini Family Fund 2026'])('accepts %j', (name) => {
+  it.each(ACCEPTED_ORG_NAMES)('accepts %j', (name) => {
     expect(orgNameProblem(name)).toBeNull()
   })
 

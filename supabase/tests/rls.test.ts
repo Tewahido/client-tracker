@@ -7,6 +7,7 @@ import { PGlite } from '@electric-sql/pglite'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { ACCEPTED_ORG_NAMES, REFUSED_ORG_NAMES } from '../../src/lib/orgName.cases'
 
 const MIGRATIONS = join(__dirname, '..', 'migrations')
 
@@ -504,17 +505,11 @@ describe('signed-out visitors', () => {
 
 describe('organisation names (security fix)', () => {
   // Names go into invite emails sent from this project's address, so no links or markup.
-  it.each([
-    'Urgent: verify at https://evil.example',
-    'Visit www.example.org now',
-    'Pay at lendly-support.com today',
-    'Claim it on secure-bank.co.za',
-    '<b>Important</b>',
-  ])('refuses %j for a new organisation', async (name) => {
+  it.each(REFUSED_ORG_NAMES)('refuses %j for a new organisation', async (name) => {
     await expect(createOrg('alice', name)).rejects.toThrow(/organizations_name_plain/)
   })
 
-  it.each(["St. Mary's Stokvel", 'J.R. & Co.', 'Mom & Dad', 'Dlamini Family Fund 2026'])('accepts %j', async (name) => {
+  it.each(ACCEPTED_ORG_NAMES)('accepts %j', async (name) => {
     expect(await createOrg('alice', name)).toBeTruthy()
   })
 
