@@ -157,7 +157,8 @@
   appearance: none;
   background-image: var(--select-chevron);
   background-repeat: no-repeat;
-  background-position: right 0.75rem center;
+  /* Lines up with the calendar icon of the date fields beside and below it. */
+  background-position: right 0.875rem center;
   background-size: 1rem;
   padding-right: 2.5rem;
 }
