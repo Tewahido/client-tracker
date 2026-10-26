@@ -7,6 +7,7 @@ import { PGlite } from '@electric-sql/pglite'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { ACCEPTED_ORG_NAMES, REFUSED_ORG_NAMES } from '../../src/lib/orgName.cases'
 
 const MIGRATIONS = join(__dirname, '..', 'migrations')
 
@@ -499,5 +500,131 @@ describe('signed-out visitors', () => {
       await expect(asAnon(`delete from public.${table}`)).rejects.toThrow(/permission denied/)
     }
     await expect(asAnon("update public.organization_members set role = 'owner'")).rejects.toThrow(/permission denied/)
+  })
+})
+
+describe('organisation names (security fix)', () => {
+  // Names go into invite emails sent from this project's address, so no links or markup.
+  it.each(REFUSED_ORG_NAMES)('refuses %j for a new organisation', async (name) => {
+    await expect(createOrg('alice', name)).rejects.toThrow(/organizations_name_plain/)
+  })
+
+  it.each(ACCEPTED_ORG_NAMES)('accepts %j', async (name) => {
+    expect(await createOrg('alice', name)).toBeTruthy()
+  })
+
+  it('refuses renaming an organisation to a link', async () => {
+    const org = await createOrg('alice', 'Renamers')
+    await expect(as('alice', "update organizations set name = 'Go to evil.com' where id = $1", [org])).rejects.toThrow(/organizations_name_plain/)
+  })
+
+  it('refuses to email invites from an organisation whose older name has a link', async () => {
+    const org = await createOrg('alice', 'Legacy')
+    // Simulate a name saved before the check existed (the constraint is NOT VALID for old rows).
+    await db.exec('alter table organizations drop constraint organizations_name_plain')
+    await db.query("update organizations set name = 'Legacy evil.com' where id = $1", [org])
+    await db.exec(`alter table organizations add constraint organizations_name_plain check (public.is_plain_org_name(name)) not valid`)
+    const [i] = await as<{ id: string }>('alice', "insert into organization_invites (org_id, email) values ($1, 'legacy@example.com') returning id", [org])
+    await expect(as('alice', 'select * from public.claim_invite_email($1)', [i.id])).rejects.toThrow(/Rename the organisation/)
+  })
+})
+
+describe('daily invite email cap (security fix)', () => {
+  it('stops all invite emails once the project has sent 200 in a day', async () => {
+    await db.query('delete from invite_email_log')
+    const org = await createOrg('alice', 'Capped')
+    await db.query(
+      "insert into invite_email_log (sender, recipient, org_id) select gen_random_uuid(), 'r' || g || '@example.com', $1 from generate_series(1, 200) g",
+      [org],
+    )
+    const [i] = await as<{ id: string }>('alice', "insert into organization_invites (org_id, email) values ($1, 'one-more@example.com') returning id", [org])
+    await expect(as('alice', 'select * from public.claim_invite_email($1)', [i.id])).rejects.toThrow(/daily invite emails/)
+    await db.query('delete from invite_email_log')
+  })
+})
+
+describe('keeping an owner (security fix)', () => {
+  let org: string
+
+  beforeAll(async () => {
+    org = await createOrg('alice', 'Owned')
+    const [invite] = await as<{ id: string }>('alice', "insert into organization_invites (org_id, email, role) values ($1, 'bob@example.com', 'owner') returning id", [org])
+    await as('bob', 'select public.accept_invite($1)', [invite.id])
+  })
+
+  const role = (user: User) => as('alice', 'select role from organization_members where org_id = $1 and user_id = $2', [org, users[user].id])
+
+  it('lets an owner step down while another owner remains', async () => {
+    await as('bob', "update organization_members set role = 'member' where org_id = $1 and user_id = $2", [org, users.bob.id])
+    expect(await role('bob')).toEqual([{ role: 'member' }])
+  })
+
+  it('stops the last owner stepping down', async () => {
+    await expect(as('alice', "update organization_members set role = 'viewer' where org_id = $1 and user_id = $2", [org, users.alice.id])).rejects.toThrow(
+      /needs at least one owner/,
+    )
+    expect(await role('alice')).toEqual([{ role: 'owner' }])
+  })
+
+  it('still deletes the organisation when its last member leaves', async () => {
+    const solo = await createOrg('carol', 'Solo leaver')
+    await as('carol', 'select public.leave_organization($1)', [solo])
+    expect((await db.query('select 1 from organizations where id = $1', [solo])).rows).toHaveLength(0)
+  })
+})
+
+describe('who created a record (security fix)', () => {
+  let org: string
+  let borrower: string
+  let loan: string
+
+  beforeAll(async () => {
+    org = await createOrg('alice', 'Audit trail')
+    const [invite] = await as<{ id: string }>('alice', "insert into organization_invites (org_id, email) values ($1, 'bob@example.com') returning id", [org])
+    await as('bob', 'select public.accept_invite($1)', [invite.id])
+    ;[{ id: borrower }] = await as<{ id: string }>('alice', "insert into borrowers (org_id, name) values ($1, 'Lerato') returning id", [org])
+    ;[{ id: loan }] = await as<{ id: string }>('alice', "insert into loans (org_id, borrower_id, principal_cents, due_on) values ($1, $2, 100, '2026-12-01') returning id", [org, borrower])
+  })
+
+  it.each([
+    ['borrowers', () => borrower],
+    ['loans', () => loan],
+    ['organizations', () => org],
+  ])('keeps created_by on %s', async (table, id) => {
+    const changer = table === 'organizations' ? 'alice' : 'bob'
+    await expect(as(changer, `update ${table} set created_by = $2 where id = $1`, [id(), users.carol.id])).rejects.toThrow(/cannot be changed/)
+  })
+
+  it('still lets members edit everything else', async () => {
+    await as('bob', "update loans set note = 'Car repair' where id = $1", [loan])
+    await as('bob', "update borrowers set name = 'Lerato M' where id = $1", [borrower])
+  })
+})
+
+describe('deleting a user account (with the security fixes in place)', () => {
+  // Deleting someone in Supabase (dashboard or a data-deletion request) clears created_by
+  // on what they added and removes their memberships; the new triggers must allow that.
+  const dave = { id: '00000000-0000-0000-0000-00000000000d', email: 'dave@example.com' }
+
+  const asDave = (sql: string, params: unknown[] = []) =>
+    db.transaction(async (tx) => {
+      await tx.query(`select set_config('request.jwt.claim.sub', $1, true), set_config('request.jwt.claims', $2, true)`, [
+        dave.id,
+        JSON.stringify({ sub: dave.id, email: dave.email }),
+      ])
+      await tx.exec('set local role authenticated')
+      return (await tx.query<{ id: string }>(sql, params)).rows
+    })
+
+  it('removes a sole owner who added people and loans', async () => {
+    await db.query('insert into auth.users (id, email) values ($1, $2)', [dave.id, dave.email])
+    const [{ id: org }] = await asDave("select id from public.create_organization('Dave Lends')")
+    const [{ id: borrower }] = await asDave("insert into borrowers (org_id, name) values ($1, 'Thabo') returning id", [org])
+    await asDave("insert into loans (org_id, borrower_id, principal_cents, due_on) values ($1, $2, 100, '2026-12-01')", [org, borrower])
+
+    await db.query('delete from auth.users where id = $1', [dave.id])
+
+    expect((await db.query('select created_by from borrowers where id = $1', [borrower])).rows).toEqual([{ created_by: null }])
+    expect((await db.query('select 1 from organization_members where user_id = $1', [dave.id])).rows).toHaveLength(0)
   })
 })

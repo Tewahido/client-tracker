@@ -44,6 +44,9 @@ export class OrganizationSettings extends AppPage {
   readonly roleGuide: Locator
   readonly inviteReady: InviteReadyDialog
   readonly inviteSent: InviteSentDialog
+  /** The organisation's name field and its Save button. */
+  readonly orgName: Locator
+  readonly saveOrgName: Locator
 
   constructor(page: Page) {
     super(page)
@@ -54,6 +57,8 @@ export class OrganizationSettings extends AppPage {
     this.roleGuide = page.getByRole('region', { name: 'What each role can do' })
     this.inviteReady = new InviteReadyDialog(page)
     this.inviteSent = new InviteSentDialog(page)
+    this.orgName = page.getByLabel('Name', { exact: true })
+    this.saveOrgName = page.getByRole('form', { name: 'Organisation name' }).getByRole('button', { name: 'Save', exact: true })
   }
 
   /**

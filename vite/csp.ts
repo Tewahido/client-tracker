@@ -1,0 +1,53 @@
+import { createHash } from 'node:crypto'
+import type { Plugin } from 'vite'
+
+/** Every inline <script> body in the page, which the policy allows by hash. */
+function inlineScripts(html: string): string[] {
+  return [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1])
+}
+
+const sha256 = (text: string) => `'sha256-${createHash('sha256').update(text).digest('base64')}'`
+
+/**
+ * Content-Security-Policy for the built app. Sign-in tokens live in browser storage, so
+ * this is the backstop if a script injection bug ever appears: only our own scripts run,
+ * and data can only be sent to this site and the Supabase project.
+ */
+export function contentSecurityPolicy({ supabaseUrl, inlineScriptHashes }: { supabaseUrl?: string; inlineScriptHashes: string[] }): string {
+  const supabase = supabaseUrl ? new URL(supabaseUrl) : null
+  // Realtime runs over wss:// for a hosted project, ws:// for a local one (http://127.0.0.1:54321).
+  const socket = supabase ? `${supabase.protocol === 'https:' ? 'wss' : 'ws'}://${supabase.host}` : null
+  const connect = ["'self'", ...(supabase && socket ? [supabase.origin, socket] : [])]
+  return [
+    "default-src 'self'",
+    `script-src 'self' ${inlineScriptHashes.join(' ')}`.trim(),
+    // Toasts and animations set inline styles; styles can't run code.
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: blob:",
+    `connect-src ${connect.join(' ')}`,
+    // The confetti library draws in a worker it creates from a blob: URL (only our own scripts can make those).
+    "worker-src 'self' blob:",
+    "manifest-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ')
+}
+
+/** Adds the policy to index.html as a <meta> tag in production builds (the dev server needs inline scripts). */
+export function cspPlugin(supabaseUrl: string | undefined): Plugin {
+  return {
+    name: 'lendly-csp',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html) {
+        const policy = contentSecurityPolicy({ supabaseUrl, inlineScriptHashes: inlineScripts(html).map(sha256) })
+        // Fail the build rather than silently ship without a policy if index.html changes shape.
+        if (!html.includes('<head>')) throw new Error('lendly-csp: index.html has no plain <head> tag to add the policy to')
+        return html.replace('<head>', `<head>\n    <meta http-equiv="Content-Security-Policy" content="${policy}" />`)
+      },
+    },
+  }
+}

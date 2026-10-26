@@ -106,11 +106,11 @@ export function OrganizationSection({ onCreateOrg }: { onCreateOrg: () => void }
 }
 
 function RenameForm({ name, onRename }: { name: string; onRename: (name: string) => Promise<boolean> }) {
-  const { value, setValue, busy, changed, submit } = useRenameOrgForm(name, onRename)
+  const { value, setValue, error, busy, changed, submit } = useRenameOrgForm(name, onRename)
 
   return (
-    <form className={s.inline} onSubmit={submit}>
-      <TextInput label="Name" value={value} onChange={(e) => setValue(e.target.value)} className={s.grow} maxLength={80} />
+    <form className={s.inline} onSubmit={submit} aria-label="Organisation name">
+      <TextInput label="Name" value={value} onChange={(e) => setValue(e.target.value)} error={error} className={s.grow} maxLength={80} />
       <Button type="submit" variant="secondary" disabled={!changed} loading={busy}>
         Save
       </Button>

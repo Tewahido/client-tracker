@@ -1,4 +1,5 @@
 import { type SupabaseClient, FunctionsHttpError } from '@supabase/supabase-js'
+import { friendlyDbMessage } from '../lib/dbErrors'
 
 export type OrgRole = 'owner' | 'member' | 'viewer'
 
@@ -36,7 +37,7 @@ export interface Invite {
 }
 
 function unwrap<T>(result: { data: T | null; error: { message: string } | null }): T {
-  if (result.error) throw new Error(result.error.message)
+  if (result.error) throw new Error(friendlyDbMessage(result.error.message))
   return result.data as T
 }
 

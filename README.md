@@ -125,4 +125,9 @@ Conventions:
 
 ## Deploying
 
-The build is a static site: deploy `dist/` to Vercel, Netlify, Cloudflare Pages or similar. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in the host's environment settings, and add the deployed URL to Supabase's Site URL and Redirect URLs. It must be served over HTTPS for notifications and installation to work.
+The build is a static site: deploy `dist/` to Vercel, Netlify, Cloudflare Pages, your own server, or similar. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in the host's environment settings (they are built into the files, so a wrong URL blocks every request), and add the deployed URL to Supabase's Site URL and Redirect URLs. It must be served over HTTPS for notifications and installation to work.
+
+- **Apply database migrations first** (`npx supabase db push`) whenever a release includes new ones.
+- **Content-Security-Policy:** every build carries one as a `<meta>` tag, allowing only the app's own scripts and connections to your Supabase project.
+- **Clickjacking:** a `<meta>` policy can't stop other sites framing the app, so the host must send `Content-Security-Policy: frame-ancestors 'none'` and `X-Frame-Options: DENY`.
+- **Own server:** [`deploy/Caddyfile`](deploy/Caddyfile) serves `dist/` with HTTPS, those headers and the right caching (the service worker must never be cached).
