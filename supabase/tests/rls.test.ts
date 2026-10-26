@@ -548,3 +548,33 @@ describe('daily invite email cap (security fix)', () => {
   })
 })
 
+describe('keeping an owner (security fix)', () => {
+  let org: string
+
+  beforeAll(async () => {
+    org = await createOrg('alice', 'Owned')
+    const [invite] = await as<{ id: string }>('alice', "insert into organization_invites (org_id, email, role) values ($1, 'bob@example.com', 'owner') returning id", [org])
+    await as('bob', 'select public.accept_invite($1)', [invite.id])
+  })
+
+  const role = (user: User) => as('alice', 'select role from organization_members where org_id = $1 and user_id = $2', [org, users[user].id])
+
+  it('lets an owner step down while another owner remains', async () => {
+    await as('bob', "update organization_members set role = 'member' where org_id = $1 and user_id = $2", [org, users.bob.id])
+    expect(await role('bob')).toEqual([{ role: 'member' }])
+  })
+
+  it('stops the last owner stepping down', async () => {
+    await expect(as('alice', "update organization_members set role = 'viewer' where org_id = $1 and user_id = $2", [org, users.alice.id])).rejects.toThrow(
+      /needs at least one owner/,
+    )
+    expect(await role('alice')).toEqual([{ role: 'owner' }])
+  })
+
+  it('still deletes the organisation when its last member leaves', async () => {
+    const solo = await createOrg('carol', 'Solo leaver')
+    await as('carol', 'select public.leave_organization($1)', [solo])
+    expect((await db.query('select 1 from organizations where id = $1', [solo])).rows).toHaveLength(0)
+  })
+})
+
