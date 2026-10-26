@@ -5,6 +5,9 @@
 #            ├──▶ Deploy (waits for approval)
 #   Build  ──┘
 #
+# All three jobs use the commit the run started on (github.sha), not "the latest main":
+# Deploy can wait hours for approval, and it must ship and record what was tested.
+#
 # Checks and Build run side by side and need no secrets; Deploy starts only when both
 # pass. Secrets never share a machine with installed packages: Deploy runs no npm
 # packages, it only uploads the build.
@@ -32,10 +35,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Check out main
+      - name: Check out the commit this run started on
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
+          ref: ${{ github.sha }}
           # Full history, to compare with the commit that's live now.
           fetch-depth: 0
           persist-credentials: false
@@ -54,7 +57,7 @@ jobs:
             echo "::warning title=Database changes::Couldn't tell which version is live, so check for unapplied migrations yourself (npx supabase db push --linked --dry-run)."
             exit 0
           fi
-          added=$(git diff --name-only --diff-filter=A "$live" HEAD -- supabase/migrations)
+          added=$(git diff --name-only --no-renames --diff-filter=A "$live" HEAD -- supabase/migrations)
           if [ -z "$added" ]; then
             echo "No new database migrations since the live version (${live:0:7})."
             exit 0
@@ -121,10 +124,10 @@ jobs:
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
       VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
     steps:
-      - name: Check out main
+      - name: Check out the commit this run started on
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
+          ref: ${{ github.sha }}
           persist-credentials: false
 
       - name: Set up Node
@@ -166,10 +169,10 @@ jobs:
       url: ${{ vars.DEPLOY_URL }}
     steps:
       # Only for scripts/deploy.mjs, which uses nothing but Node's built-in modules.
-      - name: Check out main
+      - name: Check out the commit this run started on
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
+          ref: ${{ github.sha }}
           persist-credentials: false
 
       - name: Fetch the build
