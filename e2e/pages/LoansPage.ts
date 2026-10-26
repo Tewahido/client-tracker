@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 import { AppPage } from './AppPage'
 
 /** The Loans list. */
@@ -15,6 +15,16 @@ export class LoansPage extends AppPage {
   readonly sort = this.page.getByLabel('Sort loans')
 
   readonly search = this.page.getByRole('searchbox', { name: 'Search name or note' })
+
+  /** Border colour of a control while it has keyboard focus. */
+  async focusedBorderColor(control: Locator): Promise<string> {
+    await control.focus()
+    // Both controls animate into their focus style; read it once the transition has finished.
+    return control.evaluate(async (el) => {
+      await Promise.all(el.getAnimations().map((animation) => animation.finished))
+      return getComputedStyle(el).borderTopColor
+    })
+  }
 
   /** True when the magnifying glass in the search box is drawn on top, not hidden behind the box. */
   async searchIconShows(): Promise<boolean> {

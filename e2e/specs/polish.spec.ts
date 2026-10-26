@@ -23,6 +23,25 @@ test.describe('controls fit the design', () => {
     await expect(loans.sort).toHaveCSS('padding-right', '40px')
   })
 
+  test('search and sort fit the screen and show keyboard focus alike', async ({ app, loanForm, loanDetail, loans }, testInfo) => {
+    await app.openNewLoan()
+    await loanForm.create({ person: 'Ayanda', amount: '500' })
+    await loanDetail.close()
+    await loans.open()
+
+    // On phones the search gets its own full-width row, so its placeholder isn't cut off.
+    const search = (await loans.search.boundingBox())!
+    const sort = (await loans.sort.boundingBox())!
+    if (testInfo.project.name === 'mobile') {
+      expect(sort.y).toBeGreaterThanOrEqual(search.y + search.height)
+      expect(search.width).toBeGreaterThan(300)
+    } else {
+      expect(Math.abs(sort.y - search.y)).toBeLessThan(2)
+    }
+
+    expect(await loans.focusedBorderColor(loans.sort)).toBe(await loans.focusedBorderColor(loans.search))
+  })
+
   test('the search box shows its magnifying glass', async ({ app, loanForm, loanDetail, loans }) => {
     await app.openNewLoan()
     await loanForm.create({ person: 'Ayanda', amount: '500' })
