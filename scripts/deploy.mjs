@@ -10,7 +10,7 @@
 //   DEPLOY_HOST   ssh destination, e.g. deploy@203.0.113.10
 //   DEPLOY_URL    public address to check afterwards, e.g. https://lendly.co.za (optional)
 //   VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY   built into the app
-import { execFileSync, spawn } from 'node:child_process'
+import { execFileSync, execSync, spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { pathToFileURL } from 'node:url'
@@ -31,6 +31,8 @@ export function deployConfig(env, fileEnv = {}) {
   const config = { host: get('DEPLOY_HOST'), url: get('DEPLOY_URL'), supabaseUrl: get('VITE_SUPABASE_URL') }
   const problems = []
   if (!config.host) problems.push('Set DEPLOY_HOST (e.g. deploy@203.0.113.10) in .env.local or the environment.')
+  // user@host only: anything else (e.g. a leading '-') would be read by ssh as an option.
+  else if (!/^[A-Za-z0-9._][A-Za-z0-9._-]*@[A-Za-z0-9.-]+$/.test(config.host)) problems.push(`DEPLOY_HOST must look like user@host, not "${config.host}".`)
   if (!config.supabaseUrl) problems.push('Set VITE_SUPABASE_URL: without it the app builds in local-only mode.')
   return { config, problems }
 }
@@ -60,6 +62,9 @@ function run(command, args, options = {}) {
   return execFileSync(command, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], ...options }).trim()
 }
 
+/** Never ask questions, never trust an unknown server, and only use the configured keys. */
+const SSH_OPTIONS = ['-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'IdentitiesOnly=yes']
+
 const step = (message) => console.log(`\n▶ ${message}`)
 
 function fail(problems) {
@@ -67,17 +72,28 @@ function fail(problems) {
   process.exit(1)
 }
 
-/** Streams dist/ to the server's receiver and returns what it reports (the live index.html hash). */
+/**
+ * Streams dist/ to the server's receiver and returns its last line of output (the live
+ * index.html hash). Fails if either side fails, e.g. tar skipping an unreadable file.
+ */
 function upload(host) {
   return new Promise((resolve, reject) => {
-    const ssh = spawn('ssh', ['-o', 'BatchMode=yes', host, 'lendly-receive'], { stdio: ['pipe', 'pipe', 'inherit'] })
+    const ssh = spawn('ssh', [...SSH_OPTIONS, '--', host, 'lendly-receive'], { stdio: ['pipe', 'pipe', 'inherit'] })
     const tar = spawn('tar', ['-C', 'dist', '-cf', '-', '.'], { stdio: ['ignore', 'pipe', 'inherit'] })
     tar.stdout.pipe(ssh.stdin)
     let output = ''
+    let tarCode = null
     ssh.stdout.on('data', (chunk) => (output += chunk))
+    // The server stopping early (e.g. a full disk) closes the pipe; ssh's exit code explains why.
+    ssh.stdin.on('error', () => {})
     tar.on('error', reject)
     ssh.on('error', reject)
-    ssh.on('close', (code) => (code === 0 ? resolve(output.trim()) : reject(new Error(`the server refused the upload (exit ${code})`))))
+    tar.on('close', (code) => (tarCode = code))
+    ssh.on('close', (code) => {
+      if (code !== 0) return reject(new Error(`the server refused the upload (exit ${code}); the live site is unchanged`))
+      if (tarCode !== 0) return reject(new Error(`tar couldn't pack dist/ (exit ${tarCode}). Run npm run deploy -- --rollback, then fix dist/`))
+      resolve(output.trim().split(/\r?\n/).pop() ?? '')
+    })
   })
 }
 
@@ -87,12 +103,15 @@ async function main() {
   const { config, problems } = deployConfig(process.env, fileEnv)
 
   if (args.has('--rollback')) {
-    if (!config.host) fail(problems)
+    const hostProblems = problems.filter((p) => p.includes('DEPLOY_HOST'))
+    if (hostProblems.length) fail(hostProblems)
     step(`Rolling back on ${config.host}`)
-    console.log(run('ssh', ['-o', 'BatchMode=yes', config.host, 'lendly-receive', 'rollback']))
+    console.log(run('ssh', [...SSH_OPTIONS, '--', config.host, 'lendly-receive', 'rollback']))
     return
   }
   if (problems.length) fail(problems)
+  // Only CI may skip the checks: it runs them in its own job. On a PC, dist/ could be from any branch.
+  if (args.has('--skip-checks') && !process.env.CI) fail('--skip-checks is for GitHub Actions only. Run npm run deploy.')
 
   if (!process.env.CI) {
     step('Checking this is the reviewed main')
@@ -100,7 +119,8 @@ async function main() {
     const [behind, ahead] = run('git', ['rev-list', '--left-right', '--count', 'origin/main...HEAD']).split(/\s+/).map(Number)
     const local = localProblems({
       branch: run('git', ['rev-parse', '--abbrev-ref', 'HEAD']),
-      dirty: run('git', ['status', '--porcelain', '--untracked-files=no']) !== '',
+      // Untracked files count: one in public/ would end up in the build. Ignored files don't show here.
+      dirty: run('git', ['status', '--porcelain']) !== '',
       ahead,
       behind,
     })
@@ -109,26 +129,29 @@ async function main() {
 
   if (!args.has('--skip-checks')) {
     step('Running every check: typecheck, lint, tests, audit, build, end-to-end')
-    execFileSync('npm', ['run', 'verify', '--silent'], { stdio: 'inherit', shell: process.platform === 'win32' })
+    // One command string: npm is a .cmd file on Windows, so it needs a shell there.
+    execSync('npm run verify --silent', { stdio: 'inherit' })
   }
 
   step('Checking the build')
   if (!existsSync('dist/index.html')) fail('There is no dist/index.html. Run the checks (or npm run build) first.')
-  const html = readFileSync('dist/index.html', 'utf8')
-  const problem = buildProblem(html, config.supabaseUrl)
+  const page = readFileSync('dist/index.html')
+  const problem = buildProblem(page.toString('utf8'), config.supabaseUrl)
   if (problem) fail(problem)
 
   step(`Uploading to ${config.host}`)
   const liveHash = await upload(config.host).catch((err) => fail(err.message))
-  if (liveHash !== sha256(html)) fail(`The server is serving a different index.html than was built (${liveHash}).`)
+  if (liveHash !== sha256(page)) {
+    fail(`The server reports a different index.html than was built (${liveHash}). The upload is live; run npm run deploy -- --rollback if the site is broken.`)
+  }
   console.log('The server is serving this build.')
 
   if (config.url) {
     step(`Checking ${config.url}`)
     try {
       const res = await fetch(config.url, { cache: 'no-store' })
-      const body = await res.text()
-      if (res.ok && sha256(body) === sha256(html)) console.log(`${config.url} is live with this build.`)
+      const body = Buffer.from(await res.arrayBuffer())
+      if (res.ok && sha256(body) === sha256(page)) console.log(`${config.url} is live with this build.`)
       else console.warn(`⚠ ${config.url} answered ${res.status} with different content (a cache, or the domain points elsewhere).`)
     } catch (err) {
       // The upload worked; the public address can lag behind (e.g. a new domain's DNS).
@@ -138,4 +161,4 @@ async function main() {
   console.log('\n✔ Deployed.')
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) await main()
+if (import.meta.url === pathToFileURL(process.argv[1]).href) await main().catch((err) => fail(err.message))

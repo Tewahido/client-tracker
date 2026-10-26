@@ -22,6 +22,10 @@ describe('deployConfig', () => {
     expect(problems).toEqual([])
   })
 
+  it.each(['-oProxyCommand=calc@x', 'deploy@host -oX', 'just-a-host', 'deploy@host;rm'])('refuses a host that could smuggle ssh options: %j', (host) => {
+    expect(deployConfig({ DEPLOY_HOST: host, VITE_SUPABASE_URL: 'https://abc.supabase.co' }).problems).toEqual([expect.stringMatching(/must look like user@host/)])
+  })
+
   it('says what is missing', () => {
     expect(deployConfig({}).problems).toEqual([expect.stringMatching(/DEPLOY_HOST/), expect.stringMatching(/local-only mode/)])
   })
