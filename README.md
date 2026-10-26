@@ -131,3 +131,39 @@ The build is a static site: deploy `dist/` to Vercel, Netlify, Cloudflare Pages,
 - **Content-Security-Policy:** every build carries one as a `<meta>` tag, allowing only the app's own scripts and connections to your Supabase project.
 - **Clickjacking:** a `<meta>` policy can't stop other sites framing the app, so the host must send `Content-Security-Policy: frame-ancestors 'none'` and `X-Frame-Options: DENY`.
 - **Own server:** [`deploy/Caddyfile`](deploy/Caddyfile) serves `dist/` with HTTPS, those headers and the right caching (the service worker must never be cached).
+
+### Deploying to your own server
+
+`npm run deploy` checks that you're on an up-to-date `main` with no local changes, runs every check (`npm run verify`), uploads `dist/`, and confirms the server serves exactly what was built. `npm run deploy -- --rollback` puts the previous version back. The **Deploy** GitHub Actions workflow does the same, but only when someone starts it: **Actions → Deploy → Run workflow**, or `gh workflow run deploy.yml`. Nothing deploys on merge.
+
+Uploads go to [`deploy/lendly-receive.sh`](deploy/lendly-receive.sh) on the server, which unpacks the build beside the live one, swaps it in, and keeps the previous version as `lendly.old`.
+
+**Once, on the server** (as root):
+
+```bash
+install -o root -g root -m 755 lendly-receive.sh /usr/local/bin/lendly-receive
+```
+
+**For `npm run deploy`:** add to `.env.local`:
+
+```bash
+DEPLOY_HOST=deploy@<server-ip>
+DEPLOY_URL=https://<your-domain>
+```
+
+**For the workflow:**
+
+1. Make a key that can only deploy, and allow it on the server. On your PC:
+   ```bash
+   ssh-keygen -t ed25519 -N "" -C github-actions-deploy -f lendly-ci-key
+   ```
+   Then, on the server, add a line to `/home/deploy/.ssh/authorized_keys` that forces the key to run the receiver and nothing else:
+   ```
+   command="/usr/local/bin/lendly-receive",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty <contents of lendly-ci-key.pub>
+   ```
+2. In GitHub, create a **production** environment (Settings → Environments) and add:
+   - **Secrets:** `DEPLOY_SSH_KEY` (the private key file), `DEPLOY_HOST` (`deploy@<server-ip>`), `DEPLOY_KNOWN_HOSTS` (the output of `ssh-keyscan -t ed25519 <server-ip>`, checked against the fingerprint you accepted when you first connected). Optionally `SUPABASE_ACCESS_TOKEN` and `SUPABASE_DB_PASSWORD`, which let the workflow stop when `main` has migrations that aren't applied yet.
+   - **Variables:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `DEPLOY_URL`.
+3. Delete the private key from your PC once it's in GitHub.
+
+Database migrations stay a deliberate, manual step: apply them before deploying a release that needs them.
