@@ -600,3 +600,31 @@ describe('who created a record (security fix)', () => {
     await as('bob', "update borrowers set name = 'Lerato M' where id = $1", [borrower])
   })
 })
+
+describe('deleting a user account (with the security fixes in place)', () => {
+  // Deleting someone in Supabase (dashboard or a data-deletion request) clears created_by
+  // on what they added and removes their memberships; the new triggers must allow that.
+  const dave = { id: '00000000-0000-0000-0000-00000000000d', email: 'dave@example.com' }
+
+  const asDave = (sql: string, params: unknown[] = []) =>
+    db.transaction(async (tx) => {
+      await tx.query(`select set_config('request.jwt.claim.sub', $1, true), set_config('request.jwt.claims', $2, true)`, [
+        dave.id,
+        JSON.stringify({ sub: dave.id, email: dave.email }),
+      ])
+      await tx.exec('set local role authenticated')
+      return (await tx.query<{ id: string }>(sql, params)).rows
+    })
+
+  it('removes a sole owner who added people and loans', async () => {
+    await db.query('insert into auth.users (id, email) values ($1, $2)', [dave.id, dave.email])
+    const [{ id: org }] = await asDave("select id from public.create_organization('Dave Lends')")
+    const [{ id: borrower }] = await asDave("insert into borrowers (org_id, name) values ($1, 'Thabo') returning id", [org])
+    await asDave("insert into loans (org_id, borrower_id, principal_cents, due_on) values ($1, $2, 100, '2026-12-01')", [org, borrower])
+
+    await db.query('delete from auth.users where id = $1', [dave.id])
+
+    expect((await db.query('select created_by from borrowers where id = $1', [borrower])).rows).toEqual([{ created_by: null }])
+    expect((await db.query('select 1 from organization_members where user_id = $1', [dave.id])).rows).toHaveLength(0)
+  })
+})
