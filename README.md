@@ -173,7 +173,8 @@ It uses your normal SSH key. Under Git Bash, `ssh` doesn't use the Windows ssh-a
    - **Required reviewers:** yourself, so every deploy waits for your approval.
    - **Secrets:** `DEPLOY_SSH_KEY` (the private key file), `DEPLOY_HOST` (`deploy@<server-ip>`), and `DEPLOY_KNOWN_HOSTS`. The last is the output of `ssh-keyscan -t ed25519 <server-ip>`, checked against the fingerprint you accepted when you first connected.
    - **Variables:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `DEPLOY_URL`.
+   - Also add those three as **repository** variables (Settings → Secrets and variables → Actions → Variables). The Checks and Build jobs have no environment, so they only see repository-level values. All three are public.
 3. Delete the private key from your PC once it's in GitHub.
 
-The workflow keeps secrets away from npm packages: a **build** job with no secrets installs, checks and builds; a **deploy** job with the secrets runs no packages and only uploads. The receiver accepts only plain files and folders, caps the upload size and time, and runs one deploy at a time.
+The workflow runs three jobs. **Checks** (typecheck, lint, tests, audit, end-to-end) and **Build** run side by side with no secrets. **Deploy** starts only when both pass and you approve; it holds the secrets but runs no npm packages, only uploads. Before you approve, Checks warns if database migrations were added since the live version (read from the live site's `version.json`, which every deploy writes): apply them first. If end-to-end tests fail, their report is attached to the run. The receiver accepts only plain files and folders, caps the upload size and time, and runs one deploy at a time.
 Database migrations stay a deliberate, manual step: apply them before deploying a release that needs them. The workflow has no database credentials, on purpose.
