@@ -80,6 +80,11 @@ export class OrganizationSettings extends AppPage {
     return this.page.evaluate(async () => window.__shared?.at(-1) ?? (await navigator.clipboard.readText()))
   }
 
+  /** The role picker beside another member. */
+  roleFor(email: string): Locator {
+    return this.page.getByLabel(`Role for ${email}`)
+  }
+
   async open() {
     await this.goto('settings')
   }

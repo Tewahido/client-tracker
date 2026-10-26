@@ -9,6 +9,11 @@ test.describe('controls fit the design', () => {
     await app.openNewLoan()
     await expect(loanForm.lentTo).toHaveCSS('appearance', 'none')
     await expect(loanForm.lentTo).toHaveCSS('padding-right', '40px')
+    // Text fields keep their padding, and the amount still leaves room for the currency.
+    await loanForm.lentTo.selectOption({ label: '+ Someone new' })
+    await expect(loanForm.field('Their name')).toHaveCSS('padding-left', '14px')
+    await expect(loanForm.field('Their name')).toHaveCSS('padding-right', '14px')
+    await expect(loanForm.amount).toHaveCSS('padding-left', '48px')
 
     // The sort dropdown appears once there are loans to sort.
     await loanForm.create({ person: 'Ayanda', amount: '500' })

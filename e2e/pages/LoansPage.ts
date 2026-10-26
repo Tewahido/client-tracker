@@ -22,6 +22,7 @@ export class LoansPage extends AppPage {
       const icon = input.parentElement?.querySelector('svg')
       if (!icon) return false
       // Hit-testing follows paint order, but skips pointer-events: none; lift that briefly.
+      // The centre of the icon's box (inside the lens) hits the <svg> itself, which is enough.
       const previous = icon.style.pointerEvents
       icon.style.pointerEvents = 'auto'
       const box = icon.getBoundingClientRect()
