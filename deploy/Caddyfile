@@ -12,7 +12,7 @@ lendly.example.com {
 	# fresh, or installed phones can stay on an old version.
 	@hashed path /assets/*
 	header @hashed Cache-Control "public, max-age=31536000, immutable"
-	@shell path / /index.html /sw.js /manifest.webmanifest
+	@shell path / /index.html /sw.js /manifest.webmanifest /version.json
 	header @shell Cache-Control "no-cache"
 
 	header {
