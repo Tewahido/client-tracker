@@ -5,12 +5,15 @@ import { INSTALMENT_STATE_LABEL } from '../../../../lib/describe'
 import type { InstalmentProgress } from '../../../../lib/instalments'
 import { instalmentListStyles as s } from './InstalmentList.styles'
 
+/** Plans up to a year are shown in full. */
+const SHORT_PLAN = 12
+
 /** A monthly plan's instalments with their due dates and whether each was paid, paid late or missed. */
 export function InstalmentList({ instalments }: { instalments: InstalmentProgress[] }) {
   const money = useMoney()
 
   return (
-    <ol className={s.list} aria-label="Repayment plan">
+    <ol className={instalments.length > SHORT_PLAN ? s.list.long : s.list.short} aria-label="Repayment plan">
       {instalments.map((i) => (
         <li key={i.number} className={s.row}>
           <span className={s.number}>{i.number}</span>

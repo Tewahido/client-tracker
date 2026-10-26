@@ -12,5 +12,5 @@ export const modalStyles = {
   titleWrap: 'min-w-0',
   title: 'text-lg font-bold tracking-tight',
   description: 'mt-0.5 text-sm text-muted',
-  body: 'overflow-y-auto px-6 pt-2 pb-[max(1.5rem,env(safe-area-inset-bottom))]',
+  body: 'scrollbar-themed overflow-y-auto px-6 pt-2 pb-[max(1.5rem,env(safe-area-inset-bottom))]',
 }

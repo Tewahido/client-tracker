@@ -14,7 +14,7 @@ export const organizationSectionStyles = {
   roleOwner: 'bg-violet-500/12 text-violet-600 ring-violet-500/25 dark:text-violet-300',
   roleMember: 'bg-surface-2 text-muted ring-line',
   memberActions: 'flex gap-1',
-  roleSelect: 'h-8 rounded-lg border border-line bg-surface-2/60 px-2 text-xs font-semibold text-fg outline-none focus:border-brand-400/60',
+  roleSelect: 'select-chevron-sm h-8 rounded-lg border border-line bg-surface-2/60 pl-2.5 text-xs font-semibold text-fg outline-none focus:border-brand-400/60',
 
   inviteForm: 'grid gap-2 sm:grid-cols-[1fr_9rem_auto] sm:items-end',
   hint: 'text-xs text-muted',

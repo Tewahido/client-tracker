@@ -28,8 +28,8 @@ test.describe('monthly repayment plans', () => {
     await expect(loanDetail.instalment(1)).toContainText('Next')
     await expect(loanDetail.instalment(2)).toContainText('Upcoming')
     await expect(loanDetail.root).toContainText('Adds all 6 payment dates to your calendar')
-    // Phones scroll the whole sheet rather than a box inside it.
-    await expect(loanDetail.plan).toHaveCSS('overflow-y', test.info().project.name === 'mobile' ? 'hidden' : 'auto')
+    // A short plan sits in the dialog rather than scrolling in a box of its own.
+    await expect(loanDetail.plan).toHaveCSS('overflow-y', 'hidden')
   })
 
   test('keeps an existing plan’s first payment date when the loan date is corrected', async ({ app, loanForm, loanDetail, loanEditForm }) => {

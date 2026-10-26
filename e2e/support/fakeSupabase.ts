@@ -52,6 +52,8 @@ export class FakeSupabase {
   emailResult: 'invite' | 'sign-in-link' | 'rate-limited' | 'failed' = 'invite'
   /** Invite ids the send-invite function was asked to email. */
   readonly emailed: string[] = []
+  /** Members besides me (the owner); add some before the page loads. */
+  readonly otherMembers: { user_id: string; email: string; role: string; joined_at: string }[] = []
 
   constructor(private readonly page: Page) {}
 
@@ -91,7 +93,7 @@ export class FakeSupabase {
           json: [{ role: 'owner', organizations: { ...ORG, currency: 'ZAR', default_term_days: 30, default_interest_rate: '0' } }],
         })
       }
-      return route.fulfill({ json: [{ user_id: ME.id, email: ME.email, role: 'owner', joined_at: '2026-01-01T00:00:00Z' }] })
+      return route.fulfill({ json: [{ user_id: ME.id, email: ME.email, role: 'owner', joined_at: '2026-01-01T00:00:00Z' }, ...this.otherMembers] })
     }
 
     if (table === 'organization_invites') {
