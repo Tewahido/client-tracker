@@ -18,4 +18,11 @@ test.describe('controls fit the design', () => {
     await expect(loans.sort).toHaveCSS('padding-right', '40px')
   })
 
+  test('the search box shows its magnifying glass', async ({ app, loanForm, loanDetail, loans }) => {
+    await app.openNewLoan()
+    await loanForm.create({ person: 'Ayanda', amount: '500' })
+    await loanDetail.close()
+    await loans.open()
+    expect(await loans.searchIconShows()).toBe(true)
+  })
 })
