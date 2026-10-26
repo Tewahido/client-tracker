@@ -12,7 +12,7 @@
 //   VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY   built into the app
 import { execFileSync, execSync, spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { pathToFileURL } from 'node:url'
 
 /** KEY=value lines, ignoring comments and blank lines; quotes around values are dropped. */
@@ -54,6 +54,15 @@ export function buildProblem(html, supabaseUrl) {
   const connect = policy.split(';').map((d) => d.trim()).find((d) => d.startsWith('connect-src')) ?? ''
   if (!connect.includes(new URL(supabaseUrl).origin)) return `The build doesn't connect to ${supabaseUrl}: it was built without that Supabase project.`
   return null
+}
+
+/**
+ * Contents of dist/version.json: which commit is live. The Deploy workflow reads it from
+ * the live site to list database migrations added since, before anyone approves.
+ */
+export function versionFile(commit, deployedAt = new Date()) {
+  if (!/^[0-9a-f]{40}$/.test(commit)) throw new Error(`Not a commit id: ${commit}`)
+  return `${JSON.stringify({ commit, deployedAt: deployedAt.toISOString() }, null, 2)}\n`
 }
 
 const sha256 = (text) => createHash('sha256').update(text).digest('hex')
@@ -138,6 +147,7 @@ async function main() {
   const page = readFileSync('dist/index.html')
   const problem = buildProblem(page.toString('utf8'), config.supabaseUrl)
   if (problem) fail(problem)
+  writeFileSync('dist/version.json', versionFile(run('git', ['rev-parse', 'HEAD'])))
 
   step(`Uploading to ${config.host}`)
   const liveHash = await upload(config.host).catch((err) => fail(err.message))

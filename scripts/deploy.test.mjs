@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildProblem, deployConfig, localProblems, parseEnvFile } from './deploy.mjs'
+import { buildProblem, deployConfig, localProblems, parseEnvFile, versionFile } from './deploy.mjs'
 
 describe('parseEnvFile', () => {
   it('reads KEY=value lines and ignores comments and blanks', () => {
@@ -60,5 +60,16 @@ describe('buildProblem', () => {
   it('refuses a local-mode build or one for another project', () => {
     expect(buildProblem(page("connect-src 'self'"), 'https://abc.supabase.co')).toMatch(/built without that Supabase project/)
     expect(buildProblem(page("connect-src 'self' https://other.supabase.co"), 'https://abc.supabase.co')).toMatch(/built without/)
+  })
+})
+
+describe('versionFile', () => {
+  it('records which commit is live and when', () => {
+    const commit = 'a'.repeat(40)
+    expect(JSON.parse(versionFile(commit, new Date('2026-10-26T18:00:00Z')))).toEqual({ commit, deployedAt: '2026-10-26T18:00:00.000Z' })
+  })
+
+  it('refuses anything that is not a full commit id', () => {
+    expect(() => versionFile('main')).toThrow(/Not a commit id/)
   })
 })
