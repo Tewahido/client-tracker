@@ -10,7 +10,7 @@ export const notificationBellStyles = {
   head: 'flex items-center justify-between border-b border-line px-4 py-3',
   title: 'text-sm font-bold',
   count: 'text-xs text-muted',
-  list: 'max-h-80 overflow-y-auto p-2',
+  list: 'scrollbar-themed max-h-80 overflow-y-auto p-2',
   item: 'flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-surface-2',
   itemMain: 'min-w-0 flex-1',
   itemName: 'truncate text-sm font-semibold',

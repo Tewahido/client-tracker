@@ -1,5 +1,6 @@
 export const segmentedStyles = {
-  root: 'glass inline-flex max-w-full gap-1 overflow-x-auto rounded-2xl p-1 [scrollbar-width:none]',
+  // Scrollbar hidden in every engine (older Safari ignores scrollbar-width).
+  root: 'glass inline-flex max-w-full gap-1 overflow-x-auto rounded-2xl p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
   option:
     'relative inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl px-3.5 text-sm font-semibold text-muted transition-colors hover:text-fg',
   active: 'text-fg',

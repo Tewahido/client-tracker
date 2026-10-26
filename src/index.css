@@ -15,6 +15,8 @@
   --chart-1: #059669;
   --scrollbar: rgb(15 23 42 / 0.18);
   --scrollbar-hover: rgb(15 23 42 / 0.32);
+  /* Dropdown chevron in the muted text colour. */
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2364748b' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   color-scheme: light;
 }
 
@@ -30,6 +32,7 @@
   --chart-1: #14a87a;
   --scrollbar: rgb(255 255 255 / 0.16);
   --scrollbar-hover: rgb(255 255 255 / 0.3);
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238b94a7' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   color-scheme: dark;
 }
 
@@ -107,51 +110,52 @@
   .dark input[type='date']::-webkit-calendar-picker-indicator {
     filter: invert(1);
   }
+}
 
-  /*
-   * Slim, themed scrollbars instead of the system ones (on Windows: wide, with arrow
-   * buttons). The thumb is inset with a transparent border, and the track keeps clear of
-   * rounded corners, so scrolling dialogs keep their shape.
-   */
-  ::-webkit-scrollbar {
+/*
+ * Slim, themed scrollbars for scrolling panels with rounded corners (dialogs and lists in
+ * them), instead of the system ones (on Windows: wide, with arrow buttons). The thumb is
+ * inset by a transparent border and the track stops short of the corners. Opt-in, so the
+ * page itself keeps the system scrollbar (e.g. auto-hiding on Macs).
+ */
+@utility scrollbar-themed {
+  &::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
 
-  ::-webkit-scrollbar-track {
+  &::-webkit-scrollbar-track {
     background: transparent;
     margin-block: 14px;
   }
 
-  ::-webkit-scrollbar-thumb {
+  &::-webkit-scrollbar-thumb {
     border: 3px solid transparent;
     border-radius: 9999px;
     background: var(--scrollbar) padding-box;
   }
 
-  ::-webkit-scrollbar-thumb:hover {
+  &::-webkit-scrollbar-thumb:hover {
     background-color: var(--scrollbar-hover);
   }
 
-  ::-webkit-scrollbar-button,
-  ::-webkit-scrollbar-corner {
+  &::-webkit-scrollbar-button,
+  &::-webkit-scrollbar-corner {
     display: none;
     background: transparent;
   }
 
   /* Firefox has no ::-webkit-scrollbar; the standard properties get it close. */
   @supports not selector(::-webkit-scrollbar) {
-    * {
-      scrollbar-width: thin;
-      scrollbar-color: var(--scrollbar) transparent;
-    }
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar) transparent;
   }
 }
 
 /* Native dropdowns with our own chevron, clear of the edge (the system arrow hugs it). */
 @utility select-chevron {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238b94a7' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: var(--select-chevron);
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   background-size: 1rem;
@@ -161,7 +165,7 @@
 /* The same in compact controls such as the members list's role picker. */
 @utility select-chevron-sm {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238b94a7' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: var(--select-chevron);
   background-repeat: no-repeat;
   background-position: right 0.5rem center;
   background-size: 0.875rem;
