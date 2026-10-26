@@ -21,6 +21,11 @@ describe('contentSecurityPolicy', () => {
     expect(directive(policy, 'worker-src')).toBe("worker-src 'self' blob:")
   })
 
+  it('uses an unencrypted socket for a local Supabase', () => {
+    const local = contentSecurityPolicy({ supabaseUrl: 'http://127.0.0.1:54321', inlineScriptHashes: [] })
+    expect(directive(local, 'connect-src')).toBe("connect-src 'self' http://127.0.0.1:54321 ws://127.0.0.1:54321")
+  })
+
   it('keeps to this site in local mode', () => {
     expect(directive(contentSecurityPolicy({ inlineScriptHashes: [] }), 'connect-src')).toBe("connect-src 'self'")
   })
@@ -35,5 +40,10 @@ describe('cspPlugin', () => {
     const hash = createHash('sha256').update(inline).digest('base64')
     expect(out).toContain('<meta http-equiv="Content-Security-Policy"')
     expect(out).toContain(`'sha256-${hash}'`)
+  })
+
+  it('fails the build instead of shipping without a policy', () => {
+    const transform = cspPlugin(undefined).transformIndexHtml as { handler: (html: string) => string }
+    expect(() => transform.handler('<html><head lang="en"></head></html>')).toThrow(/no plain <head>/)
   })
 })

@@ -15,7 +15,9 @@ const sha256 = (text: string) => `'sha256-${createHash('sha256').update(text).di
  */
 export function contentSecurityPolicy({ supabaseUrl, inlineScriptHashes }: { supabaseUrl?: string; inlineScriptHashes: string[] }): string {
   const supabase = supabaseUrl ? new URL(supabaseUrl) : null
-  const connect = ["'self'", ...(supabase ? [supabase.origin, `wss://${supabase.host}`] : [])]
+  // Realtime runs over wss:// for a hosted project, ws:// for a local one (http://127.0.0.1:54321).
+  const socket = supabase ? `${supabase.protocol === 'https:' ? 'wss' : 'ws'}://${supabase.host}` : null
+  const connect = ["'self'", ...(supabase && socket ? [supabase.origin, socket] : [])]
   return [
     "default-src 'self'",
     `script-src 'self' ${inlineScriptHashes.join(' ')}`.trim(),
@@ -42,6 +44,8 @@ export function cspPlugin(supabaseUrl: string | undefined): Plugin {
       order: 'post',
       handler(html) {
         const policy = contentSecurityPolicy({ supabaseUrl, inlineScriptHashes: inlineScripts(html).map(sha256) })
+        // Fail the build rather than silently ship without a policy if index.html changes shape.
+        if (!html.includes('<head>')) throw new Error('lendly-csp: index.html has no plain <head> tag to add the policy to')
         return html.replace('<head>', `<head>\n    <meta http-equiv="Content-Security-Policy" content="${policy}" />`)
       },
     },
