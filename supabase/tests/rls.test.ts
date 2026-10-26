@@ -578,3 +578,30 @@ describe('keeping an owner (security fix)', () => {
   })
 })
 
+describe('who created a record (security fix)', () => {
+  let org: string
+  let borrower: string
+  let loan: string
+
+  beforeAll(async () => {
+    org = await createOrg('alice', 'Audit trail')
+    const [invite] = await as<{ id: string }>('alice', "insert into organization_invites (org_id, email) values ($1, 'bob@example.com') returning id", [org])
+    await as('bob', 'select public.accept_invite($1)', [invite.id])
+    ;[{ id: borrower }] = await as<{ id: string }>('alice', "insert into borrowers (org_id, name) values ($1, 'Lerato') returning id", [org])
+    ;[{ id: loan }] = await as<{ id: string }>('alice', "insert into loans (org_id, borrower_id, principal_cents, due_on) values ($1, $2, 100, '2026-12-01') returning id", [org, borrower])
+  })
+
+  it.each([
+    ['borrowers', () => borrower],
+    ['loans', () => loan],
+    ['organizations', () => org],
+  ])('keeps created_by on %s', async (table, id) => {
+    const changer = table === 'organizations' ? 'alice' : 'bob'
+    await expect(as(changer, `update ${table} set created_by = $2 where id = $1`, [id(), users.carol.id])).rejects.toThrow(/cannot be changed/)
+  })
+
+  it('still lets members edit everything else', async () => {
+    await as('bob', "update loans set note = 'Car repair' where id = $1", [loan])
+    await as('bob', "update borrowers set name = 'Lerato M' where id = $1", [borrower])
+  })
+})
