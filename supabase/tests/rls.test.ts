@@ -501,3 +501,50 @@ describe('signed-out visitors', () => {
     await expect(asAnon("update public.organization_members set role = 'owner'")).rejects.toThrow(/permission denied/)
   })
 })
+
+describe('organisation names (security fix)', () => {
+  // Names go into invite emails sent from this project's address, so no links or markup.
+  it.each([
+    'Urgent: verify at https://evil.example',
+    'Visit www.example.org now',
+    'Pay at lendly-support.com today',
+    'Claim it on secure-bank.co.za',
+    '<b>Important</b>',
+  ])('refuses %j for a new organisation', async (name) => {
+    await expect(createOrg('alice', name)).rejects.toThrow(/organizations_name_plain/)
+  })
+
+  it.each(["St. Mary's Stokvel", 'J.R. & Co.', 'Mom & Dad', 'Dlamini Family Fund 2026'])('accepts %j', async (name) => {
+    expect(await createOrg('alice', name)).toBeTruthy()
+  })
+
+  it('refuses renaming an organisation to a link', async () => {
+    const org = await createOrg('alice', 'Renamers')
+    await expect(as('alice', "update organizations set name = 'Go to evil.com' where id = $1", [org])).rejects.toThrow(/organizations_name_plain/)
+  })
+
+  it('refuses to email invites from an organisation whose older name has a link', async () => {
+    const org = await createOrg('alice', 'Legacy')
+    // Simulate a name saved before the check existed (the constraint is NOT VALID for old rows).
+    await db.exec('alter table organizations drop constraint organizations_name_plain')
+    await db.query("update organizations set name = 'Legacy evil.com' where id = $1", [org])
+    await db.exec(`alter table organizations add constraint organizations_name_plain check (public.is_plain_org_name(name)) not valid`)
+    const [i] = await as<{ id: string }>('alice', "insert into organization_invites (org_id, email) values ($1, 'legacy@example.com') returning id", [org])
+    await expect(as('alice', 'select * from public.claim_invite_email($1)', [i.id])).rejects.toThrow(/Rename the organisation/)
+  })
+})
+
+describe('daily invite email cap (security fix)', () => {
+  it('stops all invite emails once the project has sent 200 in a day', async () => {
+    await db.query('delete from invite_email_log')
+    const org = await createOrg('alice', 'Capped')
+    await db.query(
+      "insert into invite_email_log (sender, recipient, org_id) select gen_random_uuid(), 'r' || g || '@example.com', $1 from generate_series(1, 200) g",
+      [org],
+    )
+    const [i] = await as<{ id: string }>('alice', "insert into organization_invites (org_id, email) values ($1, 'one-more@example.com') returning id", [org])
+    await expect(as('alice', 'select * from public.claim_invite_email($1)', [i.id])).rejects.toThrow(/daily invite emails/)
+    await db.query('delete from invite_email_log')
+  })
+})
+

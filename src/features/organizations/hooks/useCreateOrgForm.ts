@@ -1,4 +1,5 @@
 import { useCallback, useState, type FormEvent } from 'react'
+import { orgNameProblem } from '../../../lib/orgName'
 import { useWorkspace } from '../../../providers/workspaceContext'
 
 /** Name field and submit handler for creating an organisation. */
@@ -12,8 +13,8 @@ export function useCreateOrgForm(onCreated?: () => void) {
     async (e: FormEvent) => {
       e.preventDefault()
       const trimmed = name.trim()
-      if (!trimmed) return setError('Give your organisation a name')
-      if (trimmed.length > 80) return setError('Keep it under 80 characters')
+      const problem = orgNameProblem(trimmed)
+      if (problem) return setError(problem)
       setBusy(true)
       setError(null)
       try {
