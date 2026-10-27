@@ -62,6 +62,16 @@ test.describe('controls fit the design', () => {
     await expect(app.document).toHaveCSS('touch-action', 'manipulation')
   })
 
+  // iPhone Safari doesn't clip blurred glows to a rounded, animating card: a grey square showed in the corner.
+  test('the Home summary card keeps its glow inside its rounded corners', async ({ app, loanForm, loanDetail }) => {
+    await app.openNewLoan()
+    await loanForm.create({ person: 'Ayanda', amount: '500' })
+    await loanDetail.close()
+    await app.goto('home')
+    await expect(app.summaryCard).toBeVisible()
+    expect(await app.glowsClipped(app.summaryCard)).toBe(true)
+  })
+
   test('the search box shows its magnifying glass', async ({ app, loanForm, loanDetail, loans }) => {
     await app.openNewLoan()
     await loanForm.create({ person: 'Ayanda', amount: '500' })

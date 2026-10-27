@@ -42,6 +42,25 @@ export class AppPage {
     return (await this.page.locator('meta[name="viewport"]').getAttribute('content')) ?? ''
   }
 
+  /** The Home screen's summary card ("Out with people right now"). */
+  get summaryCard() {
+    return this.page.getByRole('region', { name: 'Summary' })
+  }
+
+  /**
+   * Whether a rounded card's glows sit in a masked layer that clips them to its corners
+   * (iPhone Safari otherwise shows blurred glows as grey squares poking out of the corner).
+   */
+  async glowsClipped(card: ReturnType<Page['locator']>): Promise<boolean> {
+    return card.evaluate((el) => {
+      const layer = el.querySelector(':scope > [data-decorations]')
+      if (!layer) return false
+      const style = getComputedStyle(layer)
+      const mask = style.maskImage || style.getPropertyValue('-webkit-mask-image')
+      return style.overflow === 'hidden' && mask !== 'none' && layer.querySelector('[class*="blur-"]') !== null
+    })
+  }
+
   toast(text: string | RegExp) {
     return this.page.locator('[data-sonner-toast]').filter({ hasText: text })
   }

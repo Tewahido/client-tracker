@@ -6,6 +6,8 @@ export const featureGridStyles = {
   lead: 'mt-3 text-balance text-muted',
   grid: 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3',
   card: 'glass group relative overflow-hidden rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10',
+  /** Holds the shine, clipped to the card's corners (see clip-corners in index.css). */
+  decor: 'clip-corners',
   shine: 'absolute -top-16 -right-16 h-40 w-40 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100',
   icon: 'relative mb-4 flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-lg',
   iconSvg: 'h-6 w-6',

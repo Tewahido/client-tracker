@@ -178,6 +178,23 @@
   padding-right: 1.75rem;
 }
 
+/*
+ * A layer holding a rounded card's glows, clipped to the card's corners. iPhone Safari doesn't
+ * clip blurred children to a rounded parent that's animating, so glows showed as grey squares
+ * in the corner; a mask makes it clip. Use it on the decorations' own layer, not on the card:
+ * a mask on the card would cut off the card's shadow.
+ */
+@utility clip-corners {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  isolation: isolate;
+  -webkit-mask-image: linear-gradient(#000, #000);
+  mask-image: linear-gradient(#000, #000);
+  pointer-events: none;
+}
+
 @utility glass {
   @apply border border-line bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.04)] backdrop-blur-xl;
 }
