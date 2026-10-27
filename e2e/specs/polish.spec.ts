@@ -56,6 +56,12 @@ test.describe('controls fit the design', () => {
     await expect(loans.sort).toHaveCSS('font-size', expected)
   })
 
+  // The app shouldn't zoom by itself on phones: not when a field is tapped, not on a double tap.
+  test('the app never zooms by itself', async ({ app }) => {
+    expect(await app.viewportSetting()).toMatch(/maximum-scale=1(\.0)?\b/)
+    await expect(app.document).toHaveCSS('touch-action', 'manipulation')
+  })
+
   test('the search box shows its magnifying glass', async ({ app, loanForm, loanDetail, loans }) => {
     await app.openNewLoan()
     await loanForm.create({ person: 'Ayanda', amount: '500' })

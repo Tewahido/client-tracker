@@ -32,6 +32,16 @@ export class AppPage {
     await this.newLoanButton.click()
   }
 
+  /** The page itself (the <html> element), for page-wide styles such as touch-action. */
+  get document() {
+    return this.page.locator('html')
+  }
+
+  /** The viewport meta tag's settings, e.g. "width=device-width, initial-scale=1". */
+  async viewportSetting(): Promise<string> {
+    return (await this.page.locator('meta[name="viewport"]').getAttribute('content')) ?? ''
+  }
+
   toast(text: string | RegExp) {
     return this.page.locator('[data-sonner-toast]').filter({ hasText: text })
   }
