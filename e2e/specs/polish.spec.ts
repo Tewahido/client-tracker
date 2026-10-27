@@ -42,6 +42,20 @@ test.describe('controls fit the design', () => {
     expect(await loans.focusedBorderColor(loans.sort)).toBe(await loans.focusedBorderColor(loans.search))
   })
 
+  // iPhone Safari zooms in when a field under 16px is tapped, and stays zoomed, cutting screens off.
+  test('form fields are big enough on touch screens that iPhones don’t zoom in', async ({ app, loanForm, loanDetail, loans }, testInfo) => {
+    const expected = testInfo.project.name === 'mobile' ? '16px' : '14px'
+    await app.openNewLoan()
+    await expect(loanForm.lentTo).toHaveCSS('font-size', expected)
+    await expect(loanForm.amount).toHaveCSS('font-size', expected)
+    await expect(loanForm.field('Note')).toHaveCSS('font-size', expected)
+    await loanForm.create({ person: 'Ayanda', amount: '500' })
+    await loanDetail.close()
+    await loans.open()
+    await expect(loans.search).toHaveCSS('font-size', expected)
+    await expect(loans.sort).toHaveCSS('font-size', expected)
+  })
+
   test('the search box shows its magnifying glass', async ({ app, loanForm, loanDetail, loans }) => {
     await app.openNewLoan()
     await loanForm.create({ person: 'Ayanda', amount: '500' })
