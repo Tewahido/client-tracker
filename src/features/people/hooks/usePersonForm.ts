@@ -1,5 +1,6 @@
 import { useCallback, type FormEvent } from 'react'
 import { useFormState } from '../../../hooks/useFormState'
+import { isValidPhone, normalisePhone } from '../../../lib/phone'
 import type { Borrower } from '../../../lib/types'
 import { useLoanStore } from '../../../providers/loanStoreContext'
 
@@ -14,7 +15,7 @@ export function validatePerson(values: PersonFormValues): Partial<Record<keyof P
   const errors: Partial<Record<keyof PersonFormValues, string>> = {}
   if (!values.name.trim()) errors.name = 'Give this person a name'
   if (values.email.trim() && !/^\S+@\S+\.\S+$/.test(values.email.trim())) errors.email = "That email doesn't look right"
-  if (values.phone.trim() && !/^\+?[\d\s()-]{6,}$/.test(values.phone.trim())) errors.phone = 'Use digits, spaces and an optional leading +'
+  if (values.phone.trim() && !isValidPhone(values.phone)) errors.phone = 'Use digits, spaces and an optional leading +'
   return errors
 }
 
@@ -40,7 +41,7 @@ export function usePersonForm(borrowerId: string | undefined, onSaved: (borrower
     (e: FormEvent) => {
       e.preventDefault()
       void submit(async (v) => {
-        const input = { name: v.name.trim(), phone: emptyToNull(v.phone), email: emptyToNull(v.email), notes: emptyToNull(v.notes) }
+        const input = { name: v.name.trim(), phone: emptyToNull(normalisePhone(v.phone)), email: emptyToNull(v.email), notes: emptyToNull(v.notes) }
         const saved = existing ? await updateBorrower(existing.id, input) : await addBorrower(input)
         onSaved(saved)
       })
