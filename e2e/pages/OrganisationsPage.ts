@@ -3,20 +3,17 @@ import { AppPage } from './AppPage'
 
 /** The Organisations page (Supabase mode): every organisation I belong to, and invites for me. */
 export class OrganisationsPage extends AppPage {
-  /** Phones: the current organisation in the top bar, which opens this page. */
-  readonly topBarButton: Locator
-  /** Desktop: the organisation switcher at the bottom of the sidebar. */
-  readonly switcherButton: Locator
   readonly list: Locator
+  /** The organisation menu the current organisation opens (top bar on phones, sidebar on desktop). */
+  readonly menu: Locator
   /** Banner on other screens saying invites are waiting, and its button to this page. */
   readonly inviteBanner: Locator
   readonly seeInvitesButton: Locator
 
   constructor(page: Page) {
     super(page)
-    this.topBarButton = page.getByRole('banner').getByRole('button', { name: /^Organisation:/ })
-    this.switcherButton = page.getByRole('complementary').getByRole('button', { name: /^Organisation:/ })
     this.list = page.getByRole('list', { name: 'Your organisations' })
+    this.menu = page.getByRole('group', { name: 'Organisations' }).locator('visible=true')
     this.inviteBanner = page.getByRole('region', { name: 'Invitations' })
     this.seeInvitesButton = this.inviteBanner.getByRole('button', { name: /^See invites?$/ })
   }
@@ -25,14 +22,22 @@ export class OrganisationsPage extends AppPage {
     await this.page.goto('/#organisations')
   }
 
-  /** Get to this page the way someone would: the top bar on phones, the sidebar switcher on desktop. */
+  /** Get to this page the way someone would: from the organisation menu (top bar or sidebar). */
   async openFromNav() {
-    if (await this.topBarButton.isVisible()) {
-      await this.topBarButton.click()
-    } else {
-      await this.switcherButton.click()
-      await this.page.getByRole('button', { name: 'All organisations' }).click()
-    }
+    await this.currentOrgButton().click()
+    await this.menuItem('All organisations').click()
+  }
+
+  /** Whether the open organisation menu fits inside the window (not cut off at an edge). */
+  async menuFitsWindow() {
+    const box = await this.menu.boundingBox()
+    const width = await this.page.evaluate(() => document.documentElement.clientWidth)
+    return !!box && box.x >= 0 && box.x + box.width <= width
+  }
+
+  /** An organisation (or other entry) in the organisation menu. */
+  menuItem(name: string) {
+    return this.menu.getByRole('button', { name, exact: true })
   }
 
   /** The visible "current organisation" control: top bar on phones, sidebar on desktop. */
