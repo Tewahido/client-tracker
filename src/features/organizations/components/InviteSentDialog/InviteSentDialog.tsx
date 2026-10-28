@@ -20,7 +20,7 @@ const NOT_EMAILED_HINT = {
 }
 
 /**
- * Shown after an invite is created. If Lendly emailed it, says what was sent (sharing by
+ * Shown after an invite is created. If Lendly emailed it, says so (sharing by
  * hand is a backup); otherwise sharing the invite becomes the main step.
  */
 export function InviteSentDialog({ open, invite, orgName, sharing, onClose }: InviteSentDialogProps) {

@@ -48,6 +48,20 @@ describe('send-invite', () => {
     expect(await replyFor('exists')).toEqual(await replyFor('sent'))
   })
 
+  // Only existing accounts get the sign-in link, so its failing must not change the reply
+  // either (nor free the claim, which would make a retry answer differently).
+  it('replies as if sent when only the sign-in link fails, and keeps the claim', async () => {
+    const newUser = await handleSendInvite(post({ inviteId: INVITE_ID }), deps())
+    const d = deps({
+      inviteNewUser: vi.fn(async (): Promise<'sent' | 'exists'> => 'exists'),
+      sendSignInLink: vi.fn(async () => Promise.reject(new Error('over_email_send_rate_limit'))),
+    })
+    const existing = await handleSendInvite(post({ inviteId: INVITE_ID }), d)
+
+    expect({ status: existing.status, body: await existing.text() }).toEqual({ status: newUser.status, body: await newUser.text() })
+    expect(d.release).not.toHaveBeenCalled()
+  })
+
   it('never sends when the database refuses the claim', async () => {
     for (const [code, status] of [
       ['42501', 403],
@@ -91,14 +105,9 @@ describe('send-invite', () => {
 
   it('reports a failed send without leaking the provider’s error', async () => {
     const leaky = new Error('SMTP 535 auth failed for smtp.internal')
-    for (const d of [
-      deps({ inviteNewUser: vi.fn(async () => Promise.reject(leaky)) }),
-      deps({ inviteNewUser: vi.fn(async (): Promise<'sent' | 'exists'> => 'exists'), sendSignInLink: vi.fn(async () => Promise.reject(leaky)) }),
-    ]) {
-      const res = await handleSendInvite(post({ inviteId: INVITE_ID }), d)
-      expect(res.status).toBe(502)
-      expect(await res.text()).not.toContain('smtp.internal')
-    }
+    const res = await handleSendInvite(post({ inviteId: INVITE_ID }), deps({ inviteNewUser: vi.fn(async () => Promise.reject(leaky)) }))
+    expect(res.status).toBe(502)
+    expect(await res.text()).not.toContain('smtp.internal')
   })
 
   it('does not fall back to a sign-in link when the invite email fails for another reason', async () => {

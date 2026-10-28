@@ -92,13 +92,20 @@ export async function handleSendInvite(req: Request, deps: SendInviteDeps): Prom
   let kind: InviteEmailKind
   try {
     const result = await deps.inviteNewUser(invite.email, { invited_to: invite.orgName, invited_by: invite.inviterEmail })
-    if (result === 'exists') await deps.sendSignInLink(invite.email)
     kind = result === 'exists' ? 'sign-in-link' : 'invite'
   } catch (err) {
     // Log the provider's error for the project owner, but don't echo it back to the browser.
     deps.log?.('send-invite: sending the email failed', describe(err))
     await deps.release(inviteId).catch((releaseErr) => deps.log?.('send-invite: releasing the claim failed', describe(releaseErr)))
     return reply(502, { error: 'The email could not be sent' })
+  }
+  if (kind === 'sign-in-link') {
+    // Only existing accounts reach this, so a failure here must look like success (and keep
+    // the claim): a different reply would reveal the account. The owner can still share the
+    // invite by hand, and the invitee sees it whenever they next sign in.
+    await deps.sendSignInLink(invite.email).catch((err) => {
+      deps.log?.('send-invite: sending the sign-in link failed', describe(err))
+    })
   }
   deps.log?.('send-invite: emailed', { kind })
   return reply(200, { sent: true })

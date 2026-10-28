@@ -85,6 +85,8 @@ export class FakeSupabase {
         case 'failed':
           return route.fulfill({ status: 502, json: { error: 'The email could not be sent' } })
         default:
+          // Still says which email went out, like older versions of the function, so tests
+          // prove the app ignores it. Don't drop `kind` here.
           return route.fulfill({ json: { sent: true, kind: this.emailResult } })
       }
     })
