@@ -1,5 +1,5 @@
 import { cn } from '../../../../lib/cn'
-import { Building2, Check, ChevronsUpDown, LogOut, Plus } from 'lucide-react'
+import { Building2, Check, ChevronsUpDown, LayoutList, LogOut, Plus } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useRef, useState } from 'react'
 import { useDismissable } from '../../../../hooks/useDismissable'
@@ -9,8 +9,8 @@ import { orgSwitcherStyles as s } from './OrgSwitcher.styles'
 const ROLE_LABEL = { owner: 'Owner', member: 'Member', viewer: 'Viewer' } as const
 
 /** Sidebar control showing the active organisation, with switching, creating and signing out. */
-export function OrgSwitcher({ onCreate }: { onCreate: () => void }) {
-  const { organizations, activeOrg, switchOrg, user, signOut } = useWorkspace()
+export function OrgSwitcher({ onCreate, onManage }: { onCreate: () => void; onManage: () => void }) {
+  const { organizations, activeOrg, invites, switchOrg, user, signOut } = useWorkspace()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const close = useCallback(() => setOpen(false), [])
@@ -42,6 +42,17 @@ export function OrgSwitcher({ onCreate }: { onCreate: () => void }) {
               className={s.item}
               onClick={() => {
                 close()
+                onManage()
+              }}
+            >
+              <LayoutList className={s.itemIcon} />
+              <span className={s.itemName}>All organisations</span>
+              {invites.length > 0 && <span className={s.count} aria-label={`${invites.length} invite${invites.length > 1 ? 's' : ''}`}>{invites.length}</span>}
+            </button>
+            <button
+              className={s.item}
+              onClick={() => {
+                close()
                 onCreate()
               }}
             >
@@ -57,8 +68,17 @@ export function OrgSwitcher({ onCreate }: { onCreate: () => void }) {
         )}
       </AnimatePresence>
 
-      <button className={s.trigger} onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-haspopup="menu">
-        <span className={s.badge}>{activeOrg.name.slice(0, 1).toUpperCase()}</span>
+      <button
+        className={s.trigger}
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label={`Organisation: ${activeOrg.name}, ${ROLE_LABEL[activeOrg.role]}${invites.length ? `, ${invites.length} invite${invites.length > 1 ? 's' : ''} waiting` : ''}`}
+      >
+        <span className={s.badge}>
+          {activeOrg.name.slice(0, 1).toUpperCase()}
+          {invites.length > 0 && <span className={s.dot} />}
+        </span>
         <span className={s.info}>
           <span className={s.name}>{activeOrg.name}</span>
           <span className={s.sub}>

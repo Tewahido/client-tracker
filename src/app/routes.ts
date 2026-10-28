@@ -1,6 +1,7 @@
 import { HandCoins, LayoutDashboard, Settings, Users, type LucideIcon } from 'lucide-react'
 
-export type RouteName = 'home' | 'loans' | 'people' | 'settings'
+/** `organisations` has no tab: it's reached from the current organisation (top bar or sidebar). */
+export type RouteName = 'home' | 'loans' | 'people' | 'settings' | 'organisations'
 
 export interface Route {
   name: RouteName
@@ -14,7 +15,7 @@ export const NAV_ITEMS: { name: RouteName; label: string; icon: LucideIcon }[] =
   { name: 'settings', label: 'Settings', icon: Settings },
 ]
 
-const NAMES = new Set<string>(NAV_ITEMS.map((n) => n.name))
+const NAMES = new Set<string>([...NAV_ITEMS.map((n) => n.name), 'organisations'])
 
 /** `#loans?status=overdue` -> { name: 'loans', params: status=overdue } */
 export function parseHash(hash: string): Route {
