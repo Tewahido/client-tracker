@@ -3,10 +3,10 @@ import { Building2, Check, ChevronsUpDown, LayoutList, LogOut, Plus } from 'luci
 import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useRef, useState } from 'react'
 import { useDismissable } from '../../../../hooks/useDismissable'
+import { inviteCount } from '../../../../lib/invites'
 import { useWorkspace } from '../../../../providers/workspaceContext'
+import { ROLE_LABEL } from '../../roles'
 import { orgSwitcherStyles as s } from './OrgSwitcher.styles'
-
-const ROLE_LABEL = { owner: 'Owner', member: 'Member', viewer: 'Viewer' } as const
 
 /** Sidebar control showing the active organisation, with switching, creating and signing out. */
 export function OrgSwitcher({ onCreate, onManage }: { onCreate: () => void; onManage: () => void }) {
@@ -47,7 +47,7 @@ export function OrgSwitcher({ onCreate, onManage }: { onCreate: () => void; onMa
             >
               <LayoutList className={s.itemIcon} />
               <span className={s.itemName}>All organisations</span>
-              {invites.length > 0 && <span className={s.count} aria-label={`${invites.length} invite${invites.length > 1 ? 's' : ''}`}>{invites.length}</span>}
+              {invites.length > 0 && <span className={s.count} aria-label={inviteCount(invites.length)}>{invites.length}</span>}
             </button>
             <button
               className={s.item}
@@ -73,7 +73,7 @@ export function OrgSwitcher({ onCreate, onManage }: { onCreate: () => void; onMa
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label={`Organisation: ${activeOrg.name}, ${ROLE_LABEL[activeOrg.role]}${invites.length ? `, ${invites.length} invite${invites.length > 1 ? 's' : ''} waiting` : ''}`}
+        aria-label={`Organisation: ${activeOrg.name}, ${ROLE_LABEL[activeOrg.role]}${invites.length ? `, ${inviteCount(invites.length)} waiting` : ''}`}
       >
         <span className={s.badge}>
           {activeOrg.name.slice(0, 1).toUpperCase()}

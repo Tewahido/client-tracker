@@ -1,4 +1,5 @@
 import { ChevronDown } from 'lucide-react'
+import { inviteCount } from '../../../../lib/invites'
 import { useWorkspace } from '../../../../providers/workspaceContext'
 import { orgChipStyles as s } from './OrgChip.styles'
 
@@ -11,7 +12,7 @@ export function OrgChip({ onOpen }: { onOpen: () => void }) {
     <button
       className={s.root}
       onClick={onOpen}
-      aria-label={`Organisation: ${activeOrg.name}${invites.length ? `, ${invites.length} invite${invites.length > 1 ? 's' : ''} waiting` : ''}`}
+      aria-label={`Organisation: ${activeOrg.name}${invites.length ? `, ${inviteCount(invites.length)} waiting` : ''}`}
     >
       <span className={s.name}>{activeOrg.name}</span>
       <ChevronDown className={s.chevron} />
