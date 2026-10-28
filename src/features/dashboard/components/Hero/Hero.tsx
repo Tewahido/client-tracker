@@ -16,10 +16,12 @@ export function Hero({ greeting, outstandingCents, openCount, borrowersWithDebt,
   const pct = Math.round(recoveryRate * 100)
 
   return (
-    <motion.section className={s.root} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-      <div className={s.bg} />
-      <div className={s.pattern} />
-      <div className={s.shine} />
+    <motion.section className={s.root} aria-label="Summary" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+      <div className={s.decor} aria-hidden="true" data-decorations>
+        <div className={s.bg} />
+        <div className={s.pattern} />
+        <div className={s.shine} />
+      </div>
       <div className={s.content}>
         <p className={s.greeting}>{greeting} 👋</p>
         <p className={s.label}>Out with people right now</p>

@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 
 type Route = 'home' | 'loans' | 'people' | 'settings'
 
@@ -30,6 +30,35 @@ export class AppPage {
 
   async openNewLoan() {
     await this.newLoanButton.click()
+  }
+
+  /** The page itself (the <html> element), for page-wide styles such as touch-action. */
+  get document() {
+    return this.page.locator('html')
+  }
+
+  /** The viewport meta tag's settings, e.g. "width=device-width, initial-scale=1". */
+  async viewportSetting(): Promise<string> {
+    return (await this.page.locator('meta[name="viewport"]').getAttribute('content')) ?? ''
+  }
+
+  /** The Home screen's summary card ("Out with people right now"). */
+  get summaryCard() {
+    return this.page.getByRole('region', { name: 'Summary' })
+  }
+
+  /**
+   * Whether a rounded card's glows sit in a masked layer that clips them to its corners
+   * (iPhone Safari otherwise shows blurred glows as grey squares poking out of the corner).
+   */
+  async glowsClipped(card: Locator): Promise<boolean> {
+    return card.evaluate((el) => {
+      const layer = el.querySelector(':scope > [data-decorations]')
+      if (!layer) return false
+      const style = getComputedStyle(layer)
+      const mask = style.maskImage || style.getPropertyValue('-webkit-mask-image')
+      return style.overflow === 'hidden' && mask !== 'none' && layer.childElementCount > 0
+    })
   }
 
   toast(text: string | RegExp) {
