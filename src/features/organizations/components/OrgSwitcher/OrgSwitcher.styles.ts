@@ -8,14 +8,9 @@ export const orgSwitcherStyles = {
   name: 'block truncate text-sm font-bold',
   sub: 'block truncate text-[11px] text-muted',
   chevron: 'h-4 w-4 shrink-0 text-muted',
-  menu: 'absolute inset-x-0 bottom-full z-40 mb-2 overflow-hidden rounded-2xl border border-line bg-bg p-1.5 shadow-2xl',
-  menuLabel: 'px-2.5 pt-1.5 pb-1 text-[11px] font-semibold tracking-wide text-muted uppercase',
+  /** Sign out, shown inside the shared organisation menu. */
   item: 'flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm font-semibold transition hover:bg-surface-2',
   itemIcon: 'h-4 w-4 shrink-0 text-muted',
-  itemCheck: 'ml-auto h-4 w-4 shrink-0 text-brand-500',
-  itemName: 'min-w-0 flex-1 truncate',
-  separator: 'my-1.5 h-px bg-line',
   danger: 'text-rose-500',
   dot: 'absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-bg',
-  count: 'ml-auto shrink-0 rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white',
 }

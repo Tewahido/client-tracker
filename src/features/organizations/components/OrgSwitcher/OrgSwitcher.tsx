@@ -1,16 +1,17 @@
 import { cn } from '../../../../lib/cn'
-import { Building2, Check, ChevronsUpDown, LayoutList, LogOut, Plus } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
+import { ChevronsUpDown, LogOut } from 'lucide-react'
+import { AnimatePresence } from 'motion/react'
 import { useCallback, useRef, useState } from 'react'
 import { useDismissable } from '../../../../hooks/useDismissable'
 import { inviteCount } from '../../../../lib/invites'
 import { useWorkspace } from '../../../../providers/workspaceContext'
 import { ROLE_LABEL } from '../../roles'
+import { OrgMenu } from '../OrgMenu'
 import { orgSwitcherStyles as s } from './OrgSwitcher.styles'
 
 /** Sidebar control showing the active organisation, with switching, creating and signing out. */
 export function OrgSwitcher({ onCreate, onManage }: { onCreate: () => void; onManage: () => void }) {
-  const { organizations, activeOrg, invites, switchOrg, user, signOut } = useWorkspace()
+  const { activeOrg, invites, user, signOut } = useWorkspace()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const close = useCallback(() => setOpen(false), [])
@@ -22,49 +23,12 @@ export function OrgSwitcher({ onCreate, onManage }: { onCreate: () => void; onMa
     <div className={s.root} ref={rootRef}>
       <AnimatePresence>
         {open && (
-          <motion.div className={s.menu} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }} transition={{ duration: 0.15 }}>
-            <div className={s.menuLabel}>Organisations</div>
-            {organizations.map((org) => (
-              <button
-                key={org.id}
-                className={s.item}
-                onClick={() => {
-                  switchOrg(org.id)
-                  close()
-                }}
-              >
-                <Building2 className={s.itemIcon} />
-                <span className={s.itemName}>{org.name}</span>
-                {org.id === activeOrg.id && <Check className={s.itemCheck} />}
-              </button>
-            ))}
-            <button
-              className={s.item}
-              onClick={() => {
-                close()
-                onManage()
-              }}
-            >
-              <LayoutList className={s.itemIcon} />
-              <span className={s.itemName}>All organisations</span>
-              {invites.length > 0 && <span className={s.count} aria-label={inviteCount(invites.length)}>{invites.length}</span>}
-            </button>
-            <button
-              className={s.item}
-              onClick={() => {
-                close()
-                onCreate()
-              }}
-            >
-              <Plus className={s.itemIcon} />
-              New organisation
-            </button>
-            <div className={s.separator} />
+          <OrgMenu placement="above" onClose={close} onCreate={onCreate} onManage={onManage}>
             <button className={cn(s.item, s.danger)} onClick={signOut}>
               <LogOut className={s.itemIcon} />
               Sign out
             </button>
-          </motion.div>
+          </OrgMenu>
         )}
       </AnimatePresence>
 
