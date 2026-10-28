@@ -39,7 +39,9 @@ export function FeatureGrid() {
             viewport={{ once: true, margin: '-60px' }}
             transition={{ delay: (i % 3) * 0.08, duration: 0.5, ease: 'easeOut' }}
           >
-            <span className={cn(s.shine, s.tone[f.tone].shine)} />
+            <span className={s.decor} aria-hidden="true" data-decorations>
+              <span className={cn(s.shine, s.tone[f.tone].shine)} />
+            </span>
             <span className={cn(s.icon, s.tone[f.tone].icon)}>
               <f.icon className={s.iconSvg} />
             </span>

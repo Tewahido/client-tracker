@@ -1,5 +1,7 @@
 export const heroStyles = {
   root: 'relative overflow-hidden rounded-3xl p-6 text-emerald-950 shadow-2xl shadow-brand-500/20 sm:p-8',
+  /** Holds bg, pattern and shine, clipped to the card's corners (see clip-corners in index.css). */
+  decor: 'clip-corners',
   bg: 'absolute inset-0 bg-gradient-to-br from-brand-300 via-brand-400 to-sky-brand',
   shine: 'absolute -top-24 -right-16 h-64 w-64 rounded-full bg-white/30 blur-3xl',
   pattern:

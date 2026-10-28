@@ -14,8 +14,10 @@ export function FinalCta({ onStart }: { onStart: () => void }) {
         viewport={{ once: true, margin: '-60px' }}
         transition={{ duration: 0.6 }}
       >
-        <div className={s.glowA} />
-        <div className={s.glowB} />
+        <div className={s.decor} aria-hidden="true" data-decorations>
+          <div className={s.glowA} />
+          <div className={s.glowB} />
+        </div>
         <FloatingArt art="money-bag" size={112} className={s.artLeft} />
         <FloatingArt art="coin" size={88} className={s.artRight} delay={1} />
         <div className={s.body}>
