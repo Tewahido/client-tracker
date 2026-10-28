@@ -65,10 +65,11 @@ const toInvite = (r: InviteRow): Invite => ({
 })
 
 /**
- * What happened to an invite's email: an invite email or (existing account) a sign-in link
- * was sent, the database's rate limit refused it, or it failed for another reason.
+ * What happened to an invite's email: it was sent (an invite, or a sign-in link for an
+ * existing account; deliberately not told apart), the database's rate limit refused it,
+ * or it failed for another reason.
  */
-export type InviteDelivery = 'invite' | 'sign-in-link' | 'rate-limited' | 'failed'
+export type InviteDelivery = 'emailed' | 'rate-limited' | 'failed'
 
 /** Organisation membership and invitations. Access rules live in the database (RLS + RPCs). */
 export function createOrganizationService(client: SupabaseClient) {
@@ -160,11 +161,12 @@ export function createOrganizationService(client: SupabaseClient) {
      */
     async emailInvite(inviteId: string): Promise<InviteDelivery> {
       try {
-        const { data, error } = await client.functions.invoke<{ kind?: string }>('send-invite', {
+        // Any detail about which email went out is ignored: it would reveal who has an account.
+        const { error } = await client.functions.invoke('send-invite', {
           body: { inviteId },
           timeout: 10_000,
         })
-        if (!error) return data?.kind === 'sign-in-link' ? 'sign-in-link' : 'invite'
+        if (!error) return 'emailed'
         if (error instanceof FunctionsHttpError && (error.context as Response | undefined)?.status === 429) return 'rate-limited'
         return 'failed'
       } catch {
