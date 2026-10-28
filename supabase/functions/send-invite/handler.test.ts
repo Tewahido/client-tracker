@@ -23,7 +23,7 @@ describe('send-invite', () => {
     const res = await handleSendInvite(post({ inviteId: INVITE_ID }), d)
 
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ sent: true, kind: 'invite' })
+    expect(await res.json()).toEqual({ sent: true })
     expect(d.claim).toHaveBeenCalledWith('Bearer user-token', INVITE_ID)
     expect(d.inviteNewUser).toHaveBeenCalledWith('partner@example.com', { invited_to: 'Test Lenders', invited_by: 'owner@example.com' })
     expect(d.sendSignInLink).not.toHaveBeenCalled()
@@ -34,8 +34,18 @@ describe('send-invite', () => {
     const d = deps({ inviteNewUser: vi.fn(async (): Promise<'sent' | 'exists'> => 'exists') })
     const res = await handleSendInvite(post({ inviteId: INVITE_ID }), d)
 
-    expect(await res.json()).toEqual({ sent: true, kind: 'sign-in-link' })
+    expect(res.status).toBe(200)
     expect(d.sendSignInLink).toHaveBeenCalledWith('partner@example.com')
+  })
+
+  // Anyone can create an organisation and invite any address, so the reply must not say
+  // whether that address already has a Lendly account.
+  it('replies the same whether or not the address already has an account', async () => {
+    const replyFor = async (result: 'sent' | 'exists') => {
+      const res = await handleSendInvite(post({ inviteId: INVITE_ID }), deps({ inviteNewUser: vi.fn(async () => result) }))
+      return { status: res.status, body: await res.text() }
+    }
+    expect(await replyFor('exists')).toEqual(await replyFor('sent'))
   })
 
   it('never sends when the database refuses the claim', async () => {
