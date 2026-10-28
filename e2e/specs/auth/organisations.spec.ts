@@ -1,6 +1,6 @@
 import { expect, test as base } from '@playwright/test'
 import { OrganisationsPage } from '../../pages/OrganisationsPage'
-import { FakeSupabase, ME, ORG } from '../../support/fakeSupabase'
+import { FakeSupabase, ME } from '../../support/fakeSupabase'
 
 const MINE = { id: 'org-mine', name: 'Abebe Loans' }
 const SHARED = { id: 'org-shared', name: 'Shared Ledger' }
@@ -49,7 +49,7 @@ test('an invite that arrives after you made your own organisation is shown and c
   await orgs.goto('home')
 
   await expect(orgs.inviteBanner).toContainText(`${SHARED.name} invited you`)
-  await orgs.inviteBanner.getByRole('button', { name: 'See invite' }).click()
+  await orgs.seeInvitesButton.click()
   await expect(orgs.heading('Organisations')).toBeVisible()
 
   await orgs.joinButton(SHARED.name).click()
@@ -59,9 +59,24 @@ test('an invite that arrives after you made your own organisation is shown and c
   await expect(orgs.personNamed('Sipho Dlamini')).toBeVisible()
 })
 
-test('says which email invites are matched to', async ({ orgs }) => {
+test('marks the open organisation and says which email invites are matched to', async ({ orgs }) => {
   await orgs.open()
-  await expect(orgs.page.getByText(`Invites are sent to ${ME.email}`)).toBeVisible()
-  // ORG is only in other specs' setup: this person isn't in it.
-  await expect(orgs.org(ORG.name)).toHaveCount(0)
+  await expect(orgs.org(MINE.name)).toContainText('Open now')
+  await expect(orgs.openButton(MINE.name)).toBeHidden()
+  await expect(orgs.invitesSentTo(ME.email)).toBeVisible()
+})
+
+test('several invites are counted, and one can be declined', async ({ orgs, backend }) => {
+  const invite = { email: ME.email, role: 'member', created_at: '2026-10-01T00:00:00Z' }
+  backend.myInvites.push({ ...invite, id: 'invite-1', org_id: SHARED.id, org_name: SHARED.name })
+  backend.myInvites.push({ ...invite, id: 'invite-2', org_id: 'org-other', org_name: 'Other Circle' })
+  await orgs.goto('home')
+
+  await expect(orgs.inviteBanner).toContainText('2 organisations invited you')
+  await orgs.seeInvitesButton.click()
+  await orgs.declineButton('Other Circle').click()
+  await expect(orgs.declineButton('Other Circle')).toBeHidden()
+  expect(backend.myInvites.map((i) => i.id)).toEqual(['invite-1'])
+  await orgs.goto('home')
+  await expect(orgs.inviteBanner).toContainText(`${SHARED.name} invited you`)
 })

@@ -138,6 +138,7 @@ export class FakeSupabase {
     if (table === 'accept_invite' && method === 'POST') {
       const { p_invite } = request.postDataJSON() as { p_invite: string }
       const index = this.myInvites.findIndex((i) => i.id === p_invite)
+      if (index < 0) throw new Error(`No invite ${p_invite} for me in the fake`)
       const [invite] = this.myInvites.splice(index, 1)
       this.memberships.push({ org: { id: invite.org_id, name: invite.org_name }, role: invite.role })
       return route.fulfill({ json: invite.org_id })

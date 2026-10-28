@@ -8,8 +8,9 @@ export class OrganisationsPage extends AppPage {
   /** Desktop: the organisation switcher at the bottom of the sidebar. */
   readonly switcherButton: Locator
   readonly list: Locator
-  /** Banner on other screens saying invites are waiting. */
+  /** Banner on other screens saying invites are waiting, and its button to this page. */
   readonly inviteBanner: Locator
+  readonly seeInvitesButton: Locator
 
   constructor(page: Page) {
     super(page)
@@ -17,6 +18,7 @@ export class OrganisationsPage extends AppPage {
     this.switcherButton = page.getByRole('complementary').getByRole('button', { name: /^Organisation:/ })
     this.list = page.getByRole('list', { name: 'Your organisations' })
     this.inviteBanner = page.getByRole('region', { name: 'Invitations' })
+    this.seeInvitesButton = this.inviteBanner.getByRole('button', { name: /^See invites?$/ })
   }
 
   async open() {
@@ -49,6 +51,16 @@ export class OrganisationsPage extends AppPage {
   /** The Join button on the invite from `orgName`. */
   joinButton(orgName: string) {
     return this.page.getByRole('listitem').filter({ hasText: orgName }).getByRole('button', { name: 'Join' })
+  }
+
+  /** The Decline button on the invite from `orgName`. */
+  declineButton(orgName: string) {
+    return this.page.getByRole('listitem').filter({ hasText: orgName }).getByRole('button', { name: 'Decline' })
+  }
+
+  /** The note saying which email address invites are matched to. */
+  invitesSentTo(email: string) {
+    return this.page.getByText(`Invites are sent to ${email}`)
   }
 
   personNamed(name: string) {
