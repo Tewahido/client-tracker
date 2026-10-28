@@ -3,10 +3,6 @@ import { AppPage } from './AppPage'
 
 /** The Organisations page (Supabase mode): every organisation I belong to, and invites for me. */
 export class OrganisationsPage extends AppPage {
-  /** Phones: the current organisation in the top bar, which opens this page. */
-  readonly topBarButton: Locator
-  /** Desktop: the organisation switcher at the bottom of the sidebar. */
-  readonly switcherButton: Locator
   readonly list: Locator
   /** The organisation menu the current organisation opens (top bar on phones, sidebar on desktop). */
   readonly menu: Locator
@@ -16,8 +12,6 @@ export class OrganisationsPage extends AppPage {
 
   constructor(page: Page) {
     super(page)
-    this.topBarButton = page.getByRole('banner').getByRole('button', { name: /^Organisation:/ })
-    this.switcherButton = page.getByRole('complementary').getByRole('button', { name: /^Organisation:/ })
     this.list = page.getByRole('list', { name: 'Your organisations' })
     this.menu = page.getByRole('group', { name: 'Organisations' }).locator('visible=true')
     this.inviteBanner = page.getByRole('region', { name: 'Invitations' })
@@ -32,6 +26,13 @@ export class OrganisationsPage extends AppPage {
   async openFromNav() {
     await this.currentOrgButton().click()
     await this.menuItem('All organisations').click()
+  }
+
+  /** Whether the open organisation menu fits inside the window (not cut off at an edge). */
+  async menuFitsWindow() {
+    const box = await this.menu.boundingBox()
+    const width = await this.page.evaluate(() => document.documentElement.clientWidth)
+    return !!box && box.x >= 0 && box.x + box.width <= width
   }
 
   /** An organisation (or other entry) in the organisation menu. */

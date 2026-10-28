@@ -9,7 +9,7 @@ export const orgSwitcherStyles = {
   sub: 'block truncate text-[11px] text-muted',
   chevron: 'h-4 w-4 shrink-0 text-muted',
   /** Sign out, shown inside the shared organisation menu. */
-  item: 'flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm font-semibold transition hover:bg-surface-2',
+  item: 'flex min-h-11 w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm font-semibold transition hover:bg-surface-2',
   itemIcon: 'h-4 w-4 shrink-0 text-muted',
   danger: 'text-rose-500',
   dot: 'absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-bg',

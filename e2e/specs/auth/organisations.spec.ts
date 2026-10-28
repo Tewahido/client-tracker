@@ -63,6 +63,21 @@ test('the current organisation opens a menu to switch, and a second tap closes i
   await expect(orgs.personNamed('Sipho Dlamini')).toBeVisible()
 })
 
+test.describe('on a very narrow phone', () => {
+  test.use({ viewport: { width: 320, height: 640 } })
+
+  test('the organisation menu fits the screen and closes with Escape', async ({ orgs, backend }) => {
+    backend.memberships.push({ org: SHARED, role: 'member' })
+    await orgs.goto('home')
+    await orgs.currentOrgButton().click()
+    await expect(orgs.menuItem(SHARED.name)).toBeVisible()
+    expect(await orgs.menuFitsWindow()).toBe(true)
+
+    await orgs.page.keyboard.press('Escape')
+    await expect(orgs.menu).toBeHidden()
+  })
+})
+
 test('an invite that arrives after you made your own organisation is shown and can be joined', async ({ orgs, backend }) => {
   backend.myInvites.push({ id: 'invite-1', org_id: SHARED.id, org_name: SHARED.name, email: ME.email, role: 'member', created_at: '2026-10-01T00:00:00Z' })
   await orgs.goto('home')

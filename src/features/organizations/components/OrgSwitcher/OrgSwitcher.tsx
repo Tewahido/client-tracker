@@ -36,7 +36,6 @@ export function OrgSwitcher({ onCreate, onManage }: { onCreate: () => void; onMa
         className={s.trigger}
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        aria-haspopup="menu"
         aria-label={`Organisation: ${activeOrg.name}, ${ROLE_LABEL[activeOrg.role]}${invites.length ? `, ${inviteCount(invites.length)} waiting` : ''}`}
       >
         <span className={s.badge}>

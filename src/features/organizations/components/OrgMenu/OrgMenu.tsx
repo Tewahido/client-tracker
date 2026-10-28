@@ -1,6 +1,6 @@
 import { Building2, Check, LayoutList, Plus } from 'lucide-react'
 import { motion } from 'motion/react'
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode, Ref } from 'react'
 import { inviteCount } from '../../../../lib/invites'
 import { useWorkspace } from '../../../../providers/workspaceContext'
 import { orgMenuStyles as s } from './OrgMenu.styles'
@@ -13,10 +13,13 @@ interface OrgMenuProps {
   onManage: () => void
   /** Extra entries after a separator, e.g. Sign out. */
   children?: ReactNode
+  /** For keeping the panel inside the window (see usePopover). */
+  ref?: Ref<HTMLDivElement>
+  style?: CSSProperties
 }
 
 /** Popup listing the user's organisations to switch between, plus "All organisations" and "New organisation". */
-export function OrgMenu({ placement, onClose, onCreate, onManage, children }: OrgMenuProps) {
+export function OrgMenu({ placement, onClose, onCreate, onManage, children, ref, style }: OrgMenuProps) {
   const { organizations, activeOrg, invites, switchOrg } = useWorkspace()
   const offset = placement === 'above' ? 6 : -6
 
@@ -27,6 +30,8 @@ export function OrgMenu({ placement, onClose, onCreate, onManage, children }: Or
 
   return (
     <motion.div
+      ref={ref}
+      style={style}
       role="group"
       aria-label="Organisations"
       className={s.menu[placement]}
