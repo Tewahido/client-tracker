@@ -6,7 +6,7 @@ export const orgMenuStyles = {
     below: `${panel} top-full left-0 mt-2 w-72 max-w-[calc(100vw-2rem)]`,
   },
   label: 'px-2.5 pt-1.5 pb-1 text-[11px] font-semibold tracking-wide text-muted uppercase',
-  item: 'flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm font-semibold transition hover:bg-surface-2',
+  item: 'flex min-h-11 w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm font-semibold transition hover:bg-surface-2',
   itemIcon: 'h-4 w-4 shrink-0 text-muted',
   itemCheck: 'ml-auto h-4 w-4 shrink-0 text-brand-500',
   itemName: 'min-w-0 flex-1 truncate',

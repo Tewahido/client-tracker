@@ -44,6 +44,25 @@ test('someone in two organisations can find and open the shared one', async ({ o
   await expect(orgs.currentOrgButton()).toContainText(SHARED.name)
 })
 
+test('the current organisation opens a menu to switch, and a second tap closes it', async ({ orgs, backend }) => {
+  backend.memberships.push({ org: SHARED, role: 'member' })
+  await orgs.goto('people')
+
+  await orgs.currentOrgButton().click()
+  await expect(orgs.menuItem(MINE.name)).toBeVisible()
+  await expect(orgs.menuItem(SHARED.name)).toBeVisible()
+  await expect(orgs.currentOrgButton()).toHaveAttribute('aria-expanded', 'true')
+  await orgs.currentOrgButton().click()
+  await expect(orgs.menu).toBeHidden()
+  await expect(orgs.currentOrgButton()).toHaveAttribute('aria-expanded', 'false')
+
+  await orgs.currentOrgButton().click()
+  await orgs.menuItem(SHARED.name).click()
+  await expect(orgs.menu).toBeHidden()
+  await expect(orgs.currentOrgButton()).toContainText(SHARED.name)
+  await expect(orgs.personNamed('Sipho Dlamini')).toBeVisible()
+})
+
 test('an invite that arrives after you made your own organisation is shown and can be joined', async ({ orgs, backend }) => {
   backend.myInvites.push({ id: 'invite-1', org_id: SHARED.id, org_name: SHARED.name, email: ME.email, role: 'member', created_at: '2026-10-01T00:00:00Z' })
   await orgs.goto('home')
