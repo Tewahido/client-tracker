@@ -48,11 +48,14 @@ test('an invite that arrives after you made your own organisation is shown and c
   backend.myInvites.push({ id: 'invite-1', org_id: SHARED.id, org_name: SHARED.name, email: ME.email, role: 'member', created_at: '2026-10-01T00:00:00Z' })
   await orgs.goto('home')
 
-  await expect(orgs.inviteBanner).toContainText(`${SHARED.name} invited you`)
+  await expect(orgs.inviteBanner).toContainText(`You're invited to join ${SHARED.name}`)
   await orgs.seeInvitesButton.click()
   await expect(orgs.heading('Organisations')).toBeVisible()
 
   await orgs.joinButton(SHARED.name).click()
+  // Straight into the shared ledger.
+  await expect(orgs.toast(`You're in ${SHARED.name}`)).toBeVisible()
+  await expect(orgs.page).toHaveURL(/#home$/)
   await expect(orgs.currentOrgButton()).toContainText(SHARED.name)
   await expect(orgs.inviteBanner).toBeHidden()
   await orgs.goto('people')
@@ -72,11 +75,12 @@ test('several invites are counted, and one can be declined', async ({ orgs, back
   backend.myInvites.push({ ...invite, id: 'invite-2', org_id: 'org-other', org_name: 'Other Circle' })
   await orgs.goto('home')
 
-  await expect(orgs.inviteBanner).toContainText('2 organisations invited you')
+  await expect(orgs.inviteBanner).toContainText("You're invited to join 2 organisations")
   await orgs.seeInvitesButton.click()
   await orgs.declineButton('Other Circle').click()
+  await orgs.confirmDecline()
   await expect(orgs.declineButton('Other Circle')).toBeHidden()
   expect(backend.myInvites.map((i) => i.id)).toEqual(['invite-1'])
   await orgs.goto('home')
-  await expect(orgs.inviteBanner).toContainText(`${SHARED.name} invited you`)
+  await expect(orgs.inviteBanner).toContainText(`You're invited to join ${SHARED.name}`)
 })

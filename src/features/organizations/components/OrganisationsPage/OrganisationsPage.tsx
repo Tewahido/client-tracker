@@ -23,7 +23,7 @@ export function OrganisationsPage({ onCreate, onOpened }: OrganisationsPageProps
         title="Organisations"
         subtitle="Open the one you want to work in. Lendly remembers your choice on this device."
         actions={
-          <Button variant="secondary" icon={Plus} onClick={onCreate}>
+          <Button variant="secondary" icon={Plus} className={s.newOrgHeader} onClick={onCreate}>
             New organisation
           </Button>
         }
@@ -34,7 +34,7 @@ export function OrganisationsPage({ onCreate, onOpened }: OrganisationsPageProps
           <h2 id="invites-title" className={s.sectionTitle}>
             Invites for you
           </h2>
-          <InviteList />
+          <InviteList onJoined={onOpened} />
         </section>
       )}
 
@@ -60,7 +60,6 @@ export function OrganisationsPage({ onCreate, onOpened }: OrganisationsPageProps
                     </span>
                   ) : (
                     <Button
-                      size="sm"
                       variant="secondary"
                       aria-label={`Open ${org.name}`}
                       onClick={() => {
@@ -76,6 +75,10 @@ export function OrganisationsPage({ onCreate, onOpened }: OrganisationsPageProps
             })}
           </ul>
         </Card>
+        {/* On phones it goes after the list, so invites and organisations come first. */}
+        <Button variant="secondary" icon={Plus} fullWidth className={s.newOrgBelow} onClick={onCreate}>
+          New organisation
+        </Button>
       </section>
 
       <p className={s.footnote}>

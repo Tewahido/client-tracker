@@ -58,6 +58,11 @@ export class OrganisationsPage extends AppPage {
     return this.page.getByRole('listitem').filter({ hasText: orgName }).getByRole('button', { name: 'Decline' })
   }
 
+  /** Confirm declining in the dialog the Decline button opens. */
+  async confirmDecline() {
+    await this.page.getByRole('dialog', { name: 'Decline this invite?' }).getByRole('button', { name: 'Decline', exact: true }).click()
+  }
+
   /** The note saying which email address invites are matched to. */
   invitesSentTo(email: string) {
     return this.page.getByText(`Invites are sent to ${email}`)

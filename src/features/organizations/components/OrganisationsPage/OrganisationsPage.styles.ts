@@ -10,6 +10,8 @@ export const organisationsPageStyles = {
   meta: 'text-xs text-muted',
   current: 'flex shrink-0 items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300',
   currentIcon: 'h-4 w-4',
-  footnote: 'text-xs text-muted',
+  footnote: 'text-sm text-muted',
+  newOrgHeader: 'hidden sm:inline-flex',
+  newOrgBelow: 'sm:hidden',
   strong: 'font-semibold text-fg',
 }

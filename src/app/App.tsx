@@ -71,7 +71,7 @@ function Layout() {
             <OrgSwitcher onCreate={() => overlay.open({ type: 'org-form' })} onManage={() => navigate('organisations')} />
           ) : undefined
         }
-        workspaceChip={status === 'ready' ? <OrgChip onOpen={() => navigate('organisations')} /> : undefined}
+        workspaceChip={status === 'ready' ? <OrgChip active={route.name === 'organisations'} onOpen={() => navigate('organisations')} /> : undefined}
       >
         {status === 'ready' && route.name !== 'organisations' && <InviteBanner onView={() => navigate('organisations')} />}
         {loadStatus === 'error' ? <LoadError message={loadError} onRetry={reload} /> : <Page route={route} onNavigate={navigate} />}
