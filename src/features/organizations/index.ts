@@ -1,5 +1,8 @@
 export { CreateOrgModal } from './components/CreateOrgModal'
+export { InviteBanner } from './components/InviteBanner'
 export { InviteList } from './components/InviteList'
+export { OrganisationsPage } from './components/OrganisationsPage'
 export { OrganizationSection } from './components/OrganizationSection'
 export { OnboardingScreen } from './components/OnboardingScreen'
+export { OrgChip } from './components/OrgChip'
 export { OrgSwitcher } from './components/OrgSwitcher'

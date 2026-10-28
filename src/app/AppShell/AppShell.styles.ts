@@ -24,10 +24,10 @@ export const appShellStyles = {
   /* Mobile top bar */
   topbar:
     'sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-line bg-bg/75 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 backdrop-blur-xl lg:hidden',
-  topbarBrand: 'flex items-center gap-2.5',
-  topbarMark: 'h-8 w-8 rounded-lg',
+  topbarBrand: 'flex min-w-0 items-center gap-2',
+  topbarMark: 'h-8 w-8 shrink-0 rounded-lg',
   topbarName: 'text-base font-extrabold tracking-tight',
-  topbarActions: 'flex items-center gap-1',
+  topbarActions: 'flex shrink-0 items-center gap-1',
 
   /* Desktop actions row above page content */
   desktopActions: 'hidden items-center justify-end gap-2 px-8 pt-6 lg:flex',

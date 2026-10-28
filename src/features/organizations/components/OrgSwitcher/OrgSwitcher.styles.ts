@@ -3,7 +3,7 @@ export const orgSwitcherStyles = {
   trigger:
     'flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-brand-400',
   badge:
-    'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-indigo-600 text-sm font-bold text-white',
+    'relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-400 to-indigo-600 text-sm font-bold text-white',
   info: 'min-w-0 flex-1',
   name: 'block truncate text-sm font-bold',
   sub: 'block truncate text-[11px] text-muted',
@@ -16,4 +16,6 @@ export const orgSwitcherStyles = {
   itemName: 'min-w-0 flex-1 truncate',
   separator: 'my-1.5 h-px bg-line',
   danger: 'text-rose-500',
+  dot: 'absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-bg',
+  count: 'ml-auto shrink-0 rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white',
 }

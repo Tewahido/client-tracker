@@ -78,12 +78,14 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const acceptInvite = useCallback(
     async (inviteId: string) => {
       if (!service) return
+      const orgName = invites.find((i) => i.id === inviteId)?.orgName
       const orgId = await service.acceptInvite(inviteId)
       await refresh()
       switchOrg(orgId)
-      toast.success("You're in! Welcome to the team.")
+      if (orgName) toast.success(`You're in ${orgName}`, { description: 'Its loans are on screen now.' })
+      else toast.success("You're in! Welcome to the team.")
     },
-    [service, refresh, switchOrg],
+    [service, invites, refresh, switchOrg],
   )
 
   const declineInvite = useCallback(

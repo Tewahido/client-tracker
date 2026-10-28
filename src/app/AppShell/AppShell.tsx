@@ -18,6 +18,8 @@ interface AppShellProps {
   actions?: ReactNode
   /** Organisation switcher; replaces the storage indicator in the sidebar when present. */
   workspace?: ReactNode
+  /** The open organisation in the phone top bar; replaces the app name there when present. */
+  workspaceChip?: ReactNode
   children: ReactNode
 }
 
@@ -25,7 +27,7 @@ function BrandMark({ className }: { className: string }) {
   return <img src="/favicon.svg" alt="" className={className} />
 }
 
-export function AppShell({ current, onNavigate, onNewLoan, loansBadge = 0, backend, actions, workspace, children }: AppShellProps) {
+export function AppShell({ current, onNavigate, onNewLoan, loansBadge = 0, backend, actions, workspace, workspaceChip, children }: AppShellProps) {
   const [first, second, ...rest] = NAV_ITEMS
 
   return (
@@ -78,7 +80,7 @@ export function AppShell({ current, onNavigate, onNewLoan, loansBadge = 0, backe
       <header className={s.topbar}>
         <div className={s.topbarBrand}>
           <BrandMark className={s.topbarMark} />
-          <span className={s.topbarName}>Lendly</span>
+          {workspaceChip ?? <span className={s.topbarName}>Lendly</span>}
         </div>
         <div className={s.topbarActions}>{actions}</div>
       </header>

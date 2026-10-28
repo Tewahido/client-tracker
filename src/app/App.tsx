@@ -1,7 +1,7 @@
 import { Toaster } from 'sonner'
 import { DashboardPage } from '../features/dashboard'
 import { isLoanFilter, LoansPage } from '../features/loans'
-import { OrgSwitcher } from '../features/organizations'
+import { InviteBanner, OrganisationsPage, OrgChip, OrgSwitcher } from '../features/organizations'
 import { PeoplePage } from '../features/people'
 import { NotificationBell, useReminderNotifications } from '../features/reminders'
 import { SettingsPage } from '../features/settings'
@@ -19,10 +19,12 @@ import { LoadError } from './LoadError'
 import { OverlayHost } from './OverlayHost'
 import { OverlayProvider } from './OverlayProvider'
 import { useOverlay } from './overlayContext'
-import type { Route } from './routes'
+import type { Route, RouteName } from './routes'
 import { WorkspaceGate } from './WorkspaceGate'
 
-function Page({ route }: { route: Route }) {
+function Page({ route, onNavigate }: { route: Route; onNavigate: (name: RouteName) => void }) {
+  const { status } = useWorkspace()
+  const overlay = useOverlay()
   switch (route.name) {
     case 'home':
       return <DashboardPage />
@@ -35,6 +37,13 @@ function Page({ route }: { route: Route }) {
       return <PeoplePage />
     case 'settings':
       return <SettingsPage />
+    case 'organisations':
+      // Only signed-in users have organisations; local mode shows the dashboard instead.
+      return status === 'ready' ? (
+        <OrganisationsPage onCreate={() => overlay.open({ type: 'org-form' })} onOpened={() => onNavigate('home')} />
+      ) : (
+        <DashboardPage />
+      )
   }
 }
 
@@ -57,9 +66,15 @@ function Layout() {
         loansBadge={overdue}
         backend={backend}
         actions={<NotificationBell onOpenLoan={(loanId) => overlay.open({ type: 'loan', loanId })} />}
-        workspace={status === 'ready' ? <OrgSwitcher onCreate={() => overlay.open({ type: 'org-form' })} /> : undefined}
+        workspace={
+          status === 'ready' ? (
+            <OrgSwitcher onCreate={() => overlay.open({ type: 'org-form' })} onManage={() => navigate('organisations')} />
+          ) : undefined
+        }
+        workspaceChip={status === 'ready' ? <OrgChip active={route.name === 'organisations'} onOpen={() => navigate('organisations')} /> : undefined}
       >
-        {loadStatus === 'error' ? <LoadError message={loadError} onRetry={reload} /> : <Page route={route} />}
+        {status === 'ready' && route.name !== 'organisations' && <InviteBanner onView={() => navigate('organisations')} />}
+        {loadStatus === 'error' ? <LoadError message={loadError} onRetry={reload} /> : <Page route={route} onNavigate={navigate} />}
       </AppShell>
       <OverlayHost />
     </>
