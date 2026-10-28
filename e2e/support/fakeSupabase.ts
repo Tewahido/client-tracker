@@ -54,6 +54,12 @@ export class FakeSupabase {
   readonly emailed: string[] = []
   /** Members besides me (the owner); add some before the page loads. */
   readonly otherMembers: { user_id: string; email: string; role: string; joined_at: string }[] = []
+  /** Organisations I belong to and my role in each; I own ORG unless changed. */
+  readonly memberships: { org: { id: string; name: string }; role: string }[] = [{ org: ORG, role: 'owner' }]
+  /** Invites addressed to me, from other organisations. */
+  readonly myInvites: (InviteRow & { org_name: string })[] = []
+  /** People in each organisation's ledger, by organisation id. */
+  readonly people: Record<string, string[]> = {}
 
   constructor(private readonly page: Page) {}
 
@@ -90,7 +96,10 @@ export class FakeSupabase {
     if (table === 'organization_members' && method === 'GET') {
       if (url.searchParams.get('select')?.includes('organizations')) {
         return route.fulfill({
-          json: [{ role: 'owner', organizations: { ...ORG, currency: 'ZAR', default_term_days: 30, default_interest_rate: '0' } }],
+          json: this.memberships.map(({ org, role }) => ({
+            role,
+            organizations: { ...org, currency: 'ZAR', default_term_days: 30, default_interest_rate: '0' },
+          })),
         })
       }
       return route.fulfill({ json: [{ user_id: ME.id, email: ME.email, role: 'owner', joined_at: '2026-01-01T00:00:00Z' }, ...this.otherMembers] })
@@ -98,8 +107,11 @@ export class FakeSupabase {
 
     if (table === 'organization_invites') {
       if (method === 'GET') {
-        // Invites addressed to me (none) vs. the organisation's outgoing invites.
-        return route.fulfill({ json: url.searchParams.has('email') ? [] : this.invites })
+        // Invites addressed to me vs. the organisation's outgoing invites.
+        if (url.searchParams.has('email')) {
+          return route.fulfill({ json: this.myInvites.map(({ org_name, ...row }) => ({ ...row, organizations: { name: org_name } })) })
+        }
+        return route.fulfill({ json: this.invites })
       }
       if (method === 'POST') {
         if (this.failNextInviteWith) {
@@ -115,10 +127,28 @@ export class FakeSupabase {
       }
       if (method === 'DELETE') {
         const id = url.searchParams.get('id')?.replace(/^eq\./, '')
-        const index = this.invites.findIndex((i) => i.id === id)
-        if (index >= 0) this.invites.splice(index, 1)
+        for (const list of [this.invites, this.myInvites]) {
+          const index = list.findIndex((i) => i.id === id)
+          if (index >= 0) list.splice(index, 1)
+        }
         return route.fulfill({ status: 204, body: '' })
       }
+    }
+
+    if (table === 'accept_invite' && method === 'POST') {
+      const { p_invite } = request.postDataJSON() as { p_invite: string }
+      const index = this.myInvites.findIndex((i) => i.id === p_invite)
+      const [invite] = this.myInvites.splice(index, 1)
+      this.memberships.push({ org: { id: invite.org_id, name: invite.org_name }, role: invite.role })
+      return route.fulfill({ json: invite.org_id })
+    }
+
+    if (table === 'borrowers' && method === 'GET') {
+      const orgId = url.searchParams.get('org_id')?.replace(/^eq\./, '') ?? ''
+      const names = this.people[orgId] ?? []
+      return route.fulfill({
+        json: names.map((name, i) => ({ id: `${orgId}-person-${i}`, name, phone: null, email: null, notes: null, created_at: '2026-01-01T00:00:00Z' })),
+      })
     }
 
     // Borrowers, loans, payments and anything else: an empty organisation.
