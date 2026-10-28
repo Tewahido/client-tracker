@@ -16,4 +16,8 @@ describe('validatePerson', () => {
   it('leaves the phone optional', () => {
     expect(validatePerson(person('')).phone).toBeUndefined()
   })
+
+  it('treats a pasted value of only invisible marks as empty, since it looks empty', () => {
+    expect(validatePerson(person(String.fromCharCode(0x202a, 0x202c))).phone).toBeUndefined()
+  })
 })

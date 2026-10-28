@@ -15,7 +15,8 @@ export function validatePerson(values: PersonFormValues): Partial<Record<keyof P
   const errors: Partial<Record<keyof PersonFormValues, string>> = {}
   if (!values.name.trim()) errors.name = 'Give this person a name'
   if (values.email.trim() && !/^\S+@\S+\.\S+$/.test(values.email.trim())) errors.email = "That email doesn't look right"
-  if (values.phone.trim() && !isValidPhone(values.phone)) errors.phone = 'Use digits, spaces and an optional leading +'
+  // Cleaned first: a pasted value of only invisible marks looks empty, so it counts as empty.
+  if (normalisePhone(values.phone) && !isValidPhone(values.phone)) errors.phone = 'Use digits, spaces and an optional leading +'
   return errors
 }
 
