@@ -45,8 +45,8 @@ test('emails the invite and says so', async ({ org, backend }) => {
   await org.invite('Partner@Example.com', 'Viewer')
 
   await expect(org.inviteSent.root).toBeVisible()
-  await expect(org.inviteSent.root).toContainText(`We emailed partner@example.com an invite to join ${ORG.name} as a Viewer`)
-  await expect(org.inviteSent.root).toContainText('tap Accept invite')
+  await expect(org.inviteSent.root).toContainText(`We emailed partner@example.com about joining ${ORG.name} as a Viewer`)
+  await expect(org.inviteSent.root).toContainText('follow its link to sign in')
   // The function was asked to email exactly the invite that was just created.
   expect(backend.emailed).toEqual(backend.invites.map((i) => i.id))
   expect(backend.emailed).toHaveLength(1)
@@ -58,13 +58,19 @@ test('emails the invite and says so', async ({ org, backend }) => {
   await expect(org.pendingInvite('partner@example.com')).toBeVisible()
 })
 
-test('tells the owner when someone who already uses Lendly was sent a sign-in link', async ({ org, backend }) => {
-  backend.emailResult = 'sign-in-link'
-  await org.invite('partner@example.com')
+// Anyone can create an organisation, so the dialog must not reveal who already has an
+// account, even if an older send-invite function still says which email it sent.
+test('says the same whether or not the person already uses Lendly', async ({ org, backend }) => {
+  await org.invite('new@example.com')
+  const forNewcomer = await org.inviteSent.text()
+  await org.inviteSent.doneButton.click()
 
-  await expect(org.inviteSent.root).toContainText('partner@example.com already uses Lendly, so we emailed them a sign-in link')
-  // That email doesn't name the inviter, so sharing a personal message is suggested.
-  await expect(org.inviteSent.root).toContainText("doesn't mention you")
+  backend.emailResult = 'sign-in-link'
+  await org.invite('existing@example.com')
+  const forExistingUser = await org.inviteSent.text()
+
+  expect(forExistingUser.replace('existing@example.com', 'new@example.com')).toBe(forNewcomer)
+  expect(forExistingUser).not.toContain('already uses Lendly')
 })
 
 test('says why when the invite was not emailed because of the limits', async ({ org, backend }) => {

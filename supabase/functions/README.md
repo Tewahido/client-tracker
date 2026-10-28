@@ -34,7 +34,7 @@ if it isn't deployed or fails, the app falls back to "share the invite yourself"
      `{{ .Data.invited_by }} invited you to Lendly`
    - *Magic link*: `supabase/templates/magic-link.html`, subject `Your Lendly sign-in link`.
      This is also everyone's normal sign-in email, and what people who already have an
-     account receive when invited (the app tells the owner so).
+     account receive when invited.
 5. **Custom SMTP (needed for real use)**: Supabase's built-in mailer only delivers to
    members of your Supabase team and is heavily rate limited. To email anyone else
    (including sign-in links for your partner), set up SMTP under Dashboard ›

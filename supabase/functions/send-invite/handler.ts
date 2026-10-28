@@ -6,7 +6,9 @@
  * `claim` runs the claim_invite_email database function *as that user*, so the database
  * decides whether they may send (owners only, rate limited). Only after a successful
  * claim does the function email the invitee through Supabase Auth: an invite email for
- * someone new to Lendly, or a sign-in link for someone who already has an account.
+ * someone new to Lendly, or a sign-in link for someone who already has an account. The
+ * reply doesn't say which: anyone can create an organisation and invite any address, so
+ * it would tell them who uses Lendly. Only the server log records it.
  */
 
 /** Thrown by `claim` with the Postgres error code the database function raised. */
@@ -43,8 +45,8 @@ const describe = (err: unknown) =>
     ? { code: (err as { code?: unknown }).code, status: (err as { status?: unknown }).status, message: (err as { message?: unknown }).message }
     : err
 
-/** What the invitee was sent: an invite email, or (already a user) a sign-in link. */
-export type InviteEmailKind = 'invite' | 'sign-in-link'
+/** What the invitee was sent: an invite email, or (already a user) a sign-in link. Logged only. */
+type InviteEmailKind = 'invite' | 'sign-in-link'
 
 // Every header supabase-js may send (its own list is in '@supabase/supabase-js/cors'; a test
 // keeps this in step). A header missing here makes the browser drop the request silently.
@@ -90,7 +92,6 @@ export async function handleSendInvite(req: Request, deps: SendInviteDeps): Prom
   let kind: InviteEmailKind
   try {
     const result = await deps.inviteNewUser(invite.email, { invited_to: invite.orgName, invited_by: invite.inviterEmail })
-    if (result === 'exists') await deps.sendSignInLink(invite.email)
     kind = result === 'exists' ? 'sign-in-link' : 'invite'
   } catch (err) {
     // Log the provider's error for the project owner, but don't echo it back to the browser.
@@ -98,5 +99,14 @@ export async function handleSendInvite(req: Request, deps: SendInviteDeps): Prom
     await deps.release(inviteId).catch((releaseErr) => deps.log?.('send-invite: releasing the claim failed', describe(releaseErr)))
     return reply(502, { error: 'The email could not be sent' })
   }
-  return reply(200, { sent: true, kind })
+  if (kind === 'sign-in-link') {
+    // Only existing accounts reach this, so a failure here must look like success (and keep
+    // the claim): a different reply would reveal the account. The owner can still share the
+    // invite by hand, and the invitee sees it whenever they next sign in.
+    await deps.sendSignInLink(invite.email).catch((err) => {
+      deps.log?.('send-invite: sending the sign-in link failed', describe(err))
+    })
+  }
+  deps.log?.('send-invite: emailed', { kind })
+  return reply(200, { sent: true })
 }

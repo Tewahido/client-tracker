@@ -20,7 +20,7 @@ const NOT_EMAILED_HINT = {
 }
 
 /**
- * Shown after an invite is created. If Lendly emailed it, says what was sent (sharing by
+ * Shown after an invite is created. If Lendly emailed it, says so (sharing by
  * hand is a backup); otherwise sharing the invite becomes the main step.
  */
 export function InviteSentDialog({ open, invite, orgName, sharing, onClose }: InviteSentDialogProps) {
@@ -29,7 +29,7 @@ export function InviteSentDialog({ open, invite, orgName, sharing, onClose }: In
 
   const copied = sharing.copiedFor === invite.email
   const role = withArticle(invite.role)
-  const emailed = invite.delivery === 'invite' || invite.delivery === 'sign-in-link'
+  const emailed = invite.delivery === 'emailed'
 
   const shareButton = (
     <Button
@@ -42,27 +42,22 @@ export function InviteSentDialog({ open, invite, orgName, sharing, onClose }: In
     </Button>
   )
 
+  // Worded the same whether they got an invite or (already a user) a sign-in link: telling
+  // them apart would reveal who has a Lendly account to anyone who creates an organisation.
   const steps =
-    invite.delivery === 'invite'
+    invite.delivery === 'emailed'
       ? {
           title: 'Invite sent',
-          description: `We emailed ${invite.email} an invite to join ${orgName} as ${role}.`,
-          first: 'They open the email from Lendly and tap Accept invite',
-          hint: 'Not there? Ask them to check spam, or send it yourself:',
+          description: `We emailed ${invite.email} about joining ${orgName} as ${role}.`,
+          first: 'They open the email from Lendly and follow its link to sign in',
+          hint: 'The email may not mention you, and can land in spam, so a quick message helps:',
         }
-      : invite.delivery === 'sign-in-link'
-        ? {
-            title: 'Invite sent',
-            description: `${invite.email} already uses Lendly, so we emailed them a sign-in link. They can join ${orgName} as ${role}.`,
-            first: 'They sign in with the link from Lendly',
-            hint: "That email doesn't mention you, so a quick message helps:",
-          }
-        : {
-            title: 'Invite ready',
-            description: `${invite.email} can join ${orgName} as ${role}.`,
-            first: 'Send them the invite',
-            hint: NOT_EMAILED_HINT[invite.delivery],
-          }
+      : {
+          title: 'Invite ready',
+          description: `${invite.email} can join ${orgName} as ${role}.`,
+          first: 'Send them the invite',
+          hint: NOT_EMAILED_HINT[invite.delivery],
+        }
 
   return (
     <Modal open={open} onClose={onClose} title={steps.title} description={steps.description}>

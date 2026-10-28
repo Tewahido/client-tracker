@@ -20,6 +20,11 @@ export class InviteSentDialog extends Dialog {
     this.sendButton = this.root.getByRole('button', { name: /Share invite|Copy invite message|Copied/ })
     this.doneButton = this.root.getByRole('button', { name: 'Done' })
   }
+
+  /** Everything the dialog says. */
+  async text() {
+    return (await this.root.innerText()).trim()
+  }
 }
 
 /** "Invite ready" dialog: next steps when the invite couldn't be emailed. */

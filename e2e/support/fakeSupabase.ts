@@ -48,7 +48,10 @@ export class FakeSupabase {
   readonly invites: InviteRow[] = []
   /** When set, the next invite insert fails with this Postgres error code. */
   failNextInviteWith: string | null = null
-  /** How the send-invite Edge Function answers: which email it sent, or why it didn't. */
+  /**
+   * How the send-invite Edge Function answers: which email it sent (as older versions of it
+   * said; the current one doesn't), or why it didn't send one.
+   */
   emailResult: 'invite' | 'sign-in-link' | 'rate-limited' | 'failed' = 'invite'
   /** Invite ids the send-invite function was asked to email. */
   readonly emailed: string[] = []
@@ -82,6 +85,8 @@ export class FakeSupabase {
         case 'failed':
           return route.fulfill({ status: 502, json: { error: 'The email could not be sent' } })
         default:
+          // Still says which email went out, like older versions of the function, so tests
+          // prove the app ignores it. Don't drop `kind` here.
           return route.fulfill({ json: { sent: true, kind: this.emailResult } })
       }
     })
