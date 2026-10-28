@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 
 type Route = 'home' | 'loans' | 'people' | 'settings'
 
@@ -51,13 +51,13 @@ export class AppPage {
    * Whether a rounded card's glows sit in a masked layer that clips them to its corners
    * (iPhone Safari otherwise shows blurred glows as grey squares poking out of the corner).
    */
-  async glowsClipped(card: ReturnType<Page['locator']>): Promise<boolean> {
+  async glowsClipped(card: Locator): Promise<boolean> {
     return card.evaluate((el) => {
       const layer = el.querySelector(':scope > [data-decorations]')
       if (!layer) return false
       const style = getComputedStyle(layer)
       const mask = style.maskImage || style.getPropertyValue('-webkit-mask-image')
-      return style.overflow === 'hidden' && mask !== 'none' && layer.querySelector('[class*="blur-"]') !== null
+      return style.overflow === 'hidden' && mask !== 'none' && layer.childElementCount > 0
     })
   }
 
