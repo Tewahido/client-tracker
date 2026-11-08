@@ -125,7 +125,7 @@ Conventions:
 
 ## Deploying
 
-The build is a static site: deploy `dist/` to Vercel, Netlify, Cloudflare Pages, your own server, or similar. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in the host's environment settings (they are built into the files, so a wrong URL blocks every request), and add the deployed URL to Supabase's Site URL and Redirect URLs. It must be served over HTTPS for notifications and installation to work.
+The build is a static site: deploy `dist/` to Vercel, Netlify, Cloudflare Pages, your own server, or similar. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` (and, for reminders with the app closed, `VITE_VAPID_PUBLIC_KEY`) in the host's environment settings (they are built into the files, so a wrong URL blocks every request), and add the deployed URL to Supabase's Site URL and Redirect URLs. It must be served over HTTPS for notifications and installation to work.
 
 - **Apply database migrations first** (`npx supabase db push`) whenever a release includes new ones.
 - **Content-Security-Policy:** every build carries one as a `<meta>` tag, allowing only the app's own scripts and connections to your Supabase project.
@@ -172,7 +172,7 @@ It uses your normal SSH key. Under Git Bash, `ssh` doesn't use the Windows ssh-a
    - **Deployment branches and tags:** Selected branches, `main` only.
    - **Required reviewers:** yourself, so every deploy waits for your approval.
    - **Secrets:** `DEPLOY_SSH_KEY` (the private key file), `DEPLOY_HOST` (`deploy@<server-ip>`), and `DEPLOY_KNOWN_HOSTS`. The last is the output of `ssh-keyscan -t ed25519 <server-ip>`, checked against the fingerprint you accepted when you first connected.
-   - **Variables:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `DEPLOY_URL`.
+   - **Variables:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_VAPID_PUBLIC_KEY` (optional, see `supabase/functions/README.md`), `DEPLOY_URL`.
    - Also add those three as **repository** variables (Settings → Secrets and variables → Actions → Variables). The Checks and Build jobs have no environment, so they only see repository-level values. All three are public.
 3. Delete the private key from your PC once it's in GitHub.
 
