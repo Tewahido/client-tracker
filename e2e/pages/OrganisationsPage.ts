@@ -27,6 +27,9 @@ export class OrganisationsPage extends AppPage {
     await this.page.goto(`/${hash}`)
   }
 
+  /** The loan details dialog, as a reminder tap opens it. */
+  readonly loanDetails = this.page.getByRole('dialog', { name: 'Loan details' })
+
   /** The address bar's hash. */
   async currentHash() {
     return this.page.evaluate(() => window.location.hash)

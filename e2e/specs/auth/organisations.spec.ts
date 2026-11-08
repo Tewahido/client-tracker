@@ -87,6 +87,16 @@ test('a reminder for another organisation opens that organisation', async ({ org
   await expect.poll(() => orgs.currentHash()).toBe('#loans?status=open')
 })
 
+test('a reminder tap opens the loan, in its own organisation', async ({ orgs, backend }) => {
+  backend.memberships.push({ org: SHARED, role: 'member' })
+  backend.loans[SHARED.id] = [['loan-s', 0, '2026-12-01']]
+  await orgs.openLink(`#loans?open=loan-s&org=${SHARED.id}`)
+
+  await expect(orgs.loanDetails).toBeVisible()
+  await expect(orgs.loanDetails).toContainText('Sipho Dlamini')
+  await expect(orgs.currentOrgButton()).toContainText(SHARED.name)
+})
+
 test('ignores a reminder link for an organisation you are not in', async ({ orgs }) => {
   await orgs.openLink('#loans?org=someone-elses')
   await expect(orgs.currentOrgButton()).toContainText(MINE.name)
