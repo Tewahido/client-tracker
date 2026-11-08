@@ -9,16 +9,20 @@ const LEAD_DAYS = [1, 2, 3, 5, 7, 14]
 
 export function RemindersSection() {
   const { settings, updateSettings } = useSettings()
-  const { permission, active, enable, disable, sendTest } = useNotificationPermission()
+  const { permission, active, pushOn, needsHomeScreen, enable, disable, sendTest } = useNotificationPermission()
   const { exportAllOpen } = useCalendarExport()
 
   const notificationHint =
-    permission === 'unsupported'
+    needsHomeScreen && !active
+      ? 'On iPhone, add Lendly to your Home Screen first (Share › Add to Home Screen) and turn this on there, so reminders arrive even when it’s closed.'
+      : permission === 'unsupported'
       ? "This browser can't show notifications. Install the app or use calendar export."
       : permission === 'denied'
         ? 'Blocked in your browser settings. Allow notifications for this site to turn them on.'
-        : active
-          ? 'On for this device. Each person you share with turns it on for their own devices.'
+        : pushOn
+          ? 'On for this device, even when Lendly is closed. Each person you share with turns it on for their own devices.'
+          : active
+            ? 'On for this device while Lendly is open. Each person you share with turns it on for their own devices.'
           : 'Get a heads-up on this device before and after due dates.'
 
   return (

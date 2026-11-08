@@ -16,7 +16,7 @@ interface NotifyOptions {
   url: string
 }
 
-async function activeRegistration(): Promise<ServiceWorkerRegistration | null> {
+export async function activeRegistration(): Promise<ServiceWorkerRegistration | null> {
   if (!('serviceWorker' in navigator)) return null
   // Don't wait forever when no service worker is registered (e.g. in dev).
   const timeout = new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 1_500))

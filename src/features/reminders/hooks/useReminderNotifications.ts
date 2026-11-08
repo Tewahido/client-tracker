@@ -25,7 +25,8 @@ export function useReminderNotifications() {
     latest.current = { views, money, soonDays: settings.reminderDays }
   })
 
-  const enabled = settings.notificationsEnabled && status === 'ready'
+  // With Web Push on this device the server sends reminders; checking here too would repeat them.
+  const enabled = settings.notificationsEnabled && !settings.pushOnThisDevice && status === 'ready'
 
   useEffect(() => {
     if (!enabled) return

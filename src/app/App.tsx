@@ -3,7 +3,7 @@ import { DashboardPage } from '../features/dashboard'
 import { isLoanFilter, LoansPage } from '../features/loans'
 import { InviteBanner, OrganisationsPage, OrgChip, OrgSwitcher } from '../features/organizations'
 import { PeoplePage } from '../features/people'
-import { NotificationBell, useReminderNotifications } from '../features/reminders'
+import { NotificationBell, usePushSync, useReminderNotifications } from '../features/reminders'
 import { SettingsPage } from '../features/settings'
 import { useDeepLink } from '../hooks/useDeepLink'
 import { useHashRoute } from '../hooks/useHashRoute'
@@ -55,6 +55,7 @@ function Layout() {
   const { canEdit } = usePermissions()
   const overdue = views.filter((v) => v.status === 'overdue').length
   useReminderNotifications()
+  usePushSync()
   useDeepLink(route)
 
   return (

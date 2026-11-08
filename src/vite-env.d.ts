@@ -6,6 +6,8 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string
   /** Legacy name for the publishable key, still accepted. */
   readonly VITE_SUPABASE_ANON_KEY?: string
+  /** Web Push public key (VAPID), so reminders can arrive with the app closed. Optional. */
+  readonly VITE_VAPID_PUBLIC_KEY?: string
 }
 
 interface ImportMeta {

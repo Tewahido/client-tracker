@@ -1,5 +1,6 @@
 import type { Session } from '@supabase/supabase-js'
 import { useCallback, useEffect, useState } from 'react'
+import { turnOffPush } from '../services/push'
 import { supabase } from '../services/supabase'
 
 export type AuthState =
@@ -40,6 +41,8 @@ export function useAuth() {
   }, [])
 
   const signOut = useCallback(async () => {
+    // Stop this device getting the signed-out person's reminders. Best effort: signing out matters more.
+    await turnOffPush().catch(() => {})
     await supabase?.auth.signOut()
   }, [])
 

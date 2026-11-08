@@ -61,6 +61,10 @@ export class FakeSupabase {
   readonly memberships: { org: { id: string; name: string }; role: string }[] = [{ org: ORG, role: 'owner' }]
   /** Invites addressed to me, from other organisations. */
   readonly myInvites: (InviteRow & { org_name: string })[] = []
+  /** Devices the app saved for push reminders (save_push_subscription arguments). */
+  readonly pushSaves: Array<{ p_endpoint: string; p_p256dh: string; p_auth: string; p_reminder_days: number }> = []
+  /** Endpoints of devices the app removed. */
+  readonly pushRemoved: string[] = []
   /** People in each organisation's ledger, by organisation id. */
   readonly people: Record<string, string[]> = {}
 
@@ -138,6 +142,16 @@ export class FakeSupabase {
         }
         return route.fulfill({ status: 204, body: '' })
       }
+    }
+
+    if (table === 'save_push_subscription' && method === 'POST') {
+      this.pushSaves.push(request.postDataJSON())
+      return route.fulfill({ status: 204, body: '' })
+    }
+
+    if (table === 'push_subscriptions' && method === 'DELETE') {
+      this.pushRemoved.push(url.searchParams.get('endpoint')?.replace(/^eq\./, '') ?? '')
+      return route.fulfill({ status: 204, body: '' })
     }
 
     if (table === 'accept_invite' && method === 'POST') {
