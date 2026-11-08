@@ -22,6 +22,19 @@ export class OrganisationsPage extends AppPage {
     await this.page.goto('/#organisations')
   }
 
+  /** Open an in-app link, as a notification tap does (e.g. "#loans?open=<id>&org=<id>"). */
+  async openLink(hash: string) {
+    await this.page.goto(`/${hash}`)
+  }
+
+  /** The loan details dialog, as a reminder tap opens it. */
+  readonly loanDetails = this.page.getByRole('dialog', { name: 'Loan details' })
+
+  /** The address bar's hash. */
+  async currentHash() {
+    return this.page.evaluate(() => window.location.hash)
+  }
+
   /** Get to this page the way someone would: from the organisation menu (top bar or sidebar). */
   async openFromNav() {
     await this.currentOrgButton().click()

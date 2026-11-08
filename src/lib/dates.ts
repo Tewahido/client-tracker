@@ -9,6 +9,12 @@ export function today(): ISODate {
   return toISODate(new Date())
 }
 
+/** Today's date where the lender is, for code that doesn't run on their device (the server runs in UTC). */
+export function todayIn(timeZone: string, now: Date = new Date()): ISODate {
+  // en-CA formats dates as YYYY-MM-DD.
+  return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now)
+}
+
 export function shiftDate(date: ISODate, days: number): ISODate {
   return toISODate(addDays(parseISO(date), days))
 }

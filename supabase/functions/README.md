@@ -39,3 +39,35 @@ if it isn't deployed or fails, the app falls back to "share the invite yourself"
    members of your Supabase team and is heavily rate limited. To email anyone else
    (including sign-in links for your partner), set up SMTP under Dashboard ›
    Authentication › SMTP Settings, e.g. with a free Resend or Brevo account.
+
+## `send-reminders`
+
+Sends payment reminders by Web Push, so they arrive with the app closed (the app's own
+30-minute check only runs while it's open; iOS freezes home-screen apps once you leave).
+
+- Once a day the scheduler calls it with `Authorization: Bearer <CRON_SECRET>`. For every
+  device in `push_subscriptions` it works out that person's reminders in every organisation
+  they belong to, using the app's own rules (`src/lib/reminders.ts`), skips what
+  `push_reminder_log` says was already sent, and pushes the rest. Devices the push service
+  reports gone (404/410) are deleted.
+- "Today" is the date in `Africa/Johannesburg`.
+- The logic is in `handler.ts` (unit-tested). `main.ts` is the Deno wrapper; because it
+  reuses `src/lib`, `npm run build:functions` bundles it into `index.ts` (not committed),
+  and `npm run deploy:functions` builds before deploying.
+
+### Set-up (once, by the project owner)
+
+1. **Apply the migration** (`20261108000000_push_reminders.sql`): `npx supabase db push`.
+2. **VAPID keys** (identify Lendly to Apple's and Google's push services). Generate a pair
+   once and keep the private key secret; changing it later cuts off every subscribed device
+   until it turns reminders on again.
+   - The public key goes in the app: `VITE_VAPID_PUBLIC_KEY` in `.env.local` and as a
+     GitHub repository variable (the Deploy workflow builds it in).
+   - Function secrets:
+     ```bash
+     npx supabase secrets set VAPID_PUBLIC_KEY=<public> VAPID_PRIVATE_KEY=<private> VAPID_SUBJECT=mailto:<you@example.com> CRON_SECRET=<long random string>
+     ```
+3. **Deploy**: `npm run deploy:functions`.
+4. **Schedule it**: Dashboard › Integrations › Cron › *Create job*: type *Supabase Edge
+   Function*, function `send-reminders`, method POST, schedule `0 6 * * *` (06:00 UTC =
+   08:00 in South Africa), header `Authorization: Bearer <CRON_SECRET>`.

@@ -34,7 +34,7 @@ export default defineConfig({
     {
       // Blank Supabase variables force local mode even if a developer has .env.local set up.
       command: `npx vite --port ${LOCAL_PORT} --strictPort`,
-      env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '', VITE_SUPABASE_ANON_KEY: '' },
+      env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '', VITE_SUPABASE_ANON_KEY: '', VITE_VAPID_PUBLIC_KEY: '' },
       url: `http://localhost:${LOCAL_PORT}`,
       // Always start our own server rather than trusting whatever is on the port.
       reuseExistingServer: false,
@@ -47,6 +47,8 @@ export default defineConfig({
         VITE_SUPABASE_URL: 'https://lendly-e2e.supabase.co',
         VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_e2e_fake_key',
         VITE_SUPABASE_ANON_KEY: '',
+        // Any valid-looking P-256 public key: the push service is stubbed in the tests.
+        VITE_VAPID_PUBLIC_KEY: 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U',
       },
       url: `http://localhost:${AUTH_PORT}`,
       reuseExistingServer: false,

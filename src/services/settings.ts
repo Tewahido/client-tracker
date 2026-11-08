@@ -8,6 +8,8 @@ export interface Settings {
   /** How many days before the due date a loan counts as "due soon" and triggers a reminder. */
   reminderDays: number
   notificationsEnabled: boolean
+  /** This device is subscribed to Web Push, so the server sends reminders and the in-app check stands down. */
+  pushOnThisDevice: boolean
   /** Your first name, used to greet you on the dashboard. */
   lenderName: string
 }
@@ -18,6 +20,7 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultInterestRate: 0,
   reminderDays: 3,
   notificationsEnabled: false,
+  pushOnThisDevice: false,
   lenderName: '',
 }
 

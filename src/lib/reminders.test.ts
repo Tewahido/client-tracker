@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildLoanViews } from './loans'
-import { dueReminders, reminderStage } from './reminders'
+import { dueReminders, planNotifications, reminderStage, type Reminder } from './reminders'
 import type { Borrower, Loan } from './types'
 
 describe('reminderStage', () => {
@@ -59,6 +59,34 @@ describe('dueReminders', () => {
     const monthly = { ...loan('plan', '2027-03-01'), firstDueOn: '2026-10-01', instalmentCount: 6, agreedTotalCents: 60_000 }
     const [reminder] = dueReminders(buildLoanViews([monthly], [], [borrower], '2026-10-04', 3), 3, (c) => `R${c / 100}`)
     expect(reminder.key).toBe('plan:2026-10-01:overdue-3')
-    expect(reminder.body).toBe('R100 due now, R600 still owed in total. Tap to open the loan.')
+    expect(reminder.body).toBe('R100 due now, R600 still owed in total.')
+  })
+})
+
+const reminder = (n: number): Reminder => ({ key: `k${n}`, loanId: `l${n}`, stage: 'today', title: `Title ${n}`, body: `Body ${n}` })
+
+describe('planNotifications', () => {
+  it('sends up to three reminders individually, linking to each loan', () => {
+    const plan = planNotifications([reminder(1), reminder(2)])
+    expect(plan.map((n) => n.url)).toEqual(['#loans?open=l1', '#loans?open=l2'])
+  })
+
+  // Sent with the app closed, a reminder may be for an organisation that isn't open on the device.
+  it('names the organisation in the link when the reminder has one', () => {
+    const plan = planNotifications([{ ...reminder(1), orgId: 'org-a' }, { ...reminder(2), orgId: 'org-b' }])
+    expect(plan.map((n) => n.url)).toEqual(['#loans?open=l1&org=org-a', '#loans?open=l2&org=org-b'])
+    const summary = planNotifications([1, 2, 3, 4].map((n) => ({ ...reminder(n), orgId: 'org-a' })))
+    expect(summary[0].url).toBe('#loans?status=open&org=org-a')
+    const mixed = planNotifications([1, 2, 3, 4].map((n) => ({ ...reminder(n), orgId: n % 2 ? 'org-a' : 'org-b' })))
+    expect(mixed[0].url).toBe('#loans?status=open')
+  })
+
+  it('summarises more than three into one notification covering every key', () => {
+    const plan = planNotifications([1, 2, 3, 4].map(reminder))
+    expect(plan).toHaveLength(1)
+    expect(plan[0].title).toBe('4 loans need your attention')
+    // Three names fit; the rest are counted so nobody silently drops off.
+    expect(plan[0].body.split('\n').pop()).toBe('and 1 more')
+    expect(plan[0].keys).toEqual(['k1', 'k2', 'k3', 'k4'])
   })
 })

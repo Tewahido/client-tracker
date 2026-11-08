@@ -27,6 +27,8 @@ export interface Reminder {
   stage: ReminderStage
   title: string
   body: string
+  /** The loan's organisation, when it may not be the one open on the device (reminders sent by the server). */
+  orgId?: string
 }
 
 export function dueReminders(views: LoanView[], soonDays: number, formatMoney: (cents: number) => string): Reminder[] {
@@ -44,8 +46,8 @@ export function dueReminders(views: LoanView[], soonDays: number, formatMoney: (
       stage,
       title: reminderTitle(stage, name, v.daysUntilDue),
       body: v.plan
-        ? `${formatMoney(amountDueNowCents(v))} due now, ${amount} still owed in total. Tap to open the loan.`
-        : `${amount} still owed to you. Tap to open the loan.`,
+        ? `${formatMoney(amountDueNowCents(v))} due now, ${amount} still owed in total.`
+        : `${amount} still owed.`,
     })
   }
   return reminders
@@ -62,4 +64,39 @@ function reminderTitle(stage: ReminderStage, name: string, days: number): string
     default:
       return `${name} is ${-days} ${days === -1 ? 'day' : 'days'} overdue`
   }
+}
+
+export interface OutgoingNotification {
+  title: string
+  body: string
+  tag: string
+  url: string
+  /** Reminder keys this notification covers; logged only once it was shown. */
+  keys: string[]
+}
+
+/** Above this many new reminders at once, send one summary instead of a burst. */
+export const MAX_INDIVIDUAL = 3
+
+export function planNotifications(reminders: Reminder[]): OutgoingNotification[] {
+  if (reminders.length > MAX_INDIVIDUAL) {
+    return [
+      {
+        title: `${reminders.length} loans need your attention`,
+        body: [...reminders.slice(0, 3).map((r) => r.title), `and ${reminders.length - 3} more`].join('\n'),
+        tag: 'lendly-summary',
+        url: `#loans?status=open${withOrg(sharedOrg(reminders))}`,
+        keys: reminders.map((r) => r.key),
+      },
+    ]
+  }
+  return reminders.map((r) => ({ title: r.title, body: r.body, tag: r.key, url: `#loans?open=${r.loanId}${withOrg(r.orgId)}`, keys: [r.key] }))
+}
+
+const withOrg = (orgId: string | undefined) => (orgId ? `&org=${orgId}` : '')
+
+/** The organisation all the reminders belong to, if they share one. */
+function sharedOrg(reminders: Reminder[]): string | undefined {
+  const first = reminders[0]?.orgId
+  return reminders.every((r) => r.orgId === first) ? first : undefined
 }

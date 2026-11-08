@@ -628,3 +628,99 @@ describe('deleting a user account (with the security fixes in place)', () => {
     expect((await db.query('select 1 from organization_members where user_id = $1', [dave.id])).rows).toHaveLength(0)
   })
 })
+
+describe('push subscriptions (reminders with the app closed)', () => {
+  const device = (n: number) => ({
+    endpoint: `https://web.push.apple.com/device-${n}`,
+    p256dh: 'BOr8VhqTqRsOdcf8y9vO0zR2LZcyKNz2FvS8x1E6d0Y',
+    auth: 'k3Jt0mF9aQx2Lw7c',
+  })
+  const save = (user: User, d: ReturnType<typeof device>, days = 3) =>
+    as(user, 'select public.save_push_subscription($1, $2, $3, $4)', [d.endpoint, d.p256dh, d.auth, days])
+  const mine = (user: User) => as<{ endpoint: string; reminder_days: number }>(user, 'select endpoint, reminder_days from push_subscriptions order by endpoint')
+
+  beforeEach(async () => {
+    await db.query('delete from push_subscriptions')
+  })
+
+  it('saves a device for the signed-in person and hides it from everyone else', async () => {
+    await save('alice', device(1), 5)
+    expect(await mine('alice')).toEqual([{ endpoint: device(1).endpoint, reminder_days: 5 }])
+    expect(await mine('bob')).toEqual([])
+  })
+
+  it('updates the same device instead of adding it twice', async () => {
+    await save('alice', device(1), 3)
+    await save('alice', device(1), 7)
+    expect(await mine('alice')).toEqual([{ endpoint: device(1).endpoint, reminder_days: 7 }])
+  })
+
+  it('moves a device to whoever signs in on it next', async () => {
+    await save('alice', device(1))
+    await save('bob', device(1))
+    expect(await mine('alice')).toEqual([])
+    expect(await mine('bob')).toHaveLength(1)
+  })
+
+  it('lets people remove only their own devices', async () => {
+    await save('alice', device(1))
+    await as('bob', 'delete from push_subscriptions')
+    expect(await mine('alice')).toHaveLength(1)
+    await as('alice', 'delete from push_subscriptions where endpoint = $1', [device(1).endpoint])
+    expect(await mine('alice')).toEqual([])
+  })
+
+  it('only saves through the function, so a device cannot be pinned on someone else', async () => {
+    const d = device(1)
+    await expect(
+      as('alice', 'insert into push_subscriptions (endpoint, user_id, p256dh, auth) values ($1, $2, $3, $4)', [d.endpoint, users.bob.id, d.p256dh, d.auth]),
+    ).rejects.toThrow(/permission denied/)
+    await save('alice', d)
+    await expect(as('alice', 'update push_subscriptions set user_id = $1', [users.bob.id])).rejects.toThrow(/permission denied/)
+  })
+
+  it('refuses addresses that are not https push endpoints, and odd reminder windows', async () => {
+    await expect(save('alice', { ...device(1), endpoint: 'http://evil.example/collect' })).rejects.toThrow(/push_subscriptions_endpoint_check/)
+    // The daily job POSTs to every saved address, so only real push services are allowed.
+    for (const endpoint of ['https://evil.example/collect', 'https://web.push.apple.com.evil.example/x', 'https://localhost/x']) {
+      await expect(save('alice', { ...device(1), endpoint })).rejects.toThrow(/push_subscriptions_endpoint_check/)
+    }
+    for (const endpoint of [
+      'https://fcm.googleapis.com/fcm/send/abc:APA91b',
+      'https://updates.push.services.mozilla.com/wpush/v2/gAAAA',
+      'https://web.push.apple.com/QGxQ',
+      'https://wns2-par02p.notify.windows.com/w/?token=BQYAAA',
+    ]) {
+      await save('alice', { ...device(1), endpoint })
+    }
+    await expect(save('alice', device(1), 400)).rejects.toThrow(/push_subscriptions_reminder_days_check/)
+  })
+
+  it('caps how many devices one person can register', async () => {
+    for (let n = 1; n <= 10; n++) await save('alice', device(n))
+    await expect(save('alice', device(11))).rejects.toThrow(/devices/)
+    // Re-saving a device already on the list still works.
+    await save('alice', device(3))
+  })
+
+  it('is out of reach for signed-out visitors, along with the sent-reminders log', async () => {
+    const d = device(1)
+    await expect(
+      db.transaction(async (tx) => {
+        await tx.exec('set local role anon')
+        return tx.query('select public.save_push_subscription($1, $2, $3, 3)', [d.endpoint, d.p256dh, d.auth])
+      }),
+    ).rejects.toThrow(/permission denied/)
+    await expect(as('alice', 'select * from push_reminder_log')).rejects.toThrow(/permission denied/)
+  })
+
+  it('forgets the devices and sent reminders of a deleted account', async () => {
+    const erin = { id: '00000000-0000-0000-0000-00000000000e', email: 'erin@example.com' }
+    await db.query('insert into auth.users (id, email) values ($1, $2)', [erin.id, erin.email])
+    await db.query("insert into push_subscriptions (endpoint, user_id, p256dh, auth) values ('https://web.push.apple.com/e', $1, 'p', 'a')", [erin.id])
+    await db.query("insert into push_reminder_log (user_id, reminder_key) values ($1, 'loan:2026-11-08:today')", [erin.id])
+    await db.query('delete from auth.users where id = $1', [erin.id])
+    expect((await db.query('select 1 from push_subscriptions where user_id = $1', [erin.id])).rows).toHaveLength(0)
+    expect((await db.query('select 1 from push_reminder_log where user_id = $1', [erin.id])).rows).toHaveLength(0)
+  })
+})
