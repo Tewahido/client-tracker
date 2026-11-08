@@ -27,6 +27,8 @@ export interface Reminder {
   stage: ReminderStage
   title: string
   body: string
+  /** The loan's organisation, when it may not be the one open on the device (reminders sent by the server). */
+  orgId?: string
 }
 
 export function dueReminders(views: LoanView[], soonDays: number, formatMoney: (cents: number) => string): Reminder[] {
@@ -86,10 +88,18 @@ export function planNotifications(reminders: Reminder[]): OutgoingNotification[]
           .map((r) => r.title)
           .join('\n'),
         tag: 'lendly-summary',
-        url: '#loans?status=open',
+        url: `#loans?status=open${withOrg(sharedOrg(reminders))}`,
         keys: reminders.map((r) => r.key),
       },
     ]
   }
-  return reminders.map((r) => ({ title: r.title, body: r.body, tag: r.key, url: `#loans?open=${r.loanId}`, keys: [r.key] }))
+  return reminders.map((r) => ({ title: r.title, body: r.body, tag: r.key, url: `#loans?open=${r.loanId}${withOrg(r.orgId)}`, keys: [r.key] }))
+}
+
+const withOrg = (orgId: string | undefined) => (orgId ? `&org=${orgId}` : '')
+
+/** The organisation all the reminders belong to, if they share one. */
+function sharedOrg(reminders: Reminder[]): string | undefined {
+  const first = reminders[0]?.orgId
+  return reminders.every((r) => r.orgId === first) ? first : undefined
 }

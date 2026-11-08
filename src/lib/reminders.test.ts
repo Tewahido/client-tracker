@@ -71,6 +71,16 @@ describe('planNotifications', () => {
     expect(plan.map((n) => n.url)).toEqual(['#loans?open=l1', '#loans?open=l2'])
   })
 
+  // Sent with the app closed, a reminder may be for an organisation that isn't open on the device.
+  it('names the organisation in the link when the reminder has one', () => {
+    const plan = planNotifications([{ ...reminder(1), orgId: 'org-a' }, { ...reminder(2), orgId: 'org-b' }])
+    expect(plan.map((n) => n.url)).toEqual(['#loans?open=l1&org=org-a', '#loans?open=l2&org=org-b'])
+    const summary = planNotifications([1, 2, 3, 4].map((n) => ({ ...reminder(n), orgId: 'org-a' })))
+    expect(summary[0].url).toBe('#loans?status=open&org=org-a')
+    const mixed = planNotifications([1, 2, 3, 4].map((n) => ({ ...reminder(n), orgId: n % 2 ? 'org-a' : 'org-b' })))
+    expect(mixed[0].url).toBe('#loans?status=open')
+  })
+
   it('summarises more than three into one notification covering every key', () => {
     const plan = planNotifications([1, 2, 3, 4].map(reminder))
     expect(plan).toHaveLength(1)

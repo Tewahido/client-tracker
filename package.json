@@ -15,13 +15,15 @@
     "check:tests": "node scripts/tests-required.mjs",
     "audit:prod": "npm audit --omit=dev --audit-level=high",
     "deploy": "node scripts/deploy.mjs",
-    "deploy:functions": "npx supabase functions deploy send-invite --no-verify-jwt",
+    "deploy:functions": "npm run build:functions && npx supabase functions deploy send-invite --no-verify-jwt && npx supabase functions deploy send-reminders --no-verify-jwt",
     "verify": "npm run typecheck && npm run lint && npm run check:tests && npm test && npm run audit:prod && npm run build && npm run test:e2e",
     "prepare": "git config core.hooksPath .githooks",
     "test:e2e": "playwright test",
-    "landing-art": "node scripts/landing-art.mjs"
+    "landing-art": "node scripts/landing-art.mjs",
+    "build:functions": "node scripts/build-functions.mjs"
   },
   "dependencies": {
+    "@block65/webcrypto-web-push": "2.0.0",
     "@supabase/supabase-js": "^2.118.0",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",

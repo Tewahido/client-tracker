@@ -4,7 +4,7 @@ import { withFreshIds } from '../../lib/snapshot'
 import type { DataRepository } from './repository'
 
 /* Row shapes as stored in Postgres (snake_case). `user_id` is filled by the database default. */
-interface BorrowerRow {
+export interface BorrowerRow {
   id: string
   name: string
   phone: string | null
@@ -13,7 +13,7 @@ interface BorrowerRow {
   created_at: string
 }
 
-interface LoanRow {
+export interface LoanRow {
   id: string
   borrower_id: string
   principal_cents: number
@@ -28,7 +28,7 @@ interface LoanRow {
   created_at: string
 }
 
-interface PaymentRow {
+export interface PaymentRow {
   id: string
   loan_id: string
   amount_cents: number
@@ -38,7 +38,7 @@ interface PaymentRow {
   created_by?: string | null
 }
 
-const toBorrower = (r: BorrowerRow): Borrower => ({
+export const toBorrower = (r: BorrowerRow): Borrower => ({
   id: r.id,
   name: r.name,
   phone: r.phone,
@@ -50,7 +50,7 @@ const toBorrower = (r: BorrowerRow): Borrower => ({
 const fromBorrower = (b: Partial<Borrower>): Partial<BorrowerRow> =>
   strip({ id: b.id, name: b.name, phone: b.phone, email: b.email, notes: b.notes, created_at: b.createdAt })
 
-const toLoan = (r: LoanRow): Loan => ({
+export const toLoan = (r: LoanRow): Loan => ({
   id: r.id,
   borrowerId: r.borrower_id,
   principalCents: Number(r.principal_cents),
@@ -81,7 +81,7 @@ const fromLoan = (l: Partial<Loan>): Partial<LoanRow> =>
     created_at: l.createdAt,
   })
 
-const toPayment = (r: PaymentRow): Payment => ({
+export const toPayment = (r: PaymentRow): Payment => ({
   id: r.id,
   loanId: r.loan_id,
   amountCents: Number(r.amount_cents),

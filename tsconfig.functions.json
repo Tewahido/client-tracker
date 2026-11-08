@@ -17,9 +17,12 @@
     "noFallthroughCasesInSwitch": true,
     // Deno's npm: imports, resolved to the copy the app installs (same pinned version).
     "paths": {
-      "npm:@supabase/supabase-js@2.118.0": ["./node_modules/@supabase/supabase-js"]
+      "npm:@supabase/supabase-js@2.118.0": ["./node_modules/@supabase/supabase-js"],
+      "npm:@block65/webcrypto-web-push@2.0.0": ["./node_modules/@block65/webcrypto-web-push/dist/lib/main.d.ts"]
     }
   },
   // Edge Functions run on Deno; deno.d.ts declares the Deno APIs they use.
-  "include": ["supabase/functions/**/*.ts"]
+  "include": ["supabase/functions/**/*.ts"],
+  // Bundled output of main.ts (npm run build:functions); main.ts is what gets checked.
+  "exclude": ["supabase/functions/send-reminders/index.ts"]
 }

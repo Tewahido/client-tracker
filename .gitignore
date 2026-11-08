@@ -36,3 +36,6 @@ dist-ssr
 # Supabase CLI local state (created by `supabase link`)
 supabase/.temp/
 supabase/.branches/
+
+# Edge Functions bundled from main.ts by npm run build:functions
+supabase/functions/send-reminders/index.ts
