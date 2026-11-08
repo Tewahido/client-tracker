@@ -681,6 +681,18 @@ describe('push subscriptions (reminders with the app closed)', () => {
 
   it('refuses addresses that are not https push endpoints, and odd reminder windows', async () => {
     await expect(save('alice', { ...device(1), endpoint: 'http://evil.example/collect' })).rejects.toThrow(/push_subscriptions_endpoint_check/)
+    // The daily job POSTs to every saved address, so only real push services are allowed.
+    for (const endpoint of ['https://evil.example/collect', 'https://web.push.apple.com.evil.example/x', 'https://localhost/x']) {
+      await expect(save('alice', { ...device(1), endpoint })).rejects.toThrow(/push_subscriptions_endpoint_check/)
+    }
+    for (const endpoint of [
+      'https://fcm.googleapis.com/fcm/send/abc:APA91b',
+      'https://updates.push.services.mozilla.com/wpush/v2/gAAAA',
+      'https://web.push.apple.com/QGxQ',
+      'https://wns2-par02p.notify.windows.com/w/?token=BQYAAA',
+    ]) {
+      await save('alice', { ...device(1), endpoint })
+    }
     await expect(save('alice', device(1), 400)).rejects.toThrow(/push_subscriptions_reminder_days_check/)
   })
 
@@ -705,7 +717,7 @@ describe('push subscriptions (reminders with the app closed)', () => {
   it('forgets the devices and sent reminders of a deleted account', async () => {
     const erin = { id: '00000000-0000-0000-0000-00000000000e', email: 'erin@example.com' }
     await db.query('insert into auth.users (id, email) values ($1, $2)', [erin.id, erin.email])
-    await db.query("insert into push_subscriptions (endpoint, user_id, p256dh, auth) values ('https://push.example/e', $1, 'p', 'a')", [erin.id])
+    await db.query("insert into push_subscriptions (endpoint, user_id, p256dh, auth) values ('https://web.push.apple.com/e', $1, 'p', 'a')", [erin.id])
     await db.query("insert into push_reminder_log (user_id, reminder_key) values ($1, 'loan:2026-11-08:today')", [erin.id])
     await db.query('delete from auth.users where id = $1', [erin.id])
     expect((await db.query('select 1 from push_subscriptions where user_id = $1', [erin.id])).rows).toHaveLength(0)

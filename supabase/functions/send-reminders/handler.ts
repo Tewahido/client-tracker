@@ -17,6 +17,22 @@ import type { Borrower, Loan, Payment } from '../../../src/lib/types.ts'
 /** Lendly's lenders are in South Africa; the server runs in UTC. */
 export const REMINDER_TIME_ZONE = 'Africa/Johannesburg'
 
+/**
+ * The app re-saves a device each time Lendly is opened on it. One not opened for this long is
+ * probably lost, sold or shared, and its lock screen would keep showing borrowers and amounts.
+ */
+export const STALE_AFTER_DAYS = 90
+
+/**
+ * How far back to check what was already sent. A reminder key names the loan, due date and
+ * stage, and no stage comes round again more than 30 days after it first could (the longest
+ * "remind me" window), so older entries can't matter.
+ */
+export const SENT_LOG_DAYS = 45
+
+/** People per round of queries, keeping each request's list of ids short. */
+export const BATCH_SIZE = 100
+
 /** A device that turned on reminders (a row of push_subscriptions). */
 export interface Device {
   endpoint: string
@@ -24,6 +40,8 @@ export interface Device {
   p256dh: string
   auth: string
   reminderDays: number
+  /** When the app last saved it (updated_at). */
+  savedAt: string
 }
 
 /** One organisation's loans, and which of the people being reminded belong to it. */
@@ -50,7 +68,8 @@ export interface SendRemindersDeps {
   devices(): Promise<Device[]>
   /** Organisations any of these people belong to. */
   ledgers(userIds: string[]): Promise<Ledger[]>
-  alreadySent(userIds: string[]): Promise<Array<{ userId: string; key: string }>>
+  /** What these people were sent since `since` (older entries may be pruned). */
+  alreadySent(userIds: string[], since: Date): Promise<Array<{ userId: string; key: string }>>
   markSent(rows: Array<{ userId: string; key: string }>): Promise<void>
   push(device: Device, notification: PushNotification): Promise<PushResult>
   /** Removes a device the push service no longer knows. */
@@ -96,43 +115,69 @@ export async function handleSendReminders(
   const token = req.headers.get('Authorization')?.replace(/^Bearer /, '') ?? ''
   if (!sameSecret(token, options.secret)) return reply(401, { error: 'Not allowed' })
 
-  const devices = await deps.devices()
+  const summary = { people: 0, notifications: 0, delivered: 0, removed: 0 }
+  const DAY = 24 * 60 * 60 * 1000
+  const cutoff = options.now.getTime() - STALE_AFTER_DAYS * DAY
+  const since = new Date(options.now.getTime() - SENT_LOG_DAYS * DAY)
   const byUser = new Map<string, Device[]>()
-  for (const d of devices) byUser.set(d.userId, [...(byUser.get(d.userId) ?? []), d])
+  for (const d of await deps.devices()) {
+    if (Date.parse(d.savedAt) >= cutoff) {
+      byUser.set(d.userId, [...(byUser.get(d.userId) ?? []), d])
+      continue
+    }
+    try {
+      await deps.forget(d.endpoint)
+      summary.removed++
+    } catch (err) {
+      deps.log?.('send-reminders: forgetting a stale device failed', err instanceof Error ? err.message : err)
+    }
+  }
   const userIds = [...byUser.keys()]
-  const summary = { people: userIds.length, notifications: 0, delivered: 0, removed: 0 }
-  if (userIds.length === 0) return reply(200, summary)
-
-  const [ledgers, sentRows] = await Promise.all([deps.ledgers(userIds), deps.alreadySent(userIds)])
-  const sent = new Set(sentRows.map((r) => `${r.userId}|${r.key}`))
+  summary.people = userIds.length
   const today = todayIn(REMINDER_TIME_ZONE, options.now)
 
-  for (const [userId, userDevices] of byUser) {
-    try {
-      const soonDays = Math.max(...userDevices.map((d) => d.reminderDays))
-      const fresh = remindersFor(userId, ledgers, soonDays, today).filter((r) => !sent.has(`${userId}|${r.key}`))
-
-      const delivered: string[] = []
-      for (const n of planNotifications(fresh)) {
-        const notification = { title: n.title, body: n.body, tag: n.tag, url: n.url }
-        const results = await Promise.all(userDevices.map((d) => deps.push(d, notification)))
-        summary.notifications += results.length
-        summary.delivered += results.filter((r) => r === 'sent').length
-        // Logged once any of their devices got it; if none did, it's retried tomorrow.
-        if (results.includes('sent')) delivered.push(...n.keys)
-
-        for (const [i, result] of results.entries()) {
-          if (result !== 'gone') continue
-          await deps.forget(userDevices[i].endpoint)
-          summary.removed++
-        }
-      }
-      if (delivered.length > 0) await deps.markSent(delivered.map((key) => ({ userId, key })))
-    } catch (err) {
-      deps.log?.('send-reminders: failed for one person', err instanceof Error ? err.message : err)
-    }
+  for (let start = 0; start < userIds.length; start += BATCH_SIZE) {
+    const batch = userIds.slice(start, start + BATCH_SIZE)
+    const [ledgers, sentRows] = await Promise.all([deps.ledgers(batch), deps.alreadySent(batch, since)])
+    const sent = new Set(sentRows.map((r) => `${r.userId}|${r.key}`))
+    for (const userId of batch) await remindPerson(userId, byUser.get(userId)!, ledgers, sent, today, deps, summary)
   }
 
   deps.log?.('send-reminders: done', summary)
   return reply(200, summary)
+}
+
+/** Sends one person what's new for them, to each of their devices. Never throws. */
+async function remindPerson(
+  userId: string,
+  userDevices: Device[],
+  ledgers: Ledger[],
+  sent: Set<string>,
+  today: string,
+  deps: SendRemindersDeps,
+  summary: { notifications: number; delivered: number; removed: number },
+) {
+  try {
+    const soonDays = Math.max(...userDevices.map((d) => d.reminderDays))
+    const fresh = remindersFor(userId, ledgers, soonDays, today).filter((r) => !sent.has(`${userId}|${r.key}`))
+
+    const delivered: string[] = []
+    for (const n of planNotifications(fresh)) {
+      const notification = { title: n.title, body: n.body, tag: n.tag, url: n.url }
+      const results = await Promise.all(userDevices.map((d) => deps.push(d, notification)))
+      summary.notifications += results.length
+      summary.delivered += results.filter((r) => r === 'sent').length
+      // Logged once any of their devices got it; if none did, it's retried tomorrow.
+      if (results.includes('sent')) delivered.push(...n.keys)
+
+      for (const [i, result] of results.entries()) {
+        if (result !== 'gone') continue
+        await deps.forget(userDevices[i].endpoint)
+        summary.removed++
+      }
+    }
+    if (delivered.length > 0) await deps.markSent(delivered.map((key) => ({ userId, key })))
+  } catch (err) {
+    deps.log?.('send-reminders: failed for one person', err instanceof Error ? err.message : err)
+  }
 }

@@ -27,6 +27,7 @@ const device = (userId: string, n = 1, reminderDays = 3): Device => ({
   p256dh: 'p256dh',
   auth: 'auth',
   reminderDays,
+  savedAt: '2026-11-01T00:00:00Z',
 })
 const ledger = (orgId: string, memberIds: string[], loans: Loan[], borrowers = [borrower('b1', 'Sipho')]): Ledger => ({
   orgId,
@@ -88,6 +89,8 @@ describe('send-reminders', () => {
     })
     expect(d.sent).toEqual([{ userId: 'u1', key: 'l1:2026-11-08:today' }])
     expect(await res.json()).toEqual({ people: 1, notifications: 2, delivered: 2, removed: 0 })
+    // Only the last 45 days of the sent log can matter.
+    expect(d.alreadySent).toHaveBeenCalledWith(['u1'], new Date('2026-09-24T06:00:00Z'))
   })
 
   it('does not send the same reminder twice', async () => {
@@ -159,6 +162,28 @@ describe('send-reminders', () => {
     const res = await run(d)
     expect(res.status).toBe(200)
     expect(d.sent).toEqual([{ userId: 'u2', key: 'l1:2026-11-08:today' }])
+  })
+
+  // Lendly re-saves a device whenever it's opened there. One unopened for months is likely lost
+  // or sold, and its lock screen would keep showing borrowers and amounts.
+  it('forgets devices nobody has opened Lendly on for 90 days', async () => {
+    const old = { ...device('u1', 1), savedAt: '2026-08-01T00:00:00Z' }
+    const d = deps([old, device('u1', 2)], [ledger('org1', ['u1'], [loan('l1', 'b1', '2026-11-08')])])
+    const res = await run(d)
+
+    expect(d.forget).toHaveBeenCalledWith(old.endpoint)
+    expect(vi.mocked(d.push).mock.calls.map(([dev]) => dev.endpoint)).toEqual([device('u1', 2).endpoint])
+    expect(await res.json()).toEqual({ people: 1, notifications: 1, delivered: 1, removed: 1 })
+  })
+
+  it('works through people in batches, so a growing app stays within request limits', async () => {
+    const people = Array.from({ length: 250 }, (_, i) => `u${i}`)
+    const d = deps(people.map((u) => device(u)), [ledger('org1', people, [loan('l1', 'b1', '2026-11-08')])])
+    const res = await run(d)
+
+    const batches = vi.mocked(d.ledgers).mock.calls.map(([ids]) => ids.length)
+    expect(batches).toEqual([100, 100, 50])
+    expect((await res.json()).delivered).toBe(250)
   })
 
   it('has nothing to do when nobody turned reminders on', async () => {

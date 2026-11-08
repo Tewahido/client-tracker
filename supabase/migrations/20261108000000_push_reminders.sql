@@ -10,7 +10,12 @@
 -- each reminder stage once. Service role only.
 
 create table public.push_subscriptions (
-  endpoint      text primary key check (endpoint ~ '^https://[^\s]+$' and length(endpoint) <= 2048),
+  -- Only the browsers' push services (Google, Mozilla, Apple, Microsoft): the daily job POSTs
+  -- to every saved address, so anything else would let a user make it call their own server.
+  endpoint      text primary key check (
+    endpoint ~ '^https://(fcm\.googleapis\.com|[a-z0-9.-]+\.push\.services\.mozilla\.com|([a-z0-9-]+\.)*push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)/[^\s]+$'
+    and length(endpoint) <= 2048
+  ),
   user_id       uuid not null references auth.users (id) on delete cascade,
   p256dh        text not null check (length(p256dh) between 1 and 200),
   auth          text not null check (length(auth) between 1 and 100),

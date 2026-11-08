@@ -40,15 +40,17 @@ Deno.serve((req) =>
     req,
     {
       async devices() {
-        const rows = await all<{ endpoint: string; user_id: string; p256dh: string; auth: string; reminder_days: number }>((from, to) =>
-          db.from('push_subscriptions').select('endpoint, user_id, p256dh, auth, reminder_days').order('endpoint').range(from, to),
+        const rows = await all<{ endpoint: string; user_id: string; p256dh: string; auth: string; reminder_days: number; updated_at: string }>((from, to) =>
+          db.from('push_subscriptions').select('endpoint, user_id, p256dh, auth, reminder_days, updated_at').order('endpoint').range(from, to),
         )
-        return rows.map((r): Device => ({ endpoint: r.endpoint, userId: r.user_id, p256dh: r.p256dh, auth: r.auth, reminderDays: r.reminder_days }))
+        return rows.map(
+          (r): Device => ({ endpoint: r.endpoint, userId: r.user_id, p256dh: r.p256dh, auth: r.auth, reminderDays: r.reminder_days, savedAt: r.updated_at }),
+        )
       },
 
       async ledgers(userIds) {
         const members = await all<{ org_id: string; user_id: string }>((from, to) =>
-          db.from('organization_members').select('org_id, user_id').in('user_id', userIds).order('org_id').range(from, to),
+          db.from('organization_members').select('org_id, user_id').in('user_id', userIds).order('org_id').order('user_id').range(from, to),
         )
         const orgIds = [...new Set(members.map((m) => m.org_id))]
         if (orgIds.length === 0) return []
@@ -70,9 +72,19 @@ Deno.serve((req) =>
         )
       },
 
-      async alreadySent(userIds) {
+      async alreadySent(userIds, since) {
+        // Older entries can't matter any more (see SENT_LOG_DAYS): prune them as we go.
+        await db.from('push_reminder_log').delete().lt('sent_at', since.toISOString())
+        // Ordered by the full primary key: paging needs a stable order, and keys repeat across people.
         const rows = await all<{ user_id: string; reminder_key: string }>((from, to) =>
-          db.from('push_reminder_log').select('user_id, reminder_key').in('user_id', userIds).order('reminder_key').range(from, to),
+          db
+            .from('push_reminder_log')
+            .select('user_id, reminder_key')
+            .in('user_id', userIds)
+            .gte('sent_at', since.toISOString())
+            .order('user_id')
+            .order('reminder_key')
+            .range(from, to),
         )
         return rows.map((r) => ({ userId: r.user_id, key: r.reminder_key }))
       },
@@ -91,9 +103,11 @@ Deno.serve((req) =>
           { endpoint: device.endpoint, expirationTime: null, keys: { p256dh: device.p256dh, auth: device.auth } },
           vapid,
         )
-        const res = await fetch(device.endpoint, payload)
+        // A push service answers in well under a second; never let one address stall the run,
+        // and never follow it elsewhere.
+        const res = await fetch(device.endpoint, { ...payload, signal: AbortSignal.timeout(10_000), redirect: 'manual' })
         const result = classifyPushStatus(res.status)
-        if (result === 'failed') console.error('send-reminders: push refused', res.status, await res.text().catch(() => ''))
+        if (result === 'failed') console.error('send-reminders: push refused', res.status, (await res.text().catch(() => '')).slice(0, 200))
         return result
       },
 
