@@ -63,3 +63,33 @@ function reminderTitle(stage: ReminderStage, name: string, days: number): string
       return `${name} is ${-days} ${days === -1 ? 'day' : 'days'} overdue`
   }
 }
+
+export interface OutgoingNotification {
+  title: string
+  body: string
+  tag: string
+  url: string
+  /** Reminder keys this notification covers; logged only once it was shown. */
+  keys: string[]
+}
+
+/** Above this many new reminders at once, send one summary instead of a burst. */
+export const MAX_INDIVIDUAL = 3
+
+export function planNotifications(reminders: Reminder[]): OutgoingNotification[] {
+  if (reminders.length > MAX_INDIVIDUAL) {
+    return [
+      {
+        title: `${reminders.length} loans need your attention`,
+        body: reminders
+          .slice(0, 3)
+          .map((r) => r.title)
+          .join('\n'),
+        tag: 'lendly-summary',
+        url: '#loans?status=open',
+        keys: reminders.map((r) => r.key),
+      },
+    ]
+  }
+  return reminders.map((r) => ({ title: r.title, body: r.body, tag: r.key, url: `#loans?open=${r.loanId}`, keys: [r.key] }))
+}
