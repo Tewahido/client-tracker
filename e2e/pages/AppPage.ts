@@ -61,6 +61,18 @@ export class AppPage {
     })
   }
 
+  /**
+   * How far below the top of the screen toasts sit, on phones and on larger screens, as
+   * declared (browsers outside iOS resolve env(safe-area-inset-top) to 0, so read the rule).
+   */
+  async toastTopOffsets(): Promise<{ phone: string; wide: string }> {
+    return this.page.locator('[data-sonner-toaster]').first().evaluate((el) => {
+      // The declared value: the computed one has env() already replaced (by 0 off iPhone).
+      const style = (el as HTMLElement).style
+      return { phone: style.getPropertyValue('--mobile-offset-top').trim(), wide: style.getPropertyValue('--offset-top').trim() }
+    })
+  }
+
   toast(text: string | RegExp) {
     return this.page.locator('[data-sonner-toast]').filter({ hasText: text })
   }

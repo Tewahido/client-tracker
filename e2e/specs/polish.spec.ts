@@ -79,4 +79,15 @@ test.describe('controls fit the design', () => {
     await loans.open()
     expect(await loans.searchIconShows()).toBe(true)
   })
+
+  // The app draws under the iPhone status bar (viewport-fit=cover), so toasts at a fixed
+  // distance from the top were hidden behind the Dynamic Island.
+  test('toasts sit below the iPhone status bar and Dynamic Island', async ({ app, settings }) => {
+    await settings.open()
+    await settings.setLendingDefaults({ period: '2 weeks', interest: '12' })
+    await expect(app.toast('Defaults saved')).toBeVisible()
+    const { phone, wide } = await app.toastTopOffsets()
+    expect(phone).toContain('env(safe-area-inset-top)')
+    expect(wide).toContain('env(safe-area-inset-top)')
+  })
 })

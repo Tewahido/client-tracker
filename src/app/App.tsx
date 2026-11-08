@@ -86,6 +86,13 @@ function Layout() {
   )
 }
 
+/*
+ * The app draws under the iPhone status bar (viewport-fit=cover), so toasts keep clear of
+ * it and the Dynamic Island by adding the safe-area inset (0 elsewhere) to the usual gap.
+ */
+const TOAST_OFFSET = { top: 'calc(env(safe-area-inset-top) + 24px)' }
+const TOAST_MOBILE_OFFSET = { top: 'calc(env(safe-area-inset-top) + 12px)' }
+
 export default function App() {
   const { theme } = useTheme()
   return (
@@ -102,7 +109,7 @@ export default function App() {
           )}
         </WorkspaceGate>
       </WorkspaceProvider>
-      <Toaster position="top-center" richColors closeButton theme={theme} />
+      <Toaster position="top-center" richColors closeButton theme={theme} offset={TOAST_OFFSET} mobileOffset={TOAST_MOBILE_OFFSET} />
     </SettingsProvider>
   )
 }
