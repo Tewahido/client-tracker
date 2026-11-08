@@ -78,6 +78,21 @@ test.describe('on a very narrow phone', () => {
   })
 })
 
+// Reminders sent with the app closed name their organisation, which may not be the open one.
+test('a reminder for another organisation opens that organisation', async ({ orgs, backend }) => {
+  backend.memberships.push({ org: SHARED, role: 'member' })
+  await orgs.openLink(`#loans?status=open&org=${SHARED.id}`)
+
+  await expect(orgs.currentOrgButton()).toContainText(SHARED.name)
+  await expect.poll(() => orgs.currentHash()).toBe('#loans?status=open')
+})
+
+test('ignores a reminder link for an organisation you are not in', async ({ orgs }) => {
+  await orgs.openLink('#loans?org=someone-elses')
+  await expect(orgs.currentOrgButton()).toContainText(MINE.name)
+  await expect.poll(() => orgs.currentHash()).toBe('#loans')
+})
+
 test('an invite that arrives after you made your own organisation is shown and can be joined', async ({ orgs, backend }) => {
   backend.myInvites.push({ id: 'invite-1', org_id: SHARED.id, org_name: SHARED.name, email: ME.email, role: 'member', created_at: '2026-10-01T00:00:00Z' })
   await orgs.goto('home')
