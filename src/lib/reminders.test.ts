@@ -59,7 +59,7 @@ describe('dueReminders', () => {
     const monthly = { ...loan('plan', '2027-03-01'), firstDueOn: '2026-10-01', instalmentCount: 6, agreedTotalCents: 60_000 }
     const [reminder] = dueReminders(buildLoanViews([monthly], [], [borrower], '2026-10-04', 3), 3, (c) => `R${c / 100}`)
     expect(reminder.key).toBe('plan:2026-10-01:overdue-3')
-    expect(reminder.body).toBe('R100 due now, R600 still owed in total. Tap to open the loan.')
+    expect(reminder.body).toBe('R100 due now, R600 still owed in total.')
   })
 })
 
@@ -85,6 +85,8 @@ describe('planNotifications', () => {
     const plan = planNotifications([1, 2, 3, 4].map(reminder))
     expect(plan).toHaveLength(1)
     expect(plan[0].title).toBe('4 loans need your attention')
+    // Three names fit; the rest are counted so nobody silently drops off.
+    expect(plan[0].body.split('\n').pop()).toBe('and 1 more')
     expect(plan[0].keys).toEqual(['k1', 'k2', 'k3', 'k4'])
   })
 })

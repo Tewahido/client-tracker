@@ -14,7 +14,8 @@ export function pushAvailable(): boolean {
 
 /** An iPhone or iPad browser tab: Web Push only works once Lendly is added to the Home Screen. */
 export function needsHomeScreen(): boolean {
-  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent)
+  // iPads ask for the desktop site, so their Safari says "Macintosh"; only they have touch.
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
   return ios && !(navigator as Navigator & { standalone?: boolean }).standalone
 }
 
@@ -49,7 +50,36 @@ export async function turnOffPush(): Promise<void> {
   if (!pushAvailable()) return
   const subscription = await (await pushManager()).getSubscription()
   if (!subscription) return
-  // Remove the row first, while still signed in; it's what the daily job reads.
-  await supabase?.from('push_subscriptions').delete().eq('endpoint', subscription.endpoint)
+  // Remove the row first, while still signed in; it's what the daily job reads. Unsubscribe
+  // either way: the push service then refuses pushes, and the job drops the row itself.
+  const result = await supabase?.from('push_subscriptions').delete().eq('endpoint', subscription.endpoint)
   await subscription.unsubscribe()
+  if (result?.error) throw new Error(result.error.message)
+}
+
+/** Whether this browser still holds a push subscription for Lendly. */
+export async function hasPushSubscription(): Promise<boolean> {
+  if (!pushAvailable()) return false
+  return !!(await (await pushManager()).getSubscription())
+}
+
+/**
+ * After the session ended without signing out here (expired, revoked, signed out elsewhere):
+ * the row can't be deleted without a session, but unsubscribing makes the push service refuse
+ * pushes, and the daily job then deletes the row.
+ */
+export async function unsubscribeThisDevice(): Promise<void> {
+  if (!pushAvailable()) return
+  await (await (await pushManager()).getSubscription())?.unsubscribe()
+}
+
+/** Removes every device of the signed-in account (e.g. a lost phone), then this one's subscription. */
+export async function stopPushEverywhere(): Promise<void> {
+  if (!supabase) return
+  const { data } = await supabase.auth.getSession()
+  const userId = data.session?.user.id
+  if (!userId) throw new Error('Sign in first')
+  const { error } = await supabase.from('push_subscriptions').delete().eq('user_id', userId)
+  if (error) throw new Error(error.message)
+  await unsubscribeThisDevice().catch(() => {})
 }

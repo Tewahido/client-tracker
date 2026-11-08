@@ -46,8 +46,8 @@ export function dueReminders(views: LoanView[], soonDays: number, formatMoney: (
       stage,
       title: reminderTitle(stage, name, v.daysUntilDue),
       body: v.plan
-        ? `${formatMoney(amountDueNowCents(v))} due now, ${amount} still owed in total. Tap to open the loan.`
-        : `${amount} still owed to you. Tap to open the loan.`,
+        ? `${formatMoney(amountDueNowCents(v))} due now, ${amount} still owed in total.`
+        : `${amount} still owed.`,
     })
   }
   return reminders
@@ -83,10 +83,7 @@ export function planNotifications(reminders: Reminder[]): OutgoingNotification[]
     return [
       {
         title: `${reminders.length} loans need your attention`,
-        body: reminders
-          .slice(0, 3)
-          .map((r) => r.title)
-          .join('\n'),
+        body: [...reminders.slice(0, 3).map((r) => r.title), `and ${reminders.length - 3} more`].join('\n'),
         tag: 'lendly-summary',
         url: `#loans?status=open${withOrg(sharedOrg(reminders))}`,
         keys: reminders.map((r) => r.key),

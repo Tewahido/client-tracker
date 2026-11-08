@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { useAuth } from '../hooks/useAuth'
+import { unsubscribeThisDevice } from '../services/push'
+import { useSettings } from './settingsContext'
 import { createOrganizationService, type Invite, type Organization } from '../services/organizations'
 import { supabase } from '../services/supabase'
 import { WorkspaceContext, type WorkspaceStatus, type WorkspaceValue } from './workspaceContext'
@@ -26,6 +28,18 @@ function writeActiveOrg(orgId: string) {
 /** Who is signed in, which organisations they belong to, and which one is active on this device. */
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const auth = useAuth()
+  const { updateSettings } = useSettings()
+
+  // However the session ended (signed out, expired, revoked after a lost phone), this device
+  // stops getting that person's reminders, and the next person decides for themselves.
+  const wasSignedIn = useRef(false)
+  useEffect(() => {
+    if (auth.state.mode === 'signed-in') wasSignedIn.current = true
+    if (auth.state.mode !== 'signed-out' || !wasSignedIn.current) return
+    wasSignedIn.current = false
+    updateSettings({ notificationsEnabled: false, pushOnThisDevice: false })
+    void unsubscribeThisDevice().catch(() => {})
+  }, [auth.state.mode, updateSettings])
   const service = useMemo(() => (supabase ? createOrganizationService(supabase) : null), [])
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [invites, setInvites] = useState<Invite[]>([])

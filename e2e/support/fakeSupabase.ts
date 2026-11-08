@@ -63,8 +63,15 @@ export class FakeSupabase {
   readonly myInvites: (InviteRow & { org_name: string })[] = []
   /** Devices the app saved for push reminders (save_push_subscription arguments). */
   readonly pushSaves: Array<{ p_endpoint: string; p_p256dh: string; p_auth: string; p_reminder_days: number }> = []
-  /** Endpoints of devices the app removed. */
+  /** Endpoints of devices the app removed ("all:<user id>" for every device of an account). */
   readonly pushRemoved: string[] = []
+  /** When set, saving a device fails as if the network dropped. */
+  failPushSave = false
+  /**
+   * Loans in each organisation's ledger, by organisation id: [loan id, index of the person in
+   * `people`, due date]. R1,500 lent on 1 Oct, nothing repaid.
+   */
+  readonly loans: Record<string, Array<[id: string, person: number, dueOn: string]>> = {}
   /** People in each organisation's ledger, by organisation id. */
   readonly people: Record<string, string[]> = {}
 
@@ -145,12 +152,14 @@ export class FakeSupabase {
     }
 
     if (table === 'save_push_subscription' && method === 'POST') {
+      if (this.failPushSave) return route.abort('internetdisconnected')
       this.pushSaves.push(request.postDataJSON())
       return route.fulfill({ status: 204, body: '' })
     }
 
     if (table === 'push_subscriptions' && method === 'DELETE') {
-      this.pushRemoved.push(url.searchParams.get('endpoint')?.replace(/^eq\./, '') ?? '')
+      const endpoint = url.searchParams.get('endpoint')?.replace(/^eq\./, '')
+      this.pushRemoved.push(endpoint ?? `all:${url.searchParams.get('user_id')?.replace(/^eq\./, '')}`)
       return route.fulfill({ status: 204, body: '' })
     }
 
@@ -171,7 +180,27 @@ export class FakeSupabase {
       })
     }
 
-    // Borrowers, loans, payments and anything else: an empty organisation.
+    if (table === 'loans' && method === 'GET') {
+      const orgId = url.searchParams.get('org_id')?.replace(/^eq\./, '') ?? ''
+      return route.fulfill({
+        json: (this.loans[orgId] ?? []).map(([id, person, dueOn]) => ({
+          id,
+          borrower_id: `${orgId}-person-${person}`,
+          principal_cents: 150_000,
+          interest_rate: 0,
+          lent_on: '2026-10-01',
+          due_on: dueOn,
+          note: null,
+          written_off_on: null,
+          instalment_count: null,
+          first_due_on: null,
+          total_due_cents: null,
+          created_at: '2026-10-01T00:00:00Z',
+        })),
+      })
+    }
+
+    // Payments and anything else: nothing.
     return route.fulfill({ json: [] })
   }
 }

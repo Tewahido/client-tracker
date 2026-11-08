@@ -208,6 +208,14 @@
 }
 
 /*
+ * Sonner's light-theme warning toast puts amber text on cream at about 3:1; amber-800 reads at
+ * about 7:1. Matches its theme variables on the toaster, so dark mode keeps its own colours.
+ */
+:root:not(.dark) [data-sonner-toaster] {
+  --warning-text: #92400e;
+}
+
+/*
  * iPhone Safari zooms the page in when someone taps a field whose text is under 16px, and
  * doesn't zoom back out, leaving screens cut off at the side. Touch screens get 16px text in
  * every field instead (pinch-zoom stays available, unlike setting maximum-scale). Outside

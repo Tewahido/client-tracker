@@ -11,9 +11,9 @@ describe('base64UrlToBytes', () => {
 
 describe('readPushMessage', () => {
   it('reads the reminder the server sent', () => {
-    expect(readPushMessage({ title: 'Sipho is 3 days overdue', body: 'R1,500.00 still owed to you.', tag: 'l1:2026-11-08:overdue-3', url: '#loans?open=l1&org=o1' })).toEqual({
+    expect(readPushMessage({ title: 'Sipho is 3 days overdue', body: 'R1,500.00 still owed.', tag: 'l1:2026-11-08:overdue-3', url: '#loans?open=l1&org=o1' })).toEqual({
       title: 'Sipho is 3 days overdue',
-      body: 'R1,500.00 still owed to you.',
+      body: 'R1,500.00 still owed.',
       tag: 'l1:2026-11-08:overdue-3',
       url: '#loans?open=l1&org=o1',
     })

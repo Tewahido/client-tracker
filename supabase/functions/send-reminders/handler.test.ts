@@ -83,7 +83,8 @@ describe('send-reminders', () => {
     expect(d.push).toHaveBeenCalledTimes(2)
     expect(d.push).toHaveBeenCalledWith(device('u1', 1), {
       title: "Sipho's payment is due today",
-      body: expect.stringContaining('still owed to you'),
+      // Number formatting follows the server's locale ("R1,500.00" or "R 1 500,00").
+      body: expect.stringMatching(/^R.*still owed\.$/),
       tag: 'l1:2026-11-08:today',
       url: '#loans?open=l1&org=org1',
     })

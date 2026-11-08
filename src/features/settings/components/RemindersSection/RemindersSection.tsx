@@ -1,4 +1,4 @@
-import { BellOff, BellRing, CalendarPlus, Send } from 'lucide-react'
+import { BellOff, BellRing, CalendarPlus, Send, Smartphone } from 'lucide-react'
 import { Button, SelectInput } from '../../../../components/ui'
 import { useCalendarExport, useNotificationPermission } from '../../../reminders'
 import { useSettings } from '../../../../providers/settingsContext'
@@ -9,20 +9,22 @@ const LEAD_DAYS = [1, 2, 3, 5, 7, 14]
 
 export function RemindersSection() {
   const { settings, updateSettings } = useSettings()
-  const { permission, active, pushOn, needsHomeScreen, enable, disable, sendTest } = useNotificationPermission()
+  const { permission, active, pushOn, pushPossible, needsHomeScreen, canStopEverywhere, enable, disable, stopEverywhere, sendTest } = useNotificationPermission()
   const { exportAllOpen } = useCalendarExport()
 
   const notificationHint =
     needsHomeScreen && !active
-      ? 'On iPhone, add Lendly to your Home Screen first (Share › Add to Home Screen) and turn this on there, so reminders arrive even when it’s closed.'
+      ? 'On iPhone or iPad, add Lendly to your Home Screen first: tap Share (it may be under •••), then Add to Home Screen. Open Lendly from there and turn this on.'
       : permission === 'unsupported'
       ? "This browser can't show notifications. Install the app or use calendar export."
       : permission === 'denied'
         ? 'Blocked in your browser settings. Allow notifications for this site to turn them on.'
         : pushOn
-          ? 'On for this device, even when Lendly is closed. Each person you share with turns it on for their own devices.'
-          : active
-            ? 'On for this device while Lendly is open. Each person you share with turns it on for their own devices.'
+          ? 'On for this device, even when Lendly is closed. Other members turn it on for their own phones.'
+          : active && pushPossible
+            ? "On while Lendly is open. Reminders with Lendly closed aren't working on this device yet; we'll try again next time you open it."
+            : active
+              ? 'On for this device while Lendly is open. Other members turn it on for their own phones.'
           : 'Get a heads-up on this device before and after due dates.'
 
   return (
@@ -59,6 +61,14 @@ export function RemindersSection() {
           </option>
         ))}
       </SelectInput>
+
+      {canStopEverywhere && (
+        <SettingsRow label="Lost a phone?" hint="Stop reminders on every device signed in to your account, including ones you no longer have.">
+          <Button variant="ghost" size="sm" icon={Smartphone} onClick={stopEverywhere}>
+            Stop on all devices
+          </Button>
+        </SettingsRow>
+      )}
 
       <SettingsRow label="Calendar" hint="Add every open loan's due date to your calendar, with alerts. Works even when the app is closed.">
         <Button variant="secondary" size="sm" icon={CalendarPlus} onClick={exportAllOpen}>
