@@ -84,7 +84,9 @@ export function planNotifications(reminders: Reminder[]): OutgoingNotification[]
       {
         title: `${reminders.length} loans need your attention`,
         body: [...reminders.slice(0, 3).map((r) => r.title), `and ${reminders.length - 3} more`].join('\n'),
-        tag: 'lendly-summary',
+        // A notification with an existing tag silently replaces it (no banner on iOS), so each
+        // batch of reminders gets its own; reminders are only ever sent once, so batches differ.
+        tag: `lendly-summary-${fingerprint(reminders.map((r) => r.key).join('|'))}`,
         url: `#loans?status=open${withOrg(sharedOrg(reminders))}`,
         keys: reminders.map((r) => r.key),
       },
@@ -94,6 +96,13 @@ export function planNotifications(reminders: Reminder[]): OutgoingNotification[]
 }
 
 const withOrg = (orgId: string | undefined) => (orgId ? `&org=${orgId}` : '')
+
+/** A short, stable label for a piece of text (FNV-1a), to keep notification tags short. */
+function fingerprint(text: string): string {
+  let hash = 0x811c9dc5
+  for (let i = 0; i < text.length; i++) hash = Math.imul(hash ^ text.charCodeAt(i), 0x01000193)
+  return (hash >>> 0).toString(36)
+}
 
 /** The organisation all the reminders belong to, if they share one. */
 function sharedOrg(reminders: Reminder[]): string | undefined {

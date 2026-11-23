@@ -89,4 +89,15 @@ describe('planNotifications', () => {
     expect(plan[0].body.split('\n').pop()).toBe('and 1 more')
     expect(plan[0].keys).toEqual(['k1', 'k2', 'k3', 'k4'])
   })
+
+  // iOS replaces a notification with the same tag silently, with no banner or sound, so a
+  // new day's summary must not reuse the last one's tag.
+  it('gives each new summary its own tag, so it alerts instead of silently replacing the last', () => {
+    const monday = planNotifications([1, 2, 3, 4].map(reminder))[0]
+    const tuesday = planNotifications([5, 6, 7, 8].map(reminder))[0]
+    expect(monday.tag).not.toBe(tuesday.tag)
+    expect(monday.tag).toMatch(/^lendly-summary/)
+    // The same batch keeps the same tag, so a retry doesn't stack a copy.
+    expect(planNotifications([1, 2, 3, 4].map(reminder))[0].tag).toBe(monday.tag)
+  })
 })
